@@ -16,6 +16,18 @@ A delivery booking web app inspired by GrabExpress, built for Cebu, PH.
 - **Auth**: Firebase Authentication (Google)
 
 ## Setup
-1. Clone the repo
-2. `cd frontend && npm install && npm run dev`
-3. `cd backend && npm install && npm start`
+# 1. Clone the repo
+git clone https://github.com/your-username/grabexpress.git
+cd grabexpress
+
+# 2. Set up frontend
+cd frontend
+npm install
+# create a .env file here and paste the Firebase keys you shared
+npm run dev
+
+# 3. Set up backend (in a separate terminal)
+cd backend
+npm install
+npm start
+
