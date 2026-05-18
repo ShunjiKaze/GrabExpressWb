@@ -243,12 +243,18 @@ function TrackingPage({ dbUser }) {
           {/* Rating CTA */}
           {isComplete && (
             <div style={{ marginTop: '24px', padding: '16px', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(0,177,79,0.2)', textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', marginBottom: '8px' }}>🎉</div>
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>{booking.driverRating ? '⭐' : '🎉'}</div>
               <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--navy)', marginBottom: '6px' }}>Delivery Complete!</div>
-              <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px' }}>How was your delivery experience?</p>
-              <button onClick={() => navigate(`/rate/${id}`)} className="btn btn-primary btn-full">
-                ⭐ Rate Your Driver
-              </button>
+              {booking.driverRating ? (
+                <p style={{ fontSize: '13px', color: 'var(--text-2)' }}>You rated your driver {booking.driverRating} star{booking.driverRating !== 1 ? 's' : ''}. Thanks for your feedback!</p>
+              ) : (
+                <>
+                  <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px' }}>How was your delivery experience?</p>
+                  <button onClick={() => navigate(`/rate/${id}`)} className="btn btn-primary btn-full">
+                    ⭐ Rate Your Driver
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
