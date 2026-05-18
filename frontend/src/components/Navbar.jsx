@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import Logo from './Logo';
 
@@ -19,16 +19,17 @@ function Navbar({ user, dbUser }) {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogin  = () => signInWithPopup(auth, new GoogleAuthProvider());
   const handleLogout = () => { signOut(auth); setMenuOpen(false); };
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
-  const isHome = location.pathname === '/';
+  const isHome = ['/', '/login', '/register', '/about', '/faq', '/contact'].includes(location.pathname);
   const ROLE_BADGE = isHome ? ROLE_BADGE_DARK : ROLE_BADGE_LIGHT;
 
   const NavLinks = () => (
     <>
       <Link to="/" className={`nav-link-custom${location.pathname === '/' ? ' active' : ''}${isHome ? ' nav-link-on-dark' : ''}`} onClick={() => setMenuOpen(false)}>Home</Link>
+      <Link to="/about" className={`nav-link-custom${isActive('/about') ? ' active' : ''}${isHome ? ' nav-link-on-dark' : ''}`} onClick={() => setMenuOpen(false)}>About</Link>
+      <Link to="/faq" className={`nav-link-custom${isActive('/faq') ? ' active' : ''}${isHome ? ' nav-link-on-dark' : ''}`} onClick={() => setMenuOpen(false)}>FAQ</Link>
 
       {dbUser?.role === 'admin' && (
         <Link to="/admin/dashboard" className={`nav-link-custom${isActive('/admin') ? ' active' : ''}${isHome ? ' nav-link-on-dark' : ''}`} onClick={() => setMenuOpen(false)}>Dashboard</Link>
@@ -99,7 +100,7 @@ function Navbar({ user, dbUser }) {
           {!user && (
             <>
               <div className="nav-divider" style={isHome ? { background: 'rgba(255,255,255,0.12)' } : {}} />
-              <button onClick={handleLogin} className="btn-primary-custom">Sign In with Google</button>
+              <Link to="/login" className="btn-primary-custom">Sign In</Link>
             </>
           )}
         </div>
@@ -123,7 +124,7 @@ function Navbar({ user, dbUser }) {
           {user ? (
             <button onClick={handleLogout} className="btn btn-danger btn-sm" style={{ alignSelf: 'flex-start' }}>Sign Out</button>
           ) : (
-            <button onClick={handleLogin} className="btn-primary-custom" style={{ alignSelf: 'flex-start' }}>Sign In with Google</button>
+            <Link to="/login" className="btn-primary-custom" style={{ alignSelf: 'flex-start' }} onClick={() => setMenuOpen(false)}>Sign In</Link>
           )}
         </div>
       )}

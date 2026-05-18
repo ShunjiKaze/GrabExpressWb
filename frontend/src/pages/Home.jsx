@@ -371,11 +371,89 @@ function Home({ user, dbUser }) {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────── */}
-      <footer style={{ background: '#040810', borderTop: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', padding: '36px 24px', textAlign: 'center', fontSize: '13px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-          <Logo size="sm" textColor="rgba(255,255,255,0.7)" />
+      <footer style={{ background: '#040810', borderTop: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '64px 32px 40px', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '40px' }} className="footer-grid">
+
+          {/* Brand column */}
+          <div>
+            <Logo size="sm" textColor="rgba(255,255,255,0.85)" />
+            <p style={{ marginTop: '14px', lineHeight: 1.75, color: 'rgba(255,255,255,0.38)', fontSize: '13px', maxWidth: '240px' }}>
+              Fast, reliable parcel delivery across Cebu City and Metro Cebu. Book in under 2 minutes.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              {[
+                { label: 'FB', href: '#' },
+                { label: 'IG', href: '#' },
+                { label: 'TW', href: '#' },
+              ].map(s => (
+                <a key={s.label} href={s.href} style={{ width: 34, height: 34, borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 800, textDecoration: 'none', transition: 'background 0.2s, color 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,177,79,0.15)'; e.currentTarget.style.color = '#4ADE80'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+                >{s.label}</a>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Quick Links</div>
+            {[
+              { label: 'Home', to: '/' },
+              { label: 'Book a Delivery', to: '/book' },
+              { label: 'My Orders', to: '/history' },
+              { label: 'Driver Portal', to: '/driver/deliveries' },
+            ].map(l => (
+              <Link key={l.label} to={l.to} style={{ display: 'block', color: 'rgba(255,255,255,0.45)', marginBottom: '10px', textDecoration: 'none', fontSize: '13px', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#4ADE80'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}
+              >{l.label}</Link>
+            ))}
+          </div>
+
+          {/* Company */}
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Company</div>
+            {[
+              { label: 'About Us', to: '/about' },
+              { label: 'FAQ / Help', to: '/faq' },
+              { label: 'Contact Us', to: '/contact' },
+            ].map(l => (
+              <Link key={l.label} to={l.to} style={{ display: 'block', color: 'rgba(255,255,255,0.45)', marginBottom: '10px', textDecoration: 'none', fontSize: '13px', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#4ADE80'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}
+              >{l.label}</Link>
+            ))}
+          </div>
+
+          {/* Contact Info */}
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Contact</div>
+            {[
+              { icon: '📍', text: 'Cebu City, Philippines' },
+              { icon: '📧', text: 'support@grabexpress.ph' },
+              { icon: '📞', text: '+63 32 000 0000' },
+              { icon: '🕐', text: 'Mon–Sun, 7AM–10PM' },
+            ].map(c => (
+              <div key={c.icon} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '10px', color: 'rgba(255,255,255,0.42)', fontSize: '13px' }}>
+                <span style={{ flexShrink: 0 }}>{c.icon}</span>
+                <span>{c.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <p>© 2026 GrabExpress Cebu. Built with React + Firebase Firestore.</p>
+
+        {/* bottom bar */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '20px 32px', maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,0.22)', fontSize: '12px' }}>© 2026 GrabExpress Cebu. All rights reserved.</p>
+          <div style={{ display: 'flex', gap: '20px' }}>
+            {[{ label: 'Privacy Policy', to: '/faq' }, { label: 'Terms of Service', to: '/faq' }].map(l => (
+              <Link key={l.label} to={l.to} style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', textDecoration: 'none', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
+              >{l.label}</Link>
+            ))}
+          </div>
+        </div>
       </footer>
 
       <style>{`
@@ -392,6 +470,10 @@ function Home({ user, dbUser }) {
           .hero-grid > div:last-child { display: none !important; }
           #how-it-works > div,
           section > div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+        }
+        @media (max-width: 480px) {
+          .footer-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

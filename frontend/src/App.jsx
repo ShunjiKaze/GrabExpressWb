@@ -22,6 +22,11 @@ import DriverDeliveries  from './pages/DriverDeliveries';
 import DriverActiveOrder from './pages/DriverActiveOrder';
 import OrderHistory      from './pages/OrderHistory';
 import ProfilePage       from './pages/ProfilePage';
+import LoginPage         from './pages/LoginPage';
+import RegisterPage      from './pages/RegisterPage';
+import AboutPage         from './pages/AboutPage';
+import FAQPage           from './pages/FAQPage';
+import ContactPage       from './pages/ContactPage';
 
 import './index.css';
 
@@ -93,8 +98,15 @@ function App() {
           <Navbar user={firebaseUser} dbUser={dbUser} />
 
           <Routes>
+            {/* Auth */}
+            <Route path="/login"    element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />} />
+            <Route path="/register" element={isLoggedIn ? <Navigate to="/" replace /> : <RegisterPage />} />
+
             {/* Public */}
             <Route path="/" element={<Home user={firebaseUser} dbUser={dbUser} />} />
+            <Route path="/about"   element={<AboutPage />} />
+            <Route path="/faq"     element={<FAQPage />} />
+            <Route path="/contact" element={<ContactPage />} />
 
             {/* Admin */}
             <Route path="/admin/dashboard" element={
