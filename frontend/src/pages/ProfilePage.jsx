@@ -100,7 +100,7 @@ function ProfilePage({ dbUser }) {
       ];
 
   return (
-    <div style={{ maxWidth: '820px', margin: '0 auto', padding: '32px 24px 56px' }}>
+    <div className="page-enter" style={{ maxWidth: '820px', margin: '0 auto', padding: '32px 24px 56px' }}>
 
       {/* ── Main Card ────────────────────────────────────── */}
       <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '20px' }}>

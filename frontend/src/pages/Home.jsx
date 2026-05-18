@@ -4,6 +4,7 @@ import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase';
 import DriverRegistrationModal from '../components/DriverRegistrationModal';
 import Logo from '../components/Logo';
+import ScrollReveal from '../components/ScrollReveal';
 
 import heroBg          from '../assets/hero-bg.jpg';
 import heroRider       from '../assets/hero-rider.png';
@@ -86,6 +87,7 @@ function Home({ user, dbUser }) {
         <div className="hero-grid" style={{ position: 'relative', zIndex: 1, maxWidth: '1140px', margin: '0 auto', padding: '110px 32px 80px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center', width: '100%' }}>
 
           {/* left */}
+          <ScrollReveal direction="up" delay={100}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: '40px', padding: '6px 14px', color: '#4ADE80', fontSize: '13px', fontWeight: 700, marginBottom: '24px' }}>
               🚀 GrabExpress Delivery — Cebu
@@ -119,8 +121,10 @@ function Home({ user, dbUser }) {
             </div>
           </div>
 
+          </ScrollReveal>
+
           {/* right — rider + floating cards */}
-          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+          <ScrollReveal direction="right" delay={250} style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
             {/* glow orb */}
             <div style={{ position: 'absolute', bottom: '-60px', left: '50%', transform: 'translateX(-50%)', width: '440px', height: '440px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,177,79,0.26) 0%, rgba(0,177,79,0.07) 55%, transparent 72%)', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', width: '300px', height: '300px', borderRadius: '50%', border: '1px solid rgba(0,177,79,0.18)', pointerEvents: 'none' }} />
@@ -128,7 +132,7 @@ function Home({ user, dbUser }) {
             <img src={heroRider} alt="GrabExpress rider" style={{ width: '100%', maxWidth: '480px', objectFit: 'contain', filter: 'drop-shadow(0 32px 80px rgba(0,177,79,0.4))', mixBlendMode: 'lighten', position: 'relative', zIndex: 2 }} />
 
             {/* pickup card */}
-            <div style={{ position: 'absolute', top: '22%', left: '-16px', zIndex: 10, background: 'rgba(10,16,30,0.82)', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,177,79,0.28)', borderRadius: '16px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+            <div className="float-anim" style={{ position: 'absolute', top: '22%', left: '-16px', zIndex: 10, background: 'rgba(10,16,30,0.82)', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,177,79,0.28)', borderRadius: '16px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
               <div style={{ width: 36, height: 36, borderRadius: '10px', background: 'rgba(0,177,79,0.18)', border: '1px solid rgba(0,177,79,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📦</div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '12px', color: 'white', lineHeight: 1 }}>Package picked up!</div>
@@ -137,7 +141,7 @@ function Home({ user, dbUser }) {
             </div>
 
             {/* rating card */}
-            <div style={{ position: 'absolute', bottom: '28%', right: '-8px', zIndex: 10, background: 'rgba(10,16,30,0.82)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '16px', padding: '12px 16px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+            <div className="float-anim-delay" style={{ position: 'absolute', bottom: '28%', right: '-8px', zIndex: 10, background: 'rgba(10,16,30,0.82)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '16px', padding: '12px 16px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
               <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, marginBottom: '4px' }}>Driver Rating</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '22px', fontWeight: 900, color: 'white', lineHeight: 1 }}>4.9</span>
@@ -147,7 +151,7 @@ function Home({ user, dbUser }) {
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
 
         {/* section fade */}
@@ -163,6 +167,7 @@ function Home({ user, dbUser }) {
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center', position: 'relative', zIndex: 1 }}>
 
           {/* photo */}
+          <ScrollReveal direction="left">
           <div style={{ position: 'relative', paddingBottom: '20px', paddingRight: '20px' }}>
             {/* green offset frame */}
             <div style={{ position: 'absolute', bottom: 0, right: 0, width: 'calc(100% - 20px)', height: 'calc(100% - 20px)', borderRadius: '20px', background: 'rgba(0,177,79,0.07)', border: '1.5px solid rgba(0,177,79,0.2)' }} />
@@ -199,8 +204,10 @@ function Home({ user, dbUser }) {
               <div style={{ fontSize: '20px', fontWeight: 900, color: '#4ADE80', lineHeight: 1 }}>12 min</div>
             </div>
           </div>
+          </ScrollReveal>
 
           {/* steps */}
+          <ScrollReveal direction="right">
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0,177,79,0.12)', border: '1px solid rgba(0,177,79,0.25)', borderRadius: '40px', padding: '5px 14px', color: '#4ADE80', fontSize: '12px', fontWeight: 700, marginBottom: '18px' }}>🗺️ The Process</div>
             <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: 'white', letterSpacing: '-0.02em', marginBottom: '10px' }}>How GrabExpress Works</h2>
@@ -227,6 +234,7 @@ function Home({ user, dbUser }) {
               ))}
             </div>
           </div>
+          </ScrollReveal>
         </div>
 
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to bottom, transparent, #0A1223)', pointerEvents: 'none' }} />
@@ -238,15 +246,18 @@ function Home({ user, dbUser }) {
         <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '500px', height: '1px', background: 'linear-gradient(to right, transparent, rgba(0,177,79,0.25), transparent)' }} />
 
         <div style={{ maxWidth: '1100px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          <ScrollReveal direction="up">
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0,177,79,0.12)', border: '1px solid rgba(0,177,79,0.25)', borderRadius: '40px', padding: '5px 14px', color: '#4ADE80', fontSize: '12px', fontWeight: 700, marginBottom: '18px' }}>✨ Why Choose Us</div>
             <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: 'white', letterSpacing: '-0.02em' }}>Everything You Need</h2>
             <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '10px', fontSize: '15px' }}>Built for speed, safety, and simplicity.</p>
           </div>
+          </ScrollReveal>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '16px' }}>
             {features.map((f, i) => (
-              <div key={i}
+              <ScrollReveal key={i} direction="up" delay={i * 60}>
+              <div
                 style={{ padding: '28px 24px', borderRadius: '20px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', transition: 'transform 0.25s, background 0.25s, border-color 0.25s', position: 'relative', overflow: 'hidden', cursor: 'default' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.background = 'rgba(0,177,79,0.08)'; e.currentTarget.style.borderColor = 'rgba(0,177,79,0.3)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
@@ -258,6 +269,7 @@ function Home({ user, dbUser }) {
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>{f.title}</h3>
                 <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.65 }}>{f.desc}</p>
               </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -274,6 +286,7 @@ function Home({ user, dbUser }) {
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center', position: 'relative', zIndex: 1 }}>
 
           {/* left */}
+          <ScrollReveal direction="left">
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '40px', padding: '5px 14px', color: 'rgba(255,255,255,0.65)', fontSize: '12px', fontWeight: 700, marginBottom: '20px' }}>🛵 For Riders</div>
             <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: 'white', marginBottom: '14px', letterSpacing: '-0.02em' }}>
@@ -319,8 +332,10 @@ function Home({ user, dbUser }) {
               ))}
             </div>
           </div>
+          </ScrollReveal>
 
           {/* right — driver photo */}
+          <ScrollReveal direction="right" delay={150}>
           <div style={{ position: 'relative' }}>
             {/* glow */}
             <div style={{ position: 'absolute', inset: '-24px', borderRadius: '24px', background: 'radial-gradient(ellipse at 60% 50%, rgba(0,177,79,0.18), transparent 65%)', pointerEvents: 'none' }} />
@@ -351,6 +366,7 @@ function Home({ user, dbUser }) {
               <div style={{ fontWeight: 700, fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>200+ Drivers</div>
             </div>
           </div>
+          </ScrollReveal>
         </div>
       </section>
 
