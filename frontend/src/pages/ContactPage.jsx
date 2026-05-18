@@ -121,6 +121,11 @@ function ContactPage() {
         </div>
       </div>
 
+      {/* Copyright */}
+      <div style={{ background: '#040810', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '20px 32px', textAlign: 'center' }}>
+        <p style={{ margin: 0, color: 'rgba(255,255,255,0.22)', fontSize: '12px' }}>© 2026 GrabExpress Cebu. All rights reserved.</p>
+      </div>
+
       <style>{`
         @media (max-width: 768px) {
           .contact-grid { grid-template-columns: 1fr !important; gap: 28px !important; }

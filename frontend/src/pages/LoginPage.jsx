@@ -43,8 +43,10 @@ function LoginPage() {
       navigate('/');
     } catch (err) {
       const c = err.code;
-      if (c === 'auth/wrong-password' || c === 'auth/invalid-credential')
+      if (c === 'auth/wrong-password' || c === 'auth/invalid-credential') {
+        setPw('');
         setErrors({ pw: 'Incorrect password. Please try again.' });
+      }
       else if (c === 'auth/user-not-found')
         setErrors({ email: 'No account found with this email.' });
       else if (c === 'auth/invalid-email')

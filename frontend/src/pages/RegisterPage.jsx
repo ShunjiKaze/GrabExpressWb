@@ -61,7 +61,8 @@ function RegisterPage() {
         role:       'customer',
         created_at: serverTimestamp(),
       });
-      navigate('/');
+      await auth.signOut();
+      navigate('/login');
     } catch (err) {
       const c = err.code;
       if (c === 'auth/email-already-in-use')

@@ -314,23 +314,6 @@ function Home({ user, dbUser }) {
               </div>
             )}
 
-            {/* accounts info */}
-            <div style={{ marginTop: '36px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: '22px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>How Accounts Work</div>
-              {[
-                { role: 'Customer', icon: '👤', color: '#4ADE80', desc: 'Auto-assigned on first sign-in. Book deliveries immediately.' },
-                { role: 'Driver',   icon: '🛵', color: '#60A5FA', desc: 'Click "Become a Driver" to register your vehicle.' },
-                { role: 'Admin',    icon: '🛡️', color: '#F87171', desc: 'Assigned by an existing admin through the Admin Dashboard.' },
-              ].map(item => (
-                <div key={item.role} style={{ display: 'flex', gap: '12px', marginBottom: '14px', alignItems: 'flex-start' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{item.icon}</div>
-                  <div>
-                    <div style={{ fontWeight: 700, color: item.color, fontSize: '13px', marginBottom: '2px' }}>{item.role}</div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.38)', lineHeight: 1.5 }}>{item.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
           </ScrollReveal>
 

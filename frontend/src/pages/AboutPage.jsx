@@ -116,20 +116,19 @@ function AboutPage() {
               <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', lineHeight: 1.75, marginBottom: '28px' }}>
                 Whether you ride a motorcycle, drive a car, or operate a van — GrabExpress has orders for you. No fixed schedule, no monthly fees. Just deliver and earn.
               </p>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <Link to="/" style={{ background: '#00B14F', color: 'white', padding: '12px 24px', borderRadius: '10px', fontWeight: 700, fontSize: '14px', textDecoration: 'none', transition: 'background 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#00a046'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#00B14F'}
-                >Become a Driver</Link>
-                <Link to="/faq" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '12px 24px', borderRadius: '10px', fontWeight: 700, fontSize: '14px', textDecoration: 'none', transition: 'background 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
-                >Learn More</Link>
-              </div>
+              <Link to="/faq" style={{ display: 'inline-block', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '12px 24px', borderRadius: '10px', fontWeight: 700, fontSize: '14px', textDecoration: 'none', transition: 'background 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+              >Learn More</Link>
             </div>
           </ScrollReveal>
         </div>
       </section>
+
+      {/* Copyright */}
+      <div style={{ background: '#040810', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '20px 32px', textAlign: 'center' }}>
+        <p style={{ margin: 0, color: 'rgba(255,255,255,0.22)', fontSize: '12px' }}>© 2026 GrabExpress Cebu. All rights reserved.</p>
+      </div>
 
       <style>{`
         @media (max-width: 768px) {
