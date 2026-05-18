@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
-import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db, auth } from '../firebase';
+import { useState, useEffect, useRef } from 'react';
+import { doc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { updateProfile, deleteUser, signOut, reauthenticateWithPopup, GoogleAuthProvider, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, auth, storage } from '../firebase';
 import { useToast } from '../components/Toast';
 
 const VEHICLE_ICONS = { motorcycle: '🛵', car: '🚗', van: '🚐' };
@@ -10,19 +12,27 @@ const ROLE_CONFIG = {
   admin:    { label: 'Admin',    color: '#B91C1C', bg: '#FEE2E2', dot: '#EF4444' },
 };
 
-function ProfilePage({ dbUser }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [name,  setName]  = useState(dbUser?.full_name || '');
-  const [phone, setPhone] = useState(dbUser?.phone || '');
-  const [saving, setSaving] = useState(false);
-  const [stats,  setStats]  = useState(null);
-  /* local display values so the header updates immediately after save */
-  const [displayName,  setDisplayName]  = useState(dbUser?.full_name || '');
-  const [displayPhone, setDisplayPhone] = useState(dbUser?.phone || '');
-  const { showToast }  = useToast();
-  const firebaseUser   = auth.currentUser;
-  const role           = dbUser?.role;
-  const roleCfg        = ROLE_CONFIG[role] || ROLE_CONFIG.customer;
+function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
+  const [isEditing, setIsEditing]         = useState(false);
+  const [name,  setName]                  = useState(dbUser?.full_name || '');
+  const [phone, setPhone]                 = useState(dbUser?.phone || '');
+  const [saving, setSaving]               = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [stats, setStats]                 = useState(null);
+  const [displayName,  setDisplayName]    = useState(dbUser?.full_name || '');
+  const [displayPhone, setDisplayPhone]   = useState(dbUser?.phone || '');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword]       = useState('');
+  const [deleting, setDeleting]           = useState(false);
+  const fileInputRef = useRef(null);
+  const { showToast } = useToast();
+  // Use prop (from App state) first, fall back to auth.currentUser
+  const firebaseUser  = fbUserProp || auth.currentUser;
+  const role          = dbUser?.role;
+  const roleCfg       = ROLE_CONFIG[role] || ROLE_CONFIG.customer;
+  // Firestore photoURL wins (user may have uploaded a custom one); fall back to Google's
+  const photoURL      = dbUser?.photoURL || firebaseUser?.photoURL || null;
+  const isGoogleUser  = firebaseUser?.providerData?.some(p => p.providerId === 'google.com');
 
   useEffect(() => {
     if (!dbUser?.user_id) return;
@@ -43,6 +53,38 @@ function ProfilePage({ dbUser }) {
     })();
   }, [dbUser?.user_id, role]);
 
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return; }
+    if (file.size > 5 * 1024 * 1024)    { showToast('Image must be under 5MB.', 'error'); return; }
+
+    setPhotoUploading(true);
+    try {
+      const storageRef = ref(storage, `profile-photos/${dbUser.user_id}`);
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject({ code: 'storage/timeout' }), 15000)
+      );
+      await Promise.race([uploadBytes(storageRef, file), timeout]);
+      const downloadURL = await getDownloadURL(storageRef);
+      await updateProfile(firebaseUser, { photoURL: downloadURL });
+      await updateDoc(doc(db, 'users', dbUser.user_id), { photoURL: downloadURL });
+      showToast('Profile photo updated!', 'success');
+    } catch (err) {
+      console.error('Photo upload error:', err);
+      if (err.code === 'storage/unauthorized') {
+        showToast('Upload blocked: update Firebase Storage rules to allow authenticated uploads.', 'error');
+      } else if (err.code === 'storage/timeout') {
+        showToast('Upload timed out — Firebase Storage rules may be blocking uploads. Check the console.', 'error');
+      } else {
+        showToast(`Upload failed: ${err.message || err.code || 'unknown error'}`, 'error');
+      }
+    } finally {
+      setPhotoUploading(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSave = async () => {
     const trimmedName  = name.trim();
     const trimmedPhone = phone.trim();
@@ -52,6 +94,7 @@ function ProfilePage({ dbUser }) {
       const updates = { full_name: trimmedName };
       if (trimmedPhone) updates.phone = trimmedPhone;
       await updateDoc(doc(db, 'users', dbUser.user_id), updates);
+      await updateProfile(firebaseUser, { displayName: trimmedName });
       setDisplayName(trimmedName);
       if (trimmedPhone) setDisplayPhone(trimmedPhone);
       showToast('Profile saved!', 'success');
@@ -70,15 +113,38 @@ function ProfilePage({ dbUser }) {
     setIsEditing(false);
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      if (isGoogleUser) {
+        await reauthenticateWithPopup(firebaseUser, new GoogleAuthProvider());
+      } else {
+        if (!deletePassword) { showToast('Please enter your password to confirm.', 'error'); setDeleting(false); return; }
+        const cred = EmailAuthProvider.credential(firebaseUser.email, deletePassword);
+        await reauthenticateWithCredential(firebaseUser, cred);
+      }
+      await deleteDoc(doc(db, 'users', dbUser.user_id));
+      await deleteUser(firebaseUser);
+    } catch (err) {
+      console.error('Delete account error:', err);
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        showToast('Incorrect password. Account not deleted.', 'error');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        showToast('Re-authentication cancelled.', 'error');
+      } else {
+        showToast('Failed to delete account. Try again.', 'error');
+      }
+      setDeleting(false);
+    }
+  };
+
   const formatDate = (ts) => {
     if (!ts) return '—';
     const d = ts.toDate ? ts.toDate() : new Date(ts);
     return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  const initial = (dbUser?.full_name || 'U')[0].toUpperCase();
-
-  /* shared read-only display field style */
+  const initial  = (dbUser?.full_name || 'U')[0].toUpperCase();
   const readField = {
     width: '100%', padding: '11px 14px',
     background: 'var(--bg)', border: '1px solid var(--border)',
@@ -88,21 +154,21 @@ function ProfilePage({ dbUser }) {
 
   const statItems = role === 'driver'
     ? [
-        { v: stats?.total     ?? '—', l: 'Total Orders'  },
-        { v: stats?.completed ?? '—', l: 'Delivered'      },
+        { v: stats?.total     ?? '—', l: 'Total Orders' },
+        { v: stats?.completed ?? '—', l: 'Delivered' },
         { v: stats?.avg ? `${stats.avg} ★` : '—', l: `Rating (${stats?.ratingCount ?? 0})` },
       ]
     : [
         { v: stats?.total     ?? '—', l: 'Total Bookings' },
-        { v: stats?.completed ?? '—', l: 'Completed'      },
-        { v: stats?.cancelled ?? '—', l: 'Cancelled'      },
-        { v: stats?.avg ? `${stats.avg} ★` : '—', l: 'Avg Rating'  },
+        { v: stats?.completed ?? '—', l: 'Completed' },
+        { v: stats?.cancelled ?? '—', l: 'Cancelled' },
+        { v: stats?.avg ? `${stats.avg} ★` : '—', l: 'Avg Rating' },
       ];
 
   return (
     <div className="page-enter" style={{ maxWidth: '820px', margin: '0 auto', padding: '32px 24px 56px' }}>
 
-      {/* ── Main Card ────────────────────────────────────── */}
+      {/* ── Main Card ── */}
       <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: '20px' }}>
 
         {/* Banner */}
@@ -113,13 +179,28 @@ function ProfilePage({ dbUser }) {
 
         {/* Avatar + Name row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '0 32px 28px', borderBottom: '1px solid var(--border)', marginTop: '-36px' }}>
-          {/* Avatar */}
-          <div style={{ width: 80, height: 80, borderRadius: '50%', border: '4px solid white', overflow: 'hidden', background: 'var(--primary)', flexShrink: 0, boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}>
-            {firebaseUser?.photoURL
-              ? <img src={firebaseUser.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '30px', fontWeight: 900 }}>{initial}</div>
-            }
+
+          {/* Clickable Avatar */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div
+              style={{ width: 80, height: 80, borderRadius: '50%', border: '4px solid white', overflow: 'hidden', background: 'var(--primary)', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', cursor: photoUploading ? 'not-allowed' : 'pointer' }}
+              onClick={() => !photoUploading && fileInputRef.current?.click()}
+              title="Change profile photo"
+            >
+              {photoURL
+                ? <img src={photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: photoUploading ? 0.4 : 1, transition: 'opacity 0.2s' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '30px', fontWeight: 900, opacity: photoUploading ? 0.4 : 1 }}>{initial}</div>
+              }
+            </div>
+            <div
+              onClick={() => !photoUploading && fileInputRef.current?.click()}
+              style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: '50%', background: photoUploading ? '#aaa' : 'var(--primary)', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)', fontSize: '12px' }}
+            >
+              {photoUploading ? '⏳' : '📷'}
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
           </div>
+
           {/* Name + email */}
           <div style={{ flex: 1, minWidth: 0, paddingTop: '40px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -128,8 +209,9 @@ function ProfilePage({ dbUser }) {
             </div>
             <p style={{ fontSize: '14px', color: 'var(--text-3)', margin: '3px 0 0' }}>{firebaseUser?.email}</p>
           </div>
-          {/* Edit / Save */}
-          <div style={{ paddingTop: '40px', flexShrink: 0, display: 'flex', gap: '8px' }}>
+
+          {/* Edit / Save / Sign Out */}
+          <div style={{ paddingTop: '40px', flexShrink: 0, display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {isEditing
               ? <>
                   <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm">{saving ? 'Saving…' : '✓ Save Changes'}</button>
@@ -137,16 +219,20 @@ function ProfilePage({ dbUser }) {
                 </>
               : <button onClick={() => setIsEditing(true)} className="btn btn-secondary btn-sm">✏️ Edit Profile</button>
             }
+            <button
+              onClick={() => signOut(auth)}
+              className="btn btn-sm"
+              style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}
+            >
+              Sign Out
+            </button>
           </div>
         </div>
 
-        {/* ── 2-column form grid ──── */}
+        {/* 2-column form grid */}
         <div style={{ padding: '28px 32px' }}>
           <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '20px' }}>Personal Information</p>
-
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 32px' }}>
-
-            {/* Full Name */}
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Full Name</label>
               {isEditing
@@ -154,8 +240,6 @@ function ProfilePage({ dbUser }) {
                 : <div style={readField}>{displayName || '—'}</div>
               }
             </div>
-
-            {/* Phone Number */}
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Phone Number</label>
               {isEditing
@@ -163,8 +247,6 @@ function ProfilePage({ dbUser }) {
                 : <div style={readField}>{displayPhone || <span style={{ color: 'var(--text-3)' }}>Not set</span>}</div>
               }
             </div>
-
-            {/* Account Role */}
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Account Role</label>
               <div style={readField}>
@@ -174,14 +256,10 @@ function ProfilePage({ dbUser }) {
                 </span>
               </div>
             </div>
-
-            {/* Member Since */}
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Member Since</label>
               <div style={readField}>{formatDate(dbUser?.created_at)}</div>
             </div>
-
-            {/* Driver-only fields */}
             {role === 'driver' && dbUser?.vehicle_type && <>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Vehicle Type</label>
@@ -195,7 +273,7 @@ function ProfilePage({ dbUser }) {
           </div>
         </div>
 
-        {/* ── Stats strip ──── */}
+        {/* Stats strip */}
         <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
           {statItems.map((s, i, arr) => (
             <div key={s.l} style={{ flex: 1, padding: '20px 16px', textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
@@ -204,6 +282,63 @@ function ProfilePage({ dbUser }) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Danger Zone ── */}
+      <div className="card" style={{ border: '1px solid #FECACA' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <p style={{ fontWeight: 700, color: '#B91C1C', fontSize: '14px', margin: '0 0 2px' }}>Delete Account</p>
+            <p style={{ fontSize: '13px', color: 'var(--text-3)', margin: 0 }}>Permanently remove your account and all associated data. This cannot be undone.</p>
+          </div>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="btn btn-sm"
+            style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', flexShrink: 0 }}
+          >
+            🗑️ Delete Account
+          </button>
+        </div>
+
+        {showDeleteConfirm && (
+          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #FECACA' }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#B91C1C', marginBottom: '12px' }}>
+              ⚠️ Are you sure? This will permanently delete your account and cannot be reversed.
+            </p>
+            {!isGoogleUser && (
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '6px' }}>Confirm your password</label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="form-input"
+                  style={{ maxWidth: '300px' }}
+                />
+              </div>
+            )}
+            {isGoogleUser && (
+              <p style={{ fontSize: '12px', color: 'var(--text-3)', marginBottom: '12px' }}>You will be asked to re-authenticate with Google before deletion.</p>
+            )}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="btn btn-sm"
+                style={{ background: '#DC2626', color: 'white', border: 'none' }}
+              >
+                {deleting ? 'Deleting…' : 'Yes, Delete My Account'}
+              </button>
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
+                className="btn btn-secondary btn-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
     </div>

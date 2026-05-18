@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 import { BookingProvider } from './context/BookingContext';
@@ -40,26 +40,34 @@ function App() {
   const [loading, setLoading]           = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubDoc = null;
+
+    const unsubAuth = onAuthStateChanged(auth, async (currentUser) => {
       setFirebaseUser(currentUser);
+
+      if (unsubDoc) { unsubDoc(); unsubDoc = null; }
 
       if (currentUser) {
         try {
           const ref  = doc(db, 'users', currentUser.uid);
           const snap = await getDoc(ref);
 
-          if (snap.exists()) {
-            setDbUser({ user_id: currentUser.uid, ...snap.data() });
-          } else {
-            const newUser = {
+          if (!snap.exists()) {
+            await setDoc(ref, {
               email:      currentUser.email,
               full_name:  currentUser.displayName || currentUser.email.split('@')[0],
+              photoURL:   currentUser.photoURL || null,
               role:       'customer',
               created_at: serverTimestamp(),
-            };
-            await setDoc(ref, newUser);
-            setDbUser({ user_id: currentUser.uid, ...newUser });
+            });
+          } else if (currentUser.photoURL && !snap.data().photoURL) {
+            await setDoc(ref, { photoURL: currentUser.photoURL }, { merge: true });
           }
+
+          // Live listener — updates dbUser whenever Firestore doc changes (e.g. photo upload)
+          unsubDoc = onSnapshot(ref, (s) => {
+            if (s.exists()) setDbUser({ user_id: currentUser.uid, ...s.data() });
+          });
         } catch (err) {
           console.error('Auth sync error:', err);
         }
@@ -69,7 +77,7 @@ function App() {
       setLoading(false);
     });
 
-    return unsub;
+    return () => { unsubAuth(); if (unsubDoc) unsubDoc(); };
   }, []);
 
   if (loading) {
@@ -157,7 +165,7 @@ function App() {
 
             {/* Profile */}
             <Route path="/profile" element={
-              <ProtectedRoute allow={isLoggedIn}><ProfilePage dbUser={dbUser} /></ProtectedRoute>
+              <ProtectedRoute allow={isLoggedIn}><ProfilePage dbUser={dbUser} firebaseUser={firebaseUser} /></ProtectedRoute>
             } />
 
             {/* Catch-all */}

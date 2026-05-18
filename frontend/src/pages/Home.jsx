@@ -398,11 +398,14 @@ function Home({ user, dbUser }) {
           <div>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Quick Links</div>
             {[
-              { label: 'Home', to: '/' },
-              { label: 'Book a Delivery', to: '/book' },
-              { label: 'My Orders', to: '/history' },
-              { label: 'Driver Portal', to: '/driver/deliveries' },
-            ].map(l => (
+              { label: 'Home', to: '/', show: true },
+              { label: 'Sign In', to: '/login', show: !user },
+              { label: 'Register', to: '/register', show: !user },
+              { label: 'Book a Delivery', to: '/book', show: dbUser?.role === 'customer' },
+              { label: 'My Orders', to: '/history', show: dbUser?.role === 'customer' || dbUser?.role === 'driver' },
+              { label: 'Find Orders', to: '/driver/deliveries', show: dbUser?.role === 'driver' },
+              { label: 'Dashboard', to: '/admin/dashboard', show: dbUser?.role === 'admin' },
+            ].filter(l => l.show).map(l => (
               <Link key={l.label} to={l.to} style={{ display: 'block', color: 'rgba(255,255,255,0.45)', marginBottom: '10px', textDecoration: 'none', fontSize: '13px', transition: 'color 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.color = '#4ADE80'}
                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}

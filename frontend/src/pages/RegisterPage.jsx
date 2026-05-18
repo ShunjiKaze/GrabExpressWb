@@ -87,9 +87,12 @@ function RegisterPage() {
         await setDoc(ref, {
           email:      result.user.email,
           full_name:  result.user.displayName || result.user.email.split('@')[0],
+          photoURL:   result.user.photoURL || null,
           role:       'customer',
           created_at: serverTimestamp(),
         });
+      } else if (result.user.photoURL && !snap.data().photoURL) {
+        await setDoc(ref, { photoURL: result.user.photoURL }, { merge: true });
       }
       navigate('/');
     } catch (err) {
