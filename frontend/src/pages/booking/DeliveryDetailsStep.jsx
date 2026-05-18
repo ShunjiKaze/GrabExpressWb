@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBooking } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
-import { isValidPhone, isValidName, isRequired, digitsOnly, sanitizeName, PHONE_HINT, NAME_HINT } from '../../utils/validate';
+import { isValidPhone, isValidName, digitsOnly, sanitizeName } from '../../utils/validate';
 
 const STEPS = ['Address', 'Details', 'Item', 'Review'];
 
@@ -40,7 +40,7 @@ function PersonSection({ title, prefix, fields, onUpdate, errors, onClearError }
       <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--navy)', marginBottom: '16px' }}>{title}</h3>
 
       <div className="grid grid-2 gap-12 mb-12">
-        <Field label="Contact Name" required error={errors[nameKey]} hint={NAME_HINT}>
+        <Field label="Contact Name" required error={errors[nameKey]}>
           <input
             className="form-input"
             placeholder="Full name"
@@ -54,7 +54,7 @@ function PersonSection({ title, prefix, fields, onUpdate, errors, onClearError }
           />
         </Field>
 
-        <Field label="Contact Number" required error={errors[phoneKey]} hint={PHONE_HINT}>
+        <Field label="Contact Number" required error={errors[phoneKey]}>
           <input
             className="form-input"
             placeholder="09XXXXXXXXX"

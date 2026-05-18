@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+
 function ProhibitedModal({ onClose }) {
   const items = [
     { icon: '🔫', title: 'Weapons & Firearms', desc: 'Guns, ammunition, explosives, knives intended as weapons, or any weapon component.' },
@@ -10,7 +12,7 @@ function ProhibitedModal({ onClose }) {
     { icon: '📦', title: 'Oversized Items', desc: 'Items exceeding 20kg or dimensions beyond the selected vehicle\'s capacity.' },
   ];
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
@@ -36,7 +38,8 @@ function ProhibitedModal({ onClose }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

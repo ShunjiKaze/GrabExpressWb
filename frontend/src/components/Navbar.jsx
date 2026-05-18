@@ -86,11 +86,6 @@ function Navbar({ user, dbUser }) {
         {/* Brand */}
         <Link to="/" className="brand-name" onClick={() => setMenuOpen(false)} style={{ gap: '12px', color: isHome ? 'white' : undefined }}>
           <Logo size="sm" textColor={isHome ? 'white' : undefined} />
-          {dbUser && (
-            <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', textTransform: 'uppercase', ...ROLE_BADGE[dbUser.role] }}>
-              {dbUser.role}
-            </span>
-          )}
         </Link>
 
         {/* Desktop nav */}
@@ -113,7 +108,8 @@ function Navbar({ user, dbUser }) {
           {!user && (
             <>
               <div className="nav-divider" style={isHome ? { background: 'rgba(255,255,255,0.12)' } : {}} />
-              <Link to="/login" className="btn-primary-custom">Sign In</Link>
+              <Link to="/login" className="btn-primary-custom" style={{ background: 'transparent', color: isHome ? 'rgba(255,255,255,0.8)' : 'var(--text-2)', border: isHome ? '1px solid rgba(255,255,255,0.22)' : '1px solid var(--border)' }}>Sign In</Link>
+              <Link to="/register" className="btn-primary-custom">Register</Link>
             </>
           )}
         </div>
@@ -135,7 +131,10 @@ function Navbar({ user, dbUser }) {
           <NavLinks />
           <div style={{ height: '1px', background: isHome ? 'rgba(255,255,255,0.08)' : 'var(--border)', margin: '8px 0' }} />
           {!user && (
-            <Link to="/login" className="btn-primary-custom" style={{ alignSelf: 'flex-start' }} onClick={() => setMenuOpen(false)}>Sign In</Link>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Link to="/login" className="btn-primary-custom" style={{ background: 'transparent', color: isHome ? 'rgba(255,255,255,0.8)' : 'var(--text-2)', border: isHome ? '1px solid rgba(255,255,255,0.22)' : '1px solid var(--border)' }} onClick={() => setMenuOpen(false)}>Sign In</Link>
+              <Link to="/register" className="btn-primary-custom" onClick={() => setMenuOpen(false)}>Register</Link>
+            </div>
           )}
         </div>
       )}

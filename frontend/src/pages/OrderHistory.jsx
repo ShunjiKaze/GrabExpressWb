@@ -30,10 +30,17 @@ function OrderHistory({ dbUser }) {
       where(field, '==', dbUser.user_id),
       orderBy('createdAt', 'desc')
     );
-    const unsub = onSnapshot(q, snap => {
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
-    });
+    const unsub = onSnapshot(
+      q,
+      snap => {
+        setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setLoading(false);
+      },
+      err => {
+        console.error('OrderHistory query error:', err);
+        setLoading(false);
+      }
+    );
     return unsub;
   }, [dbUser]);
 
@@ -123,8 +130,10 @@ function OrderHistory({ dbUser }) {
         <div className="card">
           <div className="empty-state">
             <div className="empty-state-icon">📋</div>
-            <div className="empty-state-title">No orders found</div>
-            <div className="empty-state-desc">{search ? 'Try adjusting your search.' : 'Your order history will appear here once you start booking.'}</div>
+            <div className="empty-state-title">{search || filter !== 'all' ? 'No matching orders found' : 'No deliveries on record'}</div>
+            <div className="empty-state-desc">
+              {search ? 'No orders matched your search. Try a different address or order ID.' : filter !== 'all' ? 'No orders match the selected filter.' : dbUser.role === 'driver' ? 'Deliveries you complete will appear here.' : 'You have not placed any delivery orders yet. Your booking history will be shown here once a delivery has been made.'}
+            </div>
           </div>
         </div>
       ) : (

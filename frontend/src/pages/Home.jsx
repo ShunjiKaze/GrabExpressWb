@@ -47,6 +47,7 @@ function Home({ user, dbUser }) {
       {showDriverModal && dbUser && (
         <DriverRegistrationModal
           userId={dbUser.user_id}
+          existingPhone={dbUser.phone || ''}
           onSuccess={handleDriverSuccess}
           onClose={() => setShowDriverModal(false)}
         />
@@ -66,22 +67,6 @@ function Home({ user, dbUser }) {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg, rgba(10,18,35,0.97) 0%, rgba(10,18,35,0.85) 55%, rgba(10,18,35,0.5) 100%)' }} />
         <div style={S.dot} />
 
-        {/* logged-in pill */}
-        {user && dbUser && (
-          <div style={{
-            position: 'absolute', top: '82px', right: '32px', zIndex: 10,
-            background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)',
-            border: '1px solid rgba(255,255,255,0.13)', borderRadius: '40px',
-            padding: '10px 18px 10px 12px',
-            display: 'flex', alignItems: 'center', gap: '10px',
-          }}>
-            {user.photoURL && <img src={user.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(0,177,79,0.6)' }} />}
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '13px', color: 'white', lineHeight: 1 }}>Hi, {dbUser.full_name?.split(' ')[0]}!</div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', textTransform: 'capitalize', marginTop: '2px' }}>Signed in as {dbUser.role}</div>
-            </div>
-          </div>
-        )}
 
         {/* grid */}
         <div className="hero-grid" style={{ position: 'relative', zIndex: 1, maxWidth: '1140px', margin: '0 auto', padding: '110px 32px 80px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center', width: '100%' }}>
@@ -103,7 +88,7 @@ function Home({ user, dbUser }) {
             </p>
 
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '52px' }}>
-              {!user && <button onClick={handleLogin} className="btn btn-primary btn-lg">🚀 Get Started — Sign In Free</button>}
+              {!user && <Link to="/login" className="btn btn-primary btn-lg">🚀 Get Started — Sign In Free</Link>}
               {user && dbUser?.role === 'customer' && <Link to="/book" className="btn btn-primary btn-lg">📦 Book a Delivery Now</Link>}
               {user && dbUser?.role === 'driver'   && <Link to="/driver/deliveries" className="btn btn-primary btn-lg">🛵 Find Available Orders</Link>}
               {user && dbUser?.role === 'admin'    && <Link to="/admin/dashboard" className="btn btn-primary btn-lg">📊 Go to Dashboard</Link>}

@@ -53,18 +53,24 @@ function App() {
           const snap = await getDoc(ref);
 
           if (!snap.exists()) {
-            await setDoc(ref, {
+            const newData = {
               email:      currentUser.email,
               full_name:  currentUser.displayName || currentUser.email.split('@')[0],
               photoURL:   currentUser.photoURL || null,
               role:       'customer',
               created_at: serverTimestamp(),
-            });
-          } else if (currentUser.photoURL && !snap.data().photoURL) {
-            await setDoc(ref, { photoURL: currentUser.photoURL }, { merge: true });
+            };
+            await setDoc(ref, newData);
+            setDbUser({ user_id: currentUser.uid, ...newData });
+          } else {
+            // Set dbUser immediately so ProtectedRoute has the role before loading ends
+            setDbUser({ user_id: currentUser.uid, ...snap.data() });
+            if (currentUser.photoURL && !snap.data().photoURL) {
+              await setDoc(ref, { photoURL: currentUser.photoURL }, { merge: true });
+            }
           }
 
-          // Live listener — updates dbUser whenever Firestore doc changes (e.g. photo upload)
+          // Live listener — keeps dbUser in sync for subsequent changes (e.g. photo upload)
           unsubDoc = onSnapshot(ref, (s) => {
             if (s.exists()) setDbUser({ user_id: currentUser.uid, ...s.data() });
           });
@@ -108,7 +114,7 @@ function App() {
           <Routes>
             {/* Auth */}
             <Route path="/login"    element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />} />
-            <Route path="/register" element={isLoggedIn ? <Navigate to="/" replace /> : <RegisterPage />} />
+            <Route path="/register" element={isLoggedIn && dbUser ? <Navigate to="/" replace /> : <RegisterPage />} />
 
             {/* Public */}
             <Route path="/" element={<Home user={firebaseUser} dbUser={dbUser} />} />

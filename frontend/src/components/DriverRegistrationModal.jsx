@@ -8,11 +8,11 @@ const VEHICLE_OPTIONS = [
   { id: 'van',        icon: '🚐', title: 'Van',        desc: 'Large or bulk items' },
 ];
 
-function DriverRegistrationModal({ userId, onSuccess, onClose }) {
+function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) {
   const [step, setStep]               = useState(1);
   const [vehicleType, setVehicleType] = useState('');
   const [vehiclePlate, setVehiclePlate] = useState('');
-  const [phone, setPhone]             = useState('');
+  const [phone, setPhone]             = useState(existingPhone || '');
   const [errors, setErrors]           = useState({});
   const [loading, setLoading]         = useState(false);
 
@@ -166,7 +166,6 @@ function DriverRegistrationModal({ userId, onSuccess, onClose }) {
                   value={phone}
                   maxLength={11}
                   onChange={e => {
-                    // Digits only
                     const val = e.target.value.replace(/\D/g, '');
                     setPhone(val);
                     setErrors(prev => ({ ...prev, phone: '' }));
@@ -177,7 +176,9 @@ function DriverRegistrationModal({ userId, onSuccess, onClose }) {
                 {errors.phone && (
                   <span style={{ fontSize: '12px', color: 'var(--red)', marginTop: '4px' }}>{errors.phone}</span>
                 )}
-                <span className="text-xs text-muted">11-digit PH number starting with 09</span>
+                <span className="text-xs text-muted">
+                  {existingPhone ? 'Pre-filled from your account — edit if needed.' : '11-digit PH number starting with 09'}
+                </span>
               </div>
 
               {errors.submit && <div className="alert alert-error mb-16">{errors.submit}</div>}

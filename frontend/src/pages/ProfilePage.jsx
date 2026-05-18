@@ -25,7 +25,7 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
   const [deletePassword, setDeletePassword]       = useState('');
   const [deleting, setDeleting]           = useState(false);
   const fileInputRef = useRef(null);
-  const { showToast } = useToast();
+  const showToast = useToast();
   // Use prop (from App state) first, fall back to auth.currentUser
   const firebaseUser  = fbUserProp || auth.currentUser;
   const role          = dbUser?.role;
@@ -43,8 +43,8 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
         const all   = snap.docs.map(d => d.data());
         const done  = all.filter(b => ['delivered', 'completed'].includes(b.status));
         const ratings = done
-          .filter(b => role === 'driver' ? b.customerRating : b.driverRating)
-          .map(b => role === 'driver' ? b.customerRating : b.driverRating);
+          .filter(b => role === 'driver' ? b.driverRating : b.customerRating)
+          .map(b => role === 'driver' ? b.driverRating : b.customerRating);
         const avg = ratings.length
           ? (ratings.reduce((a, v) => a + v, 0) / ratings.length).toFixed(1)
           : null;
@@ -90,19 +90,22 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
     const trimmedPhone = phone.trim();
     if (!trimmedName) { showToast('Name cannot be empty.', 'error'); return; }
     setSaving(true);
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 8000)
+    );
     try {
       const updates = { full_name: trimmedName };
       if (trimmedPhone) updates.phone = trimmedPhone;
-      await updateDoc(doc(db, 'users', dbUser.user_id), updates);
-      await updateProfile(firebaseUser, { displayName: trimmedName });
+      await Promise.race([updateDoc(doc(db, 'users', dbUser.user_id), updates), timeout]);
+      try { await updateProfile(firebaseUser, { displayName: trimmedName }); } catch {}
       setDisplayName(trimmedName);
       if (trimmedPhone) setDisplayPhone(trimmedPhone);
       showToast('Profile saved!', 'success');
+      setSaving(false);
       setIsEditing(false);
     } catch (err) {
       console.error('Profile save error:', err);
-      showToast('Failed to save. Check your connection and try again.', 'error');
-    } finally {
+      showToast(err?.message === 'timeout' ? 'Save timed out — check your connection.' : 'Failed to save. Try again.', 'error');
       setSaving(false);
     }
   };
@@ -201,17 +204,13 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
           </div>
 
-          {/* Name + email */}
+          {/* Name */}
           <div style={{ flex: 1, minWidth: 0, paddingTop: '40px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <h1 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--navy)', margin: 0 }}>{displayName}</h1>
-              <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: roleCfg.bg, color: roleCfg.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{roleCfg.label}</span>
-            </div>
-            <p style={{ fontSize: '14px', color: 'var(--text-3)', margin: '3px 0 0' }}>{firebaseUser?.email}</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--navy)', margin: 0 }}>{displayName}</h1>
           </div>
 
-          {/* Edit / Save / Sign Out */}
-          <div style={{ paddingTop: '40px', flexShrink: 0, display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {/* Edit / Save / Sign Out / Delete */}
+          <div style={{ paddingTop: '40px', flexShrink: 0, display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
             {isEditing
               ? <>
                   <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm">{saving ? 'Saving…' : '✓ Save Changes'}</button>
@@ -225,6 +224,17 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
               style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}
             >
               Sign Out
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              title="Delete account"
+              style={{ background: 'none', border: '1px solid #FECACA', borderRadius: 'var(--radius-sm)', padding: '6px 8px', cursor: 'pointer', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -248,13 +258,8 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
               }
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Account Role</label>
-              <div style={readField}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: roleCfg.dot, display: 'inline-block' }} />
-                  {roleCfg.label}
-                </span>
-              </div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Email Address</label>
+              <div style={readField}>{firebaseUser?.email || '—'}</div>
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Member Since</label>
@@ -284,62 +289,63 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
         </div>
       </div>
 
-      {/* ── Danger Zone ── */}
-      <div className="card" style={{ border: '1px solid #FECACA' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <p style={{ fontWeight: 700, color: '#B91C1C', fontSize: '14px', margin: '0 0 2px' }}>Delete Account</p>
-            <p style={{ fontSize: '13px', color: 'var(--text-3)', margin: 0 }}>Permanently remove your account and all associated data. This cannot be undone.</p>
-          </div>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="btn btn-sm"
-            style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', flexShrink: 0 }}
+      {/* ── Delete Account Modal ── */}
+      {showDeleteConfirm && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+          onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
+        >
+          <div
+            style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '440px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.25)', animation: 'fadeInUp 0.2s ease' }}
+            onClick={e => e.stopPropagation()}
           >
-            🗑️ Delete Account
-          </button>
-        </div>
-
-        {showDeleteConfirm && (
-          <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #FECACA' }}>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: '#B91C1C', marginBottom: '12px' }}>
-              ⚠️ Are you sure? This will permanently delete your account and cannot be reversed.
+            <div style={{ width: 48, height: 48, borderRadius: '12px', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Delete Your Account?</h2>
+            <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '20px' }}>
+              This will permanently remove your account and all associated data. <strong>This action cannot be undone.</strong>
             </p>
+
             {!isGoogleUser && (
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '6px' }}>Confirm your password</label>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Confirm your password</label>
                 <input
                   type="password"
                   value={deletePassword}
                   onChange={e => setDeletePassword(e.target.value)}
                   placeholder="Enter your password"
                   className="form-input"
-                  style={{ maxWidth: '300px' }}
                 />
               </div>
             )}
             {isGoogleUser && (
-              <p style={{ fontSize: '12px', color: 'var(--text-3)', marginBottom: '12px' }}>You will be asked to re-authenticate with Google before deletion.</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-3)', marginBottom: '16px', background: '#F9FAFB', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 14px' }}>
+                You will be prompted to re-authenticate with Google to confirm.
+              </p>
             )}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-                className="btn btn-sm"
-                style={{ background: '#DC2626', color: 'white', border: 'none' }}
-              >
-                {deleting ? 'Deleting…' : 'Yes, Delete My Account'}
-              </button>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary"
+                style={{ flex: 1 }}
               >
                 Cancel
               </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: 'none', background: deleting ? '#f87171' : '#DC2626', color: 'white', fontWeight: 700, fontSize: '14px', cursor: deleting ? 'not-allowed' : 'pointer', transition: 'background 0.15s' }}
+              >
+                {deleting ? 'Deleting…' : 'Yes, Delete Account'}
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
     </div>
   );
