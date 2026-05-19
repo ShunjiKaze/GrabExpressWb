@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import Logo from '../components/Logo';
 import { PageShell, Field, SelectField, ErrorBanner, SubmitBtn, Divider, GoogleBtn, EyeOpen, EyeOff } from './LoginPage';
+import { sanitizeName, isValidName } from '../utils/validate';
 
 const SUFFIXES = [
   { value: '',     label: 'Suffix (optional)' },
@@ -34,8 +35,8 @@ function RegisterPage() {
 
   const validate = () => {
     const e = {};
-    if (!first.trim() || first.trim().length < 2) e.first = 'First name must be at least 2 characters.';
-    if (!last.trim()  || last.trim().length  < 2) e.last  = 'Last name must be at least 2 characters.';
+    if (!isValidName(first)) e.first = 'First name must be at least 2 letters. No numbers or special characters.';
+    if (!isValidName(last))  e.last  = 'Last name must be at least 2 letters. No numbers or special characters.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Enter a valid email address.';
     if (!/^09\d{9}$/.test(phone)) e.phone = 'Phone must be in format 09XXXXXXXXX (11 digits).';
     if (pw.length < 8) e.pw  = 'Password must be at least 8 characters.';
@@ -125,7 +126,7 @@ function RegisterPage() {
 
         {/* First Name + Middle Initial */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: '12px' }}>
-          <Field label="First Name" value={first} onChange={e => setFirst(e.target.value)} placeholder="Juan" error={errors.first} />
+          <Field label="First Name" value={first} onChange={e => setFirst(sanitizeName(e.target.value))} placeholder="Juan" error={errors.first} />
           <div style={{ marginBottom: '16px', textAlign: 'left' }}>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               M.I. <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, textTransform: 'none', fontSize: '11px' }}>(opt.)</span>
@@ -140,7 +141,7 @@ function RegisterPage() {
 
         {/* Last Name + Suffix */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '12px' }}>
-          <Field label="Last Name" value={last} onChange={e => setLast(e.target.value)} placeholder="dela Cruz" error={errors.last} />
+          <Field label="Last Name" value={last} onChange={e => setLast(sanitizeName(e.target.value))} placeholder="dela Cruz" error={errors.last} />
           <SelectField label="Suffix" value={suffix} onChange={e => setSuffix(e.target.value)} options={SUFFIXES} />
         </div>
 
