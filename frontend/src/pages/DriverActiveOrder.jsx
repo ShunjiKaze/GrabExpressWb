@@ -225,6 +225,8 @@ function DriverActiveOrder({ dbUser }) {
         cancelNote:   note.trim() || null,
         cancelledBy:  'driver',
       });
+      const paySnap = await getDocs(query(collection(db, 'payments'), where('bookingId', '==', order.id)));
+      if (!paySnap.empty) await updateDoc(paySnap.docs[0].ref, { status: 'cancelled' });
       navigate('/driver/deliveries');
     } catch (err) {
       console.error(err);
@@ -259,7 +261,7 @@ function DriverActiveOrder({ dbUser }) {
   const action = ACTION_STEPS[order.status];
 
   return (
-    <div className="dashboard-container" style={{ maxWidth: '720px' }}>
+    <>
       {showProof && (
         <ProofCaptureModal
           label={pendingStatus === 'in_transit' ? 'Proof of Pickup' : 'Proof of Delivery'}
@@ -276,6 +278,7 @@ function DriverActiveOrder({ dbUser }) {
           cancelling={driverCancelling}
         />
       )}
+    <div className="dashboard-container" style={{ maxWidth: '720px' }}>
 
       {/* Mission header */}
       <div style={{ background: 'linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px' }}>
@@ -316,7 +319,7 @@ function DriverActiveOrder({ dbUser }) {
               </div>
               <div>
                 <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '3px' }}>Pickup From</div>
-                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--navy)' }}>{order.pickupAddress}</div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{order.pickupAddress}</div>
                 <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><UserIcon size={12} /> {order.senderName}</span>
                   <span>•</span>
@@ -329,13 +332,13 @@ function DriverActiveOrder({ dbUser }) {
 
             <div style={{ width: 2, height: 20, background: 'var(--border)', margin: '0 17px 0' }} />
 
-            <div style={{ display: 'flex', gap: '14px', padding: '16px', background: '#FFF1F2', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239,68,68,0.2)' }}>
+            <div style={{ display: 'flex', gap: '14px', padding: '16px', background: 'var(--red-light)', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239,68,68,0.2)' }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <FlagIcon size={18} color="white" />
               </div>
               <div>
                 <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--red)', textTransform: 'uppercase', marginBottom: '3px' }}>Deliver To</div>
-                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--navy)' }}>{order.deliveryAddress}</div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{order.deliveryAddress}</div>
                 <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><UserIcon size={12} /> {order.recipientName}</span>
                   <span>•</span>
@@ -405,6 +408,7 @@ function DriverActiveOrder({ dbUser }) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

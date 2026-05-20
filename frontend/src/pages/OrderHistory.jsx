@@ -61,7 +61,8 @@ function OrderHistory({ dbUser }) {
   }, [dbUser]);
 
   const filtered = orders.filter(o => {
-    const matchStatus = filter === 'all' || o.status === filter;
+    const matchStatus = filter === 'all' ||
+      (filter === 'delivered' ? ['delivered', 'completed'].includes(o.status) : o.status === filter);
     const matchSearch = !search || [o.pickupAddress, o.deliveryAddress, o.id].some(v => v?.toLowerCase().includes(search.toLowerCase()));
     return matchStatus && matchSearch;
   });
@@ -234,7 +235,7 @@ function OrderHistory({ dbUser }) {
                       </div>
                     </div>
                     {o.status === 'cancelled' && o.cancelReason && (
-                      <div style={{ marginTop: '14px', padding: '10px 14px', background: '#FEF2F2', borderRadius: 'var(--radius-sm)', border: '1px solid #FECACA' }}>
+                      <div className="cancellation-block" style={{ marginTop: '14px', padding: '10px 14px', background: 'var(--red-light)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(239,68,68,0.25)' }}>
                         <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--red)', textTransform: 'uppercase', marginBottom: '6px' }}>Cancellation</div>
                         <div style={{ fontSize: '13px', color: 'var(--text-2)' }}>{o.cancelReason}</div>
                         {o.cancelledBy && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>By: {o.cancelledBy}</div>}

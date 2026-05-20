@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { useBooking, calcTotal, VEHICLE_BASE, SIZE_ADD, TIER_ADD } from '../../context/BookingContext';
+import { useBooking, calcTotal, VEHICLE_BASE, SIZE_ADD, TIER_ADD, DELIVERY_ADD } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
 import { MotorcycleIcon, CarIcon, VanIcon, WalletIcon, CreditCardIcon, BanknoteIcon, HandshakeIcon } from '../../components/Icons';
 
@@ -46,9 +46,10 @@ function ReviewOrder({ dbUser }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
-  const base = VEHICLE_BASE[bookingData.vehicleType] ?? 60;
-  const sizeAdd = SIZE_ADD[bookingData.itemSize] ?? 0;
-  const tierAdd = TIER_ADD[bookingData.guaranteeTier] ?? 0;
+  const base        = VEHICLE_BASE[bookingData.vehicleType] ?? 60;
+  const sizeAdd     = SIZE_ADD[bookingData.itemSize] ?? 0;
+  const tierAdd     = TIER_ADD[bookingData.guaranteeTier] ?? 0;
+  const deliveryAdd = DELIVERY_ADD[bookingData.deliveryType] ?? 0;
 
   const handleBook = async () => {
     setLoading(true);
@@ -189,12 +190,13 @@ function ReviewOrder({ dbUser }) {
         </div>
 
         {/* Price Breakdown */}
-        <div style={{ background: 'var(--navy)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '20px', color: 'white' }}>
+        <div style={{ background: '#0F172A', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '20px', color: 'white' }}>
           <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginBottom: '14px' }}>Price Breakdown</div>
           {[
             [`Base Fare (${bookingData.vehicleType})`, `₱${base}`],
-            [`Size (${bookingData.itemSize})`, sizeAdd > 0 ? `+₱${sizeAdd}` : '—'],
-            [`Guarantee (${bookingData.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '—'],
+            [`Size (${bookingData.itemSize})`, sizeAdd > 0 ? `+₱${sizeAdd}` : '₱0'],
+            [`Delivery (${bookingData.deliveryType === 'instant' ? 'Instant' : bookingData.deliveryType})`, deliveryAdd > 0 ? `+₱${deliveryAdd}` : 'Included'],
+            [`Guarantee (${bookingData.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '₱0'],
           ].map(([l, v]) => (
             <div key={l} className="flex justify-between" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', marginBottom: '8px' }}>
               <span>{l}</span><span style={{ fontWeight: 600, color: 'white' }}>{v}</span>

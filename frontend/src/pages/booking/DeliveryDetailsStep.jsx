@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBooking } from '../../context/BookingContext';
+import { useBooking, DELIVERY_ADD } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
 import { isValidPhone, isValidName, digitsOnly, sanitizeName } from '../../utils/validate';
 import { ZapIcon, CalendarIcon, PackageIcon, UserIcon, PhoneIcon } from '../../components/Icons';
@@ -173,7 +173,10 @@ function DeliveryDetailsStep() {
                 </div>
                 <div className="option-title">{t.title}</div>
                 <div className="option-desc">{t.desc}</div>
-                {t.disabled && <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '4px' }}>Coming soon</div>}
+                <div className="option-price" style={{ color: t.disabled ? 'var(--text-3)' : 'var(--primary)' }}>
+                  {DELIVERY_ADD[t.id] === 0 ? 'Included' : `+₱${DELIVERY_ADD[t.id]}`}
+                </div>
+                {t.disabled && <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '2px' }}>Coming soon</div>}
               </div>
             ))}
           </div>

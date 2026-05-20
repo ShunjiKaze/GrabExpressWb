@@ -177,8 +177,8 @@ function ReceiptPage({ dbUser }) {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '10px',
         padding: '12px 18px', borderRadius: 'var(--radius-md)', marginBottom: '14px',
-        background: isDelivered ? 'rgba(0,177,79,0.1)' : isCancelled ? '#FEF2F2' : 'rgba(248,191,0,0.1)',
-        border: `1px solid ${isDelivered ? 'rgba(0,177,79,0.25)' : isCancelled ? '#FECACA' : 'rgba(248,191,0,0.3)'}`,
+        background: isDelivered ? 'rgba(0,177,79,0.1)' : isCancelled ? 'var(--red-light)' : 'rgba(248,191,0,0.1)',
+        border: `1px solid ${isDelivered ? 'rgba(0,177,79,0.25)' : isCancelled ? 'rgba(239,68,68,0.25)' : 'rgba(248,191,0,0.3)'}`,
       }}>
         {isDelivered
           ? <CheckCircleIcon size={18} color="var(--primary)" />
@@ -189,7 +189,7 @@ function ReceiptPage({ dbUser }) {
             {isDelivered ? 'Delivery Successful' : isCancelled ? 'Order Cancelled' : booking.status.charAt(0).toUpperCase() + booking.status.slice(1).replace('_', ' ')}
           </div>
           {isCancelled && booking.cancelReason && (
-            <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #FECACA', fontSize: '13px', color: 'var(--text-2)' }}>
+            <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(239,68,68,0.25)', fontSize: '13px', color: 'var(--text-2)' }}>
               <div>Reason: {booking.cancelReason}</div>
               {booking.cancelledBy && <div style={{ marginTop: '2px', color: 'var(--text-3)' }}>Cancelled by: {booking.cancelledBy}</div>}
               {booking.cancelNote && <div style={{ marginTop: '2px', fontStyle: 'italic', color: 'var(--text-3)' }}>"{booking.cancelNote}"</div>}
@@ -262,9 +262,9 @@ function ReceiptPage({ dbUser }) {
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{payment.title}</div>
-            {paymentDoc && (
-              <span className={`badge ${paymentDoc.status === 'paid' ? 'badge-green' : 'badge-amber'}`} style={{ marginTop: '4px', display: 'inline-block' }}>
-                {paymentDoc.status === 'paid' ? 'Paid' : 'Pending'}
+            {(paymentDoc || isCancelled) && (
+              <span className={`badge ${isCancelled ? 'badge-red' : paymentDoc?.status === 'paid' ? 'badge-green' : 'badge-amber'}`} style={{ marginTop: '4px', display: 'inline-block' }}>
+                {isCancelled ? 'Cancelled' : paymentDoc?.status === 'paid' ? 'Paid' : 'Pending'}
               </span>
             )}
           </div>
@@ -279,12 +279,12 @@ function ReceiptPage({ dbUser }) {
       </Section>
 
       {/* ── PRICE BREAKDOWN ── */}
-      <div style={{ background: 'var(--navy)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '14px', color: 'white' }}>
+      <div style={{ background: '#0F172A', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '14px', color: 'white' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>Price Breakdown</div>
         {[
           [`Base Fare (${booking.vehicleType})`, `₱${base}`],
-          [`Size (${booking.itemSize})`,          sizeAdd > 0 ? `+₱${sizeAdd}` : '—'],
-          [`Guarantee (${booking.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '—'],
+          [`Size (${booking.itemSize})`,          sizeAdd > 0 ? `+₱${sizeAdd}` : '₱0'],
+          [`Guarantee (${booking.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '₱0'],
         ].map(([l, v]) => (
           <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'rgba(255,255,255,0.65)', marginBottom: '8px' }}>
             <span>{l}</span>

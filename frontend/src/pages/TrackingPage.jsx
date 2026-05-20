@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { SearchIcon, MotorcycleIcon, CarIcon, VanIcon, PackageIcon, ZapIcon,
@@ -108,6 +108,8 @@ function TrackingPage({ dbUser }) {
         cancelNote:   note.trim() || null,
         cancelledBy:  'customer',
       });
+      const paySnap = await getDocs(query(collection(db, 'payments'), where('bookingId', '==', id)));
+      if (!paySnap.empty) await updateDoc(paySnap.docs[0].ref, { status: 'cancelled' });
       navigate('/book');
     } catch { setCancelling(false); }
   };
@@ -136,7 +138,7 @@ function TrackingPage({ dbUser }) {
   const currentStep = isCancelled ? null : STATUS_STEPS[currentIdx] || STATUS_STEPS[STATUS_STEPS.length - 1];
 
   return (
-    <div className="dashboard-container" style={{ maxWidth: '860px' }}>
+    <>
       {showCancelModal && (
         <CancelModal
           onConfirm={confirmCancel}
@@ -144,6 +146,7 @@ function TrackingPage({ dbUser }) {
           cancelling={cancelling}
         />
       )}
+    <div className="dashboard-container" style={{ maxWidth: '860px' }}>
 
       {/* ── Main status card ───────────────────────────── */}
       <div style={{
@@ -422,6 +425,7 @@ function TrackingPage({ dbUser }) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
