@@ -115,6 +115,16 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
     setIsEditing(false);
   };
 
+  const handleStatusChange = async (newStatus) => {
+    try {
+      await updateDoc(doc(db, 'users', dbUser.user_id), { accountStatus: newStatus });
+      showToast('Request submitted successfully.', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to submit request.', 'error');
+    }
+  };
+
   const formatDate = (ts) => {
     if (!ts) return '—';
     const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -257,6 +267,35 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
                 <div style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 600, marginTop: '6px' }}>{s.l}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Account Status for Drivers */}
+        {role === 'driver' && (
+          <div style={{ padding: '0 32px 32px' }}>
+            <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '20px', marginTop: '20px' }}>Account Management</p>
+            <div style={{ padding: '20px', background: 'var(--surface-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--navy)' }}>Account Status</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '4px' }}>
+                  {dbUser.accountStatus === 'deactivated' ? 'Your account is deactivated. You cannot accept orders.' :
+                   dbUser.accountStatus === 'pending_deactivation' ? 'Your request to deactivate is pending admin approval.' :
+                   dbUser.accountStatus === 'pending_reactivation' ? 'Your request to reactivate is pending admin approval.' :
+                   'Your account is active. You can receive and accept orders.'}
+                </div>
+              </div>
+              <div>
+                {dbUser.accountStatus === 'deactivated' ? (
+                   <button onClick={() => handleStatusChange('pending_reactivation')} className="btn btn-primary btn-sm">Request Reactivation</button>
+                ) : dbUser.accountStatus === 'pending_reactivation' ? (
+                   <span className="badge badge-amber">Reactivation Pending</span>
+                ) : dbUser.accountStatus === 'pending_deactivation' ? (
+                   <span className="badge badge-amber">Deactivation Pending</span>
+                ) : (
+                   <button onClick={() => handleStatusChange('pending_deactivation')} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>Deactivate Account</button>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

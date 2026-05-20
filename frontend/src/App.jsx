@@ -121,7 +121,9 @@ function App() {
             <Route path="/register" element={isLoggedIn && dbUser ? <Navigate to="/" replace /> : <RegisterPage />} />
 
             {/* Public */}
-            <Route path="/" element={<Home user={firebaseUser} dbUser={dbUser} />} />
+            <Route path="/" element={
+              isDriver ? <Navigate to="/driver/deliveries" replace /> : <Home user={firebaseUser} dbUser={dbUser} />
+            } />
             <Route path="/about"   element={<AboutPage />} />
             <Route path="/faq"     element={<FAQPage />} />
             <Route path="/contact" element={<ContactPage />} />

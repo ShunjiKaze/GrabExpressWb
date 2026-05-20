@@ -40,6 +40,16 @@ function validatePlate(type, plate) {
   return rule.pattern.test(plate.trim());
 }
 
+function formatPlateInput(type, val) {
+  let cleaned = val.replace(/\s+/g, '').toUpperCase();
+  if (type === 'motorcycle') {
+    if (cleaned.length > 3) return cleaned.slice(0, 3) + ' ' + cleaned.slice(3, 6);
+  } else {
+    if (cleaned.length > 3) return cleaned.slice(0, 3) + ' ' + cleaned.slice(3, 7);
+  }
+  return cleaned;
+}
+
 function DriverVehiclePage({ dbUser }) {
   const [vehicles, setVehicles]       = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -80,6 +90,13 @@ function DriverVehiclePage({ dbUser }) {
     }
     if (!formYear || parseInt(formYear) < 2000) { setFormError('Enter a valid year (2000 or later).'); return; }
     if (!formExpiry) { setFormError('Insurance expiry date is required.'); return; }
+
+    const hasSameType = vehicles.some(v => v.type === formType && v.status !== 'pending_delete');
+    if (hasSameType) {
+      setFormError(`You already have a ${formType}. Only one vehicle per type is allowed.`);
+      return;
+    }
+
     setSaving(true);
     try {
       await addDoc(collection(db, 'vehicles'), {
@@ -88,7 +105,7 @@ function DriverVehiclePage({ dbUser }) {
         plateNo:         formPlate.trim().toUpperCase(),
         year:            parseInt(formYear),
         insuranceExpiry: formExpiry,
-        status:          'inactive',
+        status:          'pending_add', // User requested: apply a request for new vehicle
         createdAt:       serverTimestamp(),
       });
       setShowForm(false);
@@ -98,7 +115,8 @@ function DriverVehiclePage({ dbUser }) {
   };
 
   const handleDelete = async (vehicleId) => {
-    await deleteDoc(doc(db, 'vehicles', vehicleId));
+    // User requested: apply a request for deleting
+    await updateDoc(doc(db, 'vehicles', vehicleId), { status: 'pending_delete' });
     setConfirmDeleteId(null);
   };
 
@@ -129,14 +147,14 @@ function DriverVehiclePage({ dbUser }) {
             <label className="form-label">Vehicle Type</label>
             <div style={{ display: 'flex', gap: '10px' }}>
               {['motorcycle', 'car', 'van'].map(t => (
-                <VehicleTypeCard key={t} type={t} selected={formType === t} onSelect={setFormType} />
+                <VehicleTypeCard key={t} type={t} selected={formType === t} onSelect={(type) => { setFormType(type); setFormPlate(''); }} />
               ))}
             </div>
           </div>
 
           <div className="form-group mb-16">
             <label className="form-label">Plate Number <span style={{ fontWeight: 400, color: 'var(--text-3)', fontSize: '12px' }}>({PLATE_RULES[formType].hint})</span></label>
-            <input className="form-input" placeholder={`e.g. ${PLATE_RULES[formType].hint}`} value={formPlate} onChange={e => setFormPlate(e.target.value)} style={{ textTransform: 'uppercase' }} />
+            <input className="form-input" placeholder={`e.g. ${PLATE_RULES[formType].hint}`} value={formPlate} onChange={e => setFormPlate(formatPlateInput(formType, e.target.value))} style={{ textTransform: 'uppercase' }} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
@@ -188,6 +206,8 @@ function DriverVehiclePage({ dbUser }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {vehicles.map(v => {
             const isActive = v.status === 'active';
+            const isPendingAdd = v.status === 'pending_add';
+            const isPendingDelete = v.status === 'pending_delete';
             return (
               <div key={v.id} className="card" style={{ padding: '20px', border: isActive ? '2px solid var(--primary)' : '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -197,7 +217,9 @@ function DriverVehiclePage({ dbUser }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                       <span style={{ fontWeight: 800, fontSize: '16px', fontFamily: 'monospace', letterSpacing: '0.05em' }}>{v.plateNo}</span>
-                      <span className={`badge ${isActive ? 'badge-green' : 'badge-gray'}`}>{isActive ? 'Active' : 'Inactive'}</span>
+                      <span className={`badge ${isActive ? 'badge-green' : isPendingAdd ? 'badge-amber' : isPendingDelete ? 'badge-red' : 'badge-gray'}`}>
+                        {isActive ? 'Active' : isPendingAdd ? 'Approval Pending' : isPendingDelete ? 'Deletion Pending' : 'Inactive'}
+                      </span>
                     </div>
                     <div style={{ fontSize: '13px', color: 'var(--text-2)', textTransform: 'capitalize' }}>
                       {v.type} · {v.year}
@@ -209,27 +231,29 @@ function DriverVehiclePage({ dbUser }) {
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                    {!isActive && (
+                    {!isActive && !isPendingAdd && !isPendingDelete && (
                       <button onClick={() => handleSetActive(v.id, v.plateNo, v.type)} className="btn btn-primary btn-sm">
                         Set Active
                       </button>
                     )}
-                    {isActive && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--primary)' }}>
+                    {isActive && !isPendingDelete && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 700, color: 'var(--primary)', marginRight: '8px' }}>
                         <CheckCircleIcon size={16} color="var(--primary)" /> Active
                       </div>
                     )}
-                    {confirmDeleteId === v.id ? (
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button onClick={() => handleDelete(v.id)} className="btn btn-danger btn-sm">Confirm</button>
-                        <button onClick={() => setConfirmDeleteId(null)} className="btn btn-ghost btn-sm">
-                          <XIcon size={14} />
+                    {!isPendingDelete && (
+                      confirmDeleteId === v.id ? (
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button onClick={() => handleDelete(v.id)} className="btn btn-danger btn-sm">Confirm Request</button>
+                          <button onClick={() => setConfirmDeleteId(null)} className="btn btn-ghost btn-sm">
+                            <XIcon size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setConfirmDeleteId(v.id)} className="btn btn-ghost btn-sm" style={{ color: 'var(--text-3)' }}>
+                          <TrashIcon size={15} color="var(--text-3)" />
                         </button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setConfirmDeleteId(v.id)} className="btn btn-ghost btn-sm" style={{ color: 'var(--text-3)' }}>
-                        <TrashIcon size={15} color="var(--text-3)" />
-                      </button>
+                      )
                     )}
                   </div>
                 </div>

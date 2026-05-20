@@ -85,34 +85,41 @@ function Navbar({ user, dbUser }) {
 
   const cls = (path) => `nav-link-custom${isActive(path) ? ' active' : ''}${isHome ? ' nav-link-on-dark' : ''}`;
 
-  const NavLinks = () => (
-    <>
-      <Link to="/" className={`nav-link-custom${location.pathname === '/' ? ' active' : ''}${isHome ? ' nav-link-on-dark' : ''}`} onClick={() => setMenuOpen(false)}>Home</Link>
+  const NavLinks = () => {
+    const showPublic = dbUser?.role === 'customer' || !dbUser;
+    return (
+      <>
+        {showPublic && <Link to="/" className={`nav-link-custom${location.pathname === '/' ? ' active' : ''}${isHome ? ' nav-link-on-dark' : ''}`} onClick={() => setMenuOpen(false)}>Home</Link>}
 
-      {dbUser?.role === 'admin' && (
-        <Link to="/admin/dashboard" className={cls('/admin')} onClick={() => setMenuOpen(false)}>Dashboard</Link>
-      )}
+        {dbUser?.role === 'admin' && (
+          <Link to="/admin/dashboard" className={cls('/admin')} onClick={() => setMenuOpen(false)}>Dashboard</Link>
+        )}
 
-      {dbUser?.role === 'customer' && (
-        <>
-          <Link to="/book"    className={cls('/book')}    onClick={() => setMenuOpen(false)}>Book Delivery</Link>
-          <Link to="/history" className={cls('/history')} onClick={() => setMenuOpen(false)}>History</Link>
-        </>
-      )}
+        {dbUser?.role === 'customer' && (
+          <>
+            <Link to="/book"    className={cls('/book')}    onClick={() => setMenuOpen(false)}>Book Delivery</Link>
+            <Link to="/history" className={cls('/history')} onClick={() => setMenuOpen(false)}>History</Link>
+          </>
+        )}
 
-      {dbUser?.role === 'driver' && (
-        <>
-          <Link to="/driver/deliveries" className={cls('/driver/deliveries')} onClick={() => setMenuOpen(false)}>Find Orders</Link>
-          <Link to="/driver/active"     className={cls('/driver/active')}     onClick={() => setMenuOpen(false)}>Active Order</Link>
-          <Link to="/history"           className={cls('/history')}           onClick={() => setMenuOpen(false)}>History</Link>
-          <Link to="/driver/vehicles"   className={cls('/driver/vehicles')}   onClick={() => setMenuOpen(false)}>My Vehicles</Link>
-        </>
-      )}
+        {dbUser?.role === 'driver' && (
+          <>
+            <Link to="/driver/deliveries" className={cls('/driver/deliveries')} onClick={() => setMenuOpen(false)}>Dashboard</Link>
+            <Link to="/driver/active"     className={cls('/driver/active')}     onClick={() => setMenuOpen(false)}>Orders</Link>
+            <Link to="/history"           className={cls('/history')}           onClick={() => setMenuOpen(false)}>History</Link>
+            <Link to="/driver/vehicles"   className={cls('/driver/vehicles')}   onClick={() => setMenuOpen(false)}>My Vehicles</Link>
+          </>
+        )}
 
-      <Link to="/about" className={cls('/about')} onClick={() => setMenuOpen(false)}>About</Link>
-      <Link to="/faq"   className={cls('/faq')}   onClick={() => setMenuOpen(false)}>FAQ</Link>
-    </>
-  );
+        {showPublic && (
+          <>
+            <Link to="/about" className={cls('/about')} onClick={() => setMenuOpen(false)}>About</Link>
+            <Link to="/faq"   className={cls('/faq')}   onClick={() => setMenuOpen(false)}>FAQ</Link>
+          </>
+        )}
+      </>
+    );
+  };
 
   const toggleBtnColor = isHome
     ? (dark ? 'rgba(255,255,255,0.7)' : 'rgba(17,24,39,0.65)')

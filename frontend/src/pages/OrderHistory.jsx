@@ -62,7 +62,9 @@ function OrderHistory({ dbUser }) {
 
   const filtered = orders.filter(o => {
     const matchStatus = filter === 'all' ||
-      (filter === 'delivered' ? ['delivered', 'completed'].includes(o.status) : o.status === filter);
+      (filter === 'delivered' ? ['delivered', 'completed'].includes(o.status) :
+       filter === 'active' ? ['accepted', 'picked_up', 'in_transit'].includes(o.status) :
+       o.status === filter);
     const matchSearch = !search || [o.pickupAddress, o.deliveryAddress, o.id].some(v => v?.toLowerCase().includes(search.toLowerCase()));
     return matchStatus && matchSearch;
   });
@@ -117,7 +119,10 @@ function OrderHistory({ dbUser }) {
           />
         </div>
         <div className="flex gap-8" style={{ flexWrap: 'wrap' }}>
-          {[['all','All'],['searching','Searching'],['accepted','Active'],['delivered','Delivered'],['cancelled','Cancelled']].map(([val, label]) => (
+          {(dbUser.role === 'driver'
+            ? [['all','All'],['active','Active'],['delivered','Completed'],['cancelled','Cancelled']]
+            : [['all','All'],['searching','Searching'],['active','Active'],['delivered','Delivered'],['cancelled','Cancelled']]
+          ).map(([val, label]) => (
             <button
               key={val}
               onClick={() => setFilter(val)}

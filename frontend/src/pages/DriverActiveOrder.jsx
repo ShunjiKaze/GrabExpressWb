@@ -12,8 +12,8 @@ function VehicleIcon({ type, size = 20, color = 'currentColor' }) {
 }
 
 const ACTION_STEPS = {
-  accepted:   { btn: "Arrived at Pickup Location",   next: 'picked_up',  color: 'var(--blue)',    Icon: MapPinIcon },
-  picked_up:  { btn: 'Take Proof & Start Delivery',  next: 'in_transit', color: 'var(--purple)',  Icon: PackageIcon },
+  accepted:   { btn: "Arrived at Pickup Location",   next: 'picked_up',  color: 'var(--primary)', Icon: MapPinIcon },
+  picked_up:  { btn: 'Take Proof & Start Delivery',  next: 'in_transit', color: 'var(--primary)', Icon: PackageIcon },
   in_transit: { btn: 'Mark as Delivered',            next: 'delivered',  color: 'var(--primary)', Icon: CheckCircleIcon },
 };
 
@@ -266,7 +266,7 @@ function DriverActiveOrder({ dbUser }) {
           cancelling={driverCancelling}
         />
       )}
-    <div className="dashboard-container" style={{ maxWidth: '720px' }}>
+    <div className="dashboard-container" style={{ maxWidth: '1000px' }}>
 
       {/* Mission header */}
       <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px' }}>
@@ -285,16 +285,16 @@ function DriverActiveOrder({ dbUser }) {
         <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
           <div style={{
             height: '100%', borderRadius: '4px', background: 'linear-gradient(90deg, #4ADE80, #22C55E)',
-            width: order.status === 'accepted' ? '33%' : order.status === 'picked_up' ? '66%' : '100%',
+            width: order.status === 'accepted' ? '0%' : order.status === 'picked_up' ? '33%' : order.status === 'in_transit' ? '66%' : '100%',
             transition: 'width 0.5s ease',
           }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
-          <span>Accepted</span><span>Picked Up</span><span>In Transit</span><span>Delivered</span>
+          <span>Accepted</span><span>Arrived</span><span>In Transit</span><span>Delivered</span>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '20px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', alignItems: 'start' }}>
         {/* Main info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Route */}

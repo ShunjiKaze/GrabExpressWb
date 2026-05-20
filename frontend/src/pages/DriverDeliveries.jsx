@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import { MotorcycleIcon, CarIcon, VanIcon, PackageIcon, CreditCardIcon, ShieldIcon } from '../components/Icons';
+import { MotorcycleIcon, CarIcon, VanIcon, PackageIcon, CreditCardIcon, ShieldIcon, CheckCircleIcon } from '../components/Icons';
 
 function VehicleIcon({ type, size = 20, color = 'var(--primary)' }) {
   const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
@@ -10,37 +10,47 @@ function VehicleIcon({ type, size = 20, color = 'var(--primary)' }) {
   return <Icon size={size} color={color} />;
 }
 
-const SIZE_LABEL    = { S: 'Small', M: 'Medium', L: 'Large', XL: 'XL' };
-
+const SIZE_LABEL = { S: 'Small', M: 'Medium', L: 'Large', XL: 'XL' };
 
 function DriverDeliveries({ dbUser }) {
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
   const [deliveries, setDeliveries] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [accepting, setAccepting]   = useState(null);
-  const [filter, setFilter]         = useState('all');
+  const [activeVehicle, setActiveVehicle] = useState(null);
+  const [hasActiveOrder, setHasActiveOrder] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [accepting, setAccepting] = useState(null);
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'bookings'),
-      where('status', '==', 'searching'),
-    );
-    const unsub = onSnapshot(q, snap => {
+    // 1. Fetch available orders
+    const qDeliveries = query(collection(db, 'bookings'), where('status', '==', 'searching'));
+    const unsubDeliveries = onSnapshot(qDeliveries, snap => {
       setDeliveries(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    // 2. Fetch driver's active vehicle
+    const qVehicle = query(collection(db, 'vehicles'), where('driverId', '==', dbUser.user_id), where('status', '==', 'active'));
+    const unsubVehicle = onSnapshot(qVehicle, snap => {
+      setActiveVehicle(snap.empty ? null : snap.docs[0].data());
+    });
+
+    // 3. Fetch driver's active order to prevent multiple accepts
+    const qActiveOrder = query(collection(db, 'bookings'), where('driverId', '==', dbUser.user_id), where('status', 'in', ['accepted', 'picked_up', 'in_transit']));
+    const unsubActiveOrder = onSnapshot(qActiveOrder, snap => {
+      setHasActiveOrder(!snap.empty);
       setLoading(false);
     });
-    return unsub;
-  }, []);
+
+    return () => {
+      unsubDeliveries();
+      unsubVehicle();
+      unsubActiveOrder();
+    };
+  }, [dbUser.user_id]);
 
   const handleAccept = async (delivery) => {
+    if (hasActiveOrder) return;
     setAccepting(delivery.id);
     try {
-      const vSnap = await getDocs(query(
-        collection(db, 'vehicles'),
-        where('driverId', '==', dbUser.user_id),
-        where('status',   '==', 'active')
-      ));
-      const activeVehicle = vSnap.empty ? null : vSnap.docs[0].data();
       await updateDoc(doc(db, 'bookings', delivery.id), {
         driverId:      dbUser.user_id,
         driverName:    dbUser.full_name || 'Driver',
@@ -57,14 +67,8 @@ function DriverDeliveries({ dbUser }) {
     }
   };
 
-  const filtered = filter === 'all' ? deliveries : deliveries.filter(d => d.vehicleType === filter);
-
-  const FILTER_TABS = [
-    { val: 'all', label: 'All Vehicles', Icon: null },
-    { val: 'motorcycle', label: 'Motorcycle', Icon: MotorcycleIcon },
-    { val: 'car', label: 'Car', Icon: CarIcon },
-    { val: 'van', label: 'Van', Icon: VanIcon },
-  ];
+  // Only show orders that match the driver's active vehicle
+  const filtered = activeVehicle ? deliveries.filter(d => d.vehicleType === activeVehicle.type) : [];
 
   return (
     <div className="dashboard-container" style={{ maxWidth: '900px' }}>
@@ -75,36 +79,16 @@ function DriverDeliveries({ dbUser }) {
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Driver Mode</div>
             <h1 style={{ fontSize: '24px', fontWeight: 900, marginTop: '4px' }}>Available Orders</h1>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginTop: '4px' }}>
-              {loading ? 'Loading…' : `${deliveries.length} order${deliveries.length !== 1 ? 's' : ''} waiting for a rider`}
+              {loading ? 'Loading…' : !activeVehicle ? 'No active vehicle set.' : hasActiveOrder ? 'You have an ongoing delivery.' : `${filtered.length} order${filtered.length !== 1 ? 's' : ''} for your ${activeVehicle.type}`}
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ background: 'rgba(0,177,79,0.2)', border: '1px solid rgba(0,177,79,0.4)', borderRadius: 'var(--radius-md)', padding: '12px 18px', textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 900, color: '#4ADE80' }}>{deliveries.length}</div>
+              <div style={{ fontSize: '24px', fontWeight: 900, color: '#4ADE80' }}>{!activeVehicle || hasActiveOrder ? 0 : filtered.length}</div>
               <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Available</div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
-        {FILTER_TABS.map(({ val, label, Icon }) => (
-          <button
-            key={val}
-            onClick={() => setFilter(val)}
-            style={{
-              padding: '8px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', transition: 'var(--transition)',
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: filter === val ? 'var(--primary)' : 'var(--surface)',
-              color: filter === val ? 'white' : 'var(--text-2)',
-              boxShadow: filter === val ? '0 2px 8px var(--primary-glow)' : 'var(--shadow-xs)',
-            }}
-          >
-            {Icon && <Icon size={14} color={filter === val ? 'white' : 'var(--text-2)'} />}
-            {label}
-          </button>
-        ))}
       </div>
 
       {/* Content */}
@@ -121,13 +105,46 @@ function DriverDeliveries({ dbUser }) {
             </div>
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : dbUser.accountStatus === 'deactivated' || dbUser.accountStatus === 'pending_reactivation' ? (
+        <div className="card">
+          <div className="empty-state">
+            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldIcon size={48} color="var(--red)" />
+            </div>
+            <div className="empty-state-title">Account Deactivated</div>
+            <div className="empty-state-desc">Your account is currently deactivated. You are in viewing mode and cannot accept new orders. Please request reactivation from your profile.</div>
+            <button onClick={() => navigate('/profile')} className="btn btn-primary mt-16">Go to Profile</button>
+          </div>
+        </div>
+      ) : !activeVehicle ? (
         <div className="card">
           <div className="empty-state">
             <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <MotorcycleIcon size={48} color="var(--text-3)" />
             </div>
-            <div className="empty-state-title">No orders available</div>
+            <div className="empty-state-title">No Active Vehicle</div>
+            <div className="empty-state-desc">You need to set a vehicle as "Active" in My Vehicles before you can find orders.</div>
+            <button onClick={() => navigate('/driver/vehicles')} className="btn btn-primary mt-16">Go to My Vehicles</button>
+          </div>
+        </div>
+      ) : hasActiveOrder ? (
+        <div className="card">
+          <div className="empty-state">
+            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-light)', color: 'var(--primary)' }}>
+              <CheckCircleIcon size={48} />
+            </div>
+            <div className="empty-state-title">You have an ongoing delivery!</div>
+            <div className="empty-state-desc">You must complete your current active order before accepting a new one.</div>
+            <button onClick={() => navigate('/driver/active')} className="btn btn-primary mt-16">View Active Order</button>
+          </div>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="card">
+          <div className="empty-state">
+            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <VehicleIcon type={activeVehicle.type} size={48} color="var(--text-3)" />
+            </div>
+            <div className="empty-state-title">No {activeVehicle.type} orders available</div>
             <div className="empty-state-desc">Orders appear here in real-time as customers book. Stay online and check back shortly!</div>
           </div>
         </div>

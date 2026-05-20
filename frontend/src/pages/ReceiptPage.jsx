@@ -118,14 +118,14 @@ function ReceiptPage({ dbUser }) {
   const isCancelled  = booking.status === 'cancelled';
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(booking.id).then(() => {
+    navigator.clipboard.writeText(shortId).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
 
   return (
-    <div className="dashboard-container" style={{ maxWidth: '680px' }}>
+    <div className="dashboard-container" style={{ maxWidth: '1000px' }}>
 
       {/* ── HEADER ── */}
       <div style={{
@@ -198,168 +198,179 @@ function ReceiptPage({ dbUser }) {
         </div>
       </div>
 
-      {/* ── ROUTE ── */}
-      <Section title="Route">
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0, marginTop: '3px' }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--primary)' }} />
-            <div style={{ width: 1.5, height: 30, background: 'repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 5px, transparent 5px, transparent 10px)' }} />
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--red)' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
-              <MapPinIcon size={13} color="var(--primary)" style={{ flexShrink: 0 }} />
-              <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text)' }}>{booking.pickupAddress}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <FlagIcon size={13} color="var(--red)" style={{ flexShrink: 0 }} />
-              <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text)' }}>{booking.deliveryAddress}</span>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ── SENDER & RECIPIENT ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-        {[
-          { title: 'Sender', name: booking.senderName, phone: booking.senderPhone, floor: booking.senderFloor, color: 'var(--primary)' },
-          { title: 'Recipient', name: booking.recipientName, phone: booking.recipientPhone, floor: booking.recipientFloor, color: 'var(--red)' },
-        ].map(p => (
-          <div key={p.title} style={{ background: 'var(--surface-2)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>{p.title}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-              <UserIcon size={12} color={p.color} />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: p.floor ? '6px' : 0 }}>
-              <PhoneIcon size={12} color="var(--text-3)" />
-              <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>{p.phone}</span>
-            </div>
-            {p.floor && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <BuildingIcon size={12} color="var(--text-3)" />
-                <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>{p.floor}</span>
+      {/* ── TWO COLUMN LAYOUT ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+        {/* LEFT COLUMN */}
+        <div>
+          {/* ── ROUTE ── */}
+          <Section title="Route">
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0, marginTop: '3px' }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--primary)' }} />
+                <div style={{ width: 1.5, height: 30, background: 'repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 5px, transparent 5px, transparent 10px)' }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--red)' }} />
               </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* ── PACKAGE DETAILS ── */}
-      <Section title="Package Details">
-        <Row label="Vehicle" value={booking.vehicleType.charAt(0).toUpperCase() + booking.vehicleType.slice(1)} icon={<VehicleIcon type={booking.vehicleType} size={13} color="var(--text-3)" />} />
-        <Row label="Item Type" value={booking.itemType} icon={<PackageIcon size={13} color="var(--text-3)" />} />
-        <Row label="Size" value={booking.itemSize} />
-        <Row label="Weight" value={`${booking.itemWeight} kg`} />
-        <Row label="Guarantee" value={booking.guaranteeTier} icon={<GuaranteeIcon size={13} color="var(--text-3)" />} />
-      </Section>
-
-      {/* ── PAYMENT METHOD ── */}
-      <Section title="Payment">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: paymentDoc ? '14px' : 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <payment.Icon size={18} color="var(--primary)" />
-          </div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{payment.title}</div>
-            {(paymentDoc || isCancelled) && (
-              <span className={`badge ${isCancelled ? 'badge-red' : paymentDoc?.status === 'paid' ? 'badge-green' : 'badge-amber'}`} style={{ marginTop: '4px', display: 'inline-block' }}>
-                {isCancelled ? 'Cancelled' : paymentDoc?.status === 'paid' ? 'Paid' : 'Pending'}
-              </span>
-            )}
-          </div>
-        </div>
-        {paymentDoc && (
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
-            {(isDriver || isAdmin) && <Row label="Your Earnings (80%)" value={`₱${paymentDoc.driverEarn}`} />}
-            {isAdmin && <Row label="Platform Commission (20%)" value={`₱${paymentDoc.platformComm}`} />}
-            {paymentDoc.paidAt && <Row label="Paid At" value={formatDate(paymentDoc.paidAt)} icon={<ClockIcon size={13} color="var(--text-3)" />} />}
-          </div>
-        )}
-      </Section>
-
-      {/* ── PRICE BREAKDOWN ── */}
-      <div style={{ background: '#0F172A', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '14px', color: 'white' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>Price Breakdown</div>
-        {[
-          [`Base Fare (${booking.vehicleType})`, `₱${base}`],
-          [`Size (${booking.itemSize})`,          sizeAdd > 0 ? `+₱${sizeAdd}` : '₱0'],
-          [`Guarantee (${booking.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '₱0'],
-        ].map(([l, v]) => (
-          <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'rgba(255,255,255,0.65)', marginBottom: '8px' }}>
-            <span>{l}</span>
-            <span style={{ fontWeight: 600, color: 'white' }}>{v}</span>
-          </div>
-        ))}
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', margin: '12px 0' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontWeight: 700, fontSize: '16px' }}>Total</span>
-          <span style={{ fontWeight: 900, fontSize: '24px', color: '#4ADE80' }}>₱{booking.totalAmount}</span>
-        </div>
-      </div>
-
-      {/* ── DRIVER INFO ── */}
-      {booking.driverName && (
-        <Section title="Driver">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <VehicleIcon type={booking.vehicleType} size={22} color="var(--primary)" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)', marginBottom: '2px' }}>{booking.driverName}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-                {booking.driverVehicle?.charAt(0).toUpperCase()}{booking.driverVehicle?.slice(1)}
-                {booking.driverPlate ? ` · ${booking.driverPlate}` : ''}
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
+                  <MapPinIcon size={13} color="var(--primary)" style={{ flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text)' }}>{booking.pickupAddress}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <FlagIcon size={13} color="var(--red)" style={{ flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text)' }}>{booking.deliveryAddress}</span>
+                </div>
               </div>
             </div>
-            {booking.driverRating && (
-              <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-                {Array.from({ length: 5 }, (_, i) => (
-                  <StarIcon key={i} size={14} color="#F59E0B" filled={i < booking.driverRating} />
-                ))}
-              </div>
-            )}
-          </div>
-        </Section>
-      )}
+          </Section>
 
-      {/* ── DELIVERY PROOF ── */}
-      {(booking.pickupProofURL || booking.deliveryProofURL) && (
-        <Section title="Delivery Proof">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            {booking.pickupProofURL && (
+          {/* ── SENDER & RECIPIENT ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            {[
+              { title: 'Sender', name: booking.senderName, phone: booking.senderPhone, floor: booking.senderFloor, color: 'var(--primary)' },
+              { title: 'Recipient', name: booking.recipientName, phone: booking.recipientPhone, floor: booking.recipientFloor, color: 'var(--red)' },
+            ].map(p => (
+              <div key={p.title} style={{ background: 'var(--surface-2)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>{p.title}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                  <UserIcon size={12} color={p.color} />
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>{p.name}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: p.floor ? '6px' : 0 }}>
+                  <PhoneIcon size={12} color="var(--text-3)" />
+                  <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>{p.phone}</span>
+                </div>
+                {p.floor && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <BuildingIcon size={12} color="var(--text-3)" />
+                    <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>{p.floor}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* ── PACKAGE DETAILS ── */}
+          <Section title="Package Details">
+            <Row label="Vehicle" value={booking.vehicleType.charAt(0).toUpperCase() + booking.vehicleType.slice(1)} icon={<VehicleIcon type={booking.vehicleType} size={13} color="var(--text-3)" />} />
+            <Row label="Item Type" value={booking.itemType} icon={<PackageIcon size={13} color="var(--text-3)" />} />
+            <Row label="Size" value={booking.itemSize} />
+            <Row label="Weight" value={`${booking.itemWeight} kg`} />
+            <Row label="Guarantee" value={booking.guaranteeTier} icon={<GuaranteeIcon size={13} color="var(--text-3)" />} />
+          </Section>
+
+          {/* ── DELIVERY PROOF ── */}
+          {(booking.pickupProofURL || booking.deliveryProofURL) && (
+            <Section title="Delivery Proof">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                {booking.pickupProofURL && (
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '6px' }}>Pickup</div>
+                    <img src={booking.pickupProofURL} alt="Pickup proof" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
+                  </div>
+                )}
+                {booking.deliveryProofURL && (
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '6px' }}>Delivery</div>
+                    <img src={booking.deliveryProofURL} alt="Delivery proof" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+
+          {/* ── DRIVER INFO ── */}
+          {booking.driverName && (
+            <Section title="Driver">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <VehicleIcon type={booking.vehicleType} size={22} color="var(--primary)" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)', marginBottom: '2px' }}>{booking.driverName}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>
+                    {booking.driverVehicle?.charAt(0).toUpperCase()}{booking.driverVehicle?.slice(1)}
+                    {booking.driverPlate ? ` · ${booking.driverPlate}` : ''}
+                  </div>
+                </div>
+                {booking.driverRating && (
+                  <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <StarIcon key={i} size={14} color="#F59E0B" filled={i < booking.driverRating} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div>
+          {/* ── PRICE BREAKDOWN ── */}
+          <div style={{ background: '#0F172A', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '14px', color: 'white' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>Price Breakdown</div>
+            {[
+              [`Base Fare (${booking.vehicleType})`, `₱${base}`],
+              [`Size (${booking.itemSize})`,          sizeAdd > 0 ? `+₱${sizeAdd}` : '₱0'],
+              [`Guarantee (${booking.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '₱0'],
+            ].map(([l, v]) => (
+              <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'rgba(255,255,255,0.65)', marginBottom: '8px' }}>
+                <span>{l}</span>
+                <span style={{ fontWeight: 600, color: 'white' }}>{v}</span>
+              </div>
+            ))}
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', margin: '12px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 700, fontSize: '16px' }}>Total</span>
+              <span style={{ fontWeight: 900, fontSize: '24px', color: '#4ADE80' }}>₱{booking.totalAmount}</span>
+            </div>
+          </div>
+
+
+
+          {/* ── PAYMENT METHOD ── */}
+          <Section title="Payment">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: paymentDoc ? '14px' : 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <payment.Icon size={18} color="var(--primary)" />
+              </div>
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '6px' }}>Pickup</div>
-                <img src={booking.pickupProofURL} alt="Pickup proof" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{payment.title}</div>
+                {(paymentDoc || isCancelled) && (
+                  <span className={`badge ${isCancelled ? 'badge-red' : paymentDoc?.status === 'paid' ? 'badge-green' : 'badge-amber'}`} style={{ marginTop: '4px', display: 'inline-block' }}>
+                    {isCancelled ? 'Cancelled' : paymentDoc?.status === 'paid' ? 'Paid' : 'Pending'}
+                  </span>
+                )}
+              </div>
+            </div>
+            {paymentDoc && (
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+                {(isDriver || isAdmin) && <Row label="Your Earnings" value={`₱${paymentDoc.driverEarn}`} />}
+                {isAdmin && <Row label="Platform Commission (20%)" value={`₱${paymentDoc.platformComm}`} />}
+                {paymentDoc.paidAt && <Row label="Paid At" value={formatDate(paymentDoc.paidAt)} icon={<ClockIcon size={13} color="var(--text-3)" />} />}
               </div>
             )}
-            {booking.deliveryProofURL && (
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '6px' }}>Delivery</div>
-                <img src={booking.deliveryProofURL} alt="Delivery proof" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
-              </div>
-            )}
-          </div>
-        </Section>
-      )}
+          </Section>
 
-      {/* ── TIMESTAMPS ── */}
-      <Section title="Timeline">
-        {[
-          { label: 'Booked',     ts: booking.createdAt },
-          { label: 'Accepted',   ts: booking.acceptedAt },
-          { label: 'Picked Up',  ts: booking.pickedUpAt },
-          { label: 'In Transit', ts: booking.transitAt },
-          { label: 'Delivered',  ts: booking.deliveredAt },
-          { label: 'Cancelled',  ts: booking.cancelledAt },
-        ].filter(e => e.ts).map(e => (
-          <div key={e.label} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', fontSize: '13px' }}>
-            <ClockIcon size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />
-            <span style={{ color: 'var(--text-3)', width: '80px', flexShrink: 0 }}>{e.label}</span>
-            <span style={{ color: 'var(--text)', fontWeight: 600 }}>{formatDate(e.ts)}</span>
-          </div>
-        ))}
-      </Section>
+          {/* ── TIMESTAMPS ── */}
+          <Section title="Timeline">
+            {[
+              { label: 'Booked',     ts: booking.createdAt },
+              { label: 'Accepted',   ts: booking.acceptedAt },
+              { label: 'Picked Up',  ts: booking.pickedUpAt },
+              { label: 'In Transit', ts: booking.transitAt },
+              { label: 'Delivered',  ts: booking.deliveredAt },
+              { label: 'Cancelled',  ts: booking.cancelledAt },
+            ].filter(e => e.ts).map(e => (
+              <div key={e.label} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', fontSize: '13px' }}>
+                <ClockIcon size={13} color="var(--text-3)" style={{ flexShrink: 0 }} />
+                <span style={{ color: 'var(--text-3)', width: '80px', flexShrink: 0 }}>{e.label}</span>
+                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{formatDate(e.ts)}</span>
+              </div>
+            ))}
+          </Section>
+        </div>
+      </div>
 
       {/* ── ACTIONS ── */}
       <div className="flex gap-12 receipt-no-print" style={{ marginBottom: '14px' }}>
