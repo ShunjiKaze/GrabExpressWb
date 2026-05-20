@@ -3,16 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useBooking } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
 import { isValidPhone, isValidName, digitsOnly, sanitizeName } from '../../utils/validate';
+import { ZapIcon, CalendarIcon, PackageIcon, MotorcycleIcon, CarIcon, VanIcon, UserIcon, PhoneIcon } from '../../components/Icons';
 
 const STEPS = ['Address', 'Details', 'Item', 'Review'];
 
 const VEHICLES = [
-  { id: 'motorcycle', icon: '🛵', title: 'Motorcycle', desc: 'Up to 5 kg, small items',   price: '₱60' },
-  { id: 'car',        icon: '🚗', title: 'Car',        desc: 'Up to 15 kg, medium items', price: '₱120' },
-  { id: 'van',        icon: '🚐', title: 'Van',        desc: 'Up to 20 kg, large items',  price: '₱250' },
+  { id: 'motorcycle', Icon: MotorcycleIcon, title: 'Motorcycle', desc: 'Up to 5 kg, small items',   price: '₱60' },
+  { id: 'car',        Icon: CarIcon,        title: 'Car',        desc: 'Up to 15 kg, medium items', price: '₱120' },
+  { id: 'van',        Icon: VanIcon,        title: 'Van',        desc: 'Up to 20 kg, large items',  price: '₱250' },
 ];
 
-// Inline field with error display
+const DELIVERY_TYPES = [
+  { id: 'instant',  Icon: ZapIcon,      title: 'Instant',     desc: 'Within the hour',  disabled: false },
+  { id: 'same_day', Icon: CalendarIcon, title: 'Same-Day',    desc: 'By end of day',    disabled: true },
+  { id: 'bulk',     Icon: PackageIcon,  title: 'Bulk Orders', desc: 'Multiple items',   disabled: true },
+];
+
 function Field({ label, required, optional, error, hint, children }) {
   return (
     <div className="form-group">
@@ -33,11 +39,15 @@ function PersonSection({ title, prefix, fields, onUpdate, errors, onClearError }
   const phoneKey = `${prefix}Phone`;
   const floorKey = `${prefix}Floor`;
   const noteKey  = `${prefix}Note`;
-  const saveKey  = `save${prefix.charAt(0).toUpperCase()}${prefix.slice(1)}`;
 
   return (
     <div style={{ background: 'var(--surface-2)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-      <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--navy)', marginBottom: '16px' }}>{title}</h3>
+      <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--navy)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {prefix === 'sender'
+          ? <><UserIcon size={15} color="var(--primary)" /> {title}</>
+          : <><UserIcon size={15} color="var(--red)" /> {title}</>
+        }
+      </h3>
 
       <div className="grid grid-2 gap-12 mb-12">
         <Field label="Contact Name" required error={errors[nameKey]}>
@@ -94,8 +104,8 @@ function PersonSection({ title, prefix, fields, onUpdate, errors, onClearError }
       <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-2)' }}>
         <input
           type="checkbox"
-          checked={fields[saveKey]}
-          onChange={e => onUpdate({ [saveKey]: e.target.checked })}
+          checked={fields[`save${prefix.charAt(0).toUpperCase()}${prefix.slice(1)}`]}
+          onChange={e => onUpdate({ [`save${prefix.charAt(0).toUpperCase()}${prefix.slice(1)}`]: e.target.checked })}
           style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
         />
         Save details for future bookings
@@ -158,17 +168,15 @@ function DeliveryDetailsStep() {
         <div className="form-group mb-20">
           <label className="form-label">Delivery Type</label>
           <div className="option-grid option-grid-3">
-            {[
-              { id: 'instant',  icon: '⚡', title: 'Instant',     desc: 'Within the hour' },
-              { id: 'same_day', icon: '📅', title: 'Same-Day',    desc: 'By end of day',  disabled: true },
-              { id: 'bulk',     icon: '📦', title: 'Bulk Orders', desc: 'Multiple items', disabled: true },
-            ].map(t => (
+            {DELIVERY_TYPES.map(t => (
               <div
                 key={t.id}
                 className={`option-card${bookingData.deliveryType === t.id ? ' selected' : ''}${t.disabled ? ' disabled' : ''}`}
                 onClick={() => !t.disabled && updateBooking({ deliveryType: t.id })}
               >
-                <div className="option-icon">{t.icon}</div>
+                <div className="option-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <t.Icon size={24} color={bookingData.deliveryType === t.id ? 'var(--primary)' : 'var(--text-3)'} />
+                </div>
                 <div className="option-title">{t.title}</div>
                 <div className="option-desc">{t.desc}</div>
                 {t.disabled && <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '4px' }}>Coming soon</div>}
@@ -190,7 +198,9 @@ function DeliveryDetailsStep() {
                 className={`option-card${bookingData.vehicleType === v.id ? ' selected' : ''}`}
                 onClick={() => updateBooking({ vehicleType: v.id })}
               >
-                <div className="option-icon">{v.icon}</div>
+                <div className="option-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <v.Icon size={28} color={bookingData.vehicleType === v.id ? 'var(--primary)' : 'var(--text-3)'} />
+                </div>
                 <div className="option-title">{v.title}</div>
                 <div className="option-desc">{v.desc}</div>
                 <div className="option-price">{v.price} base</div>
@@ -202,7 +212,7 @@ function DeliveryDetailsStep() {
         {/* Sender */}
         <div className="mb-16">
           <PersonSection
-            title="📤 Sender's Details"
+            title="Sender's Details"
             prefix="sender"
             fields={bookingData}
             onUpdate={updateBooking}
@@ -214,7 +224,7 @@ function DeliveryDetailsStep() {
         {/* Recipient */}
         <div className="mb-16">
           <PersonSection
-            title="📥 Recipient's Details"
+            title="Recipient's Details"
             prefix="recipient"
             fields={bookingData}
             onUpdate={updateBooking}

@@ -2,18 +2,25 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
+import { SearchIcon, MotorcycleIcon, CarIcon, VanIcon, PackageIcon, ZapIcon,
+         CheckCircleIcon, XCircleIcon, MapPinIcon, FlagIcon, StarIcon,
+         ClipboardIcon, ChevronUpIcon, ChevronDownIcon, CreditCardIcon, BanknoteIcon } from '../components/Icons';
+
+function VehicleIcon({ type, size = 20, color = 'currentColor' }) {
+  const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
+  const Icon = icons[type] || PackageIcon;
+  return <Icon size={size} color={color} />;
+}
 
 const STATUS_CONFIG = {
-  searching:  { label: 'Searching',   badge: 'badge-amber',  icon: '🔍' },
-  accepted:   { label: 'Accepted',    badge: 'badge-blue',   icon: '🛵' },
-  picked_up:  { label: 'Picked Up',   badge: 'badge-purple', icon: '📦' },
-  in_transit: { label: 'In Transit',  badge: 'badge-blue',   icon: '🚀' },
-  delivered:  { label: 'Delivered',   badge: 'badge-green',  icon: '✅' },
-  completed:  { label: 'Completed',   badge: 'badge-green',  icon: '✅' },
-  cancelled:  { label: 'Cancelled',   badge: 'badge-red',    icon: '❌' },
+  searching:  { label: 'Searching',   badge: 'badge-amber',  Icon: SearchIcon },
+  accepted:   { label: 'Accepted',    badge: 'badge-blue',   Icon: MotorcycleIcon },
+  picked_up:  { label: 'Picked Up',   badge: 'badge-purple', Icon: PackageIcon },
+  in_transit: { label: 'In Transit',  badge: 'badge-blue',   Icon: ZapIcon },
+  delivered:  { label: 'Delivered',   badge: 'badge-green',  Icon: CheckCircleIcon },
+  completed:  { label: 'Completed',   badge: 'badge-green',  Icon: CheckCircleIcon },
+  cancelled:  { label: 'Cancelled',   badge: 'badge-red',    Icon: XCircleIcon },
 };
-
-const VEHICLE_ICONS = { motorcycle: '🛵', car: '🚗', van: '🚐' };
 
 function OrderHistory({ dbUser }) {
   const navigate = useNavigate();
@@ -79,17 +86,19 @@ function OrderHistory({ dbUser }) {
       {/* Summary stats */}
       <div className="stats-grid mb-24" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         <div className="stat-card green">
-          <div className="stat-icon">📦</div>
+          <div className="stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><PackageIcon size={28} /></div>
           <div className="stat-label">Total Orders</div>
           <div className="stat-value">{orders.length}</div>
         </div>
         <div className="stat-card blue">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CheckCircleIcon size={28} /></div>
           <div className="stat-label">Completed</div>
           <div className="stat-value">{completed}</div>
         </div>
         <div className="stat-card amber">
-          <div className="stat-icon">{dbUser.role === 'driver' ? '💰' : '💳'}</div>
+          <div className="stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {dbUser.role === 'driver' ? <BanknoteIcon size={28} /> : <CreditCardIcon size={28} />}
+          </div>
           <div className="stat-label">{dbUser.role === 'driver' ? 'Total Earned' : 'Total Spent'}</div>
           <div className="stat-value" style={{ fontSize: '22px' }}>₱{total.toLocaleString()}</div>
         </div>
@@ -97,13 +106,16 @@ function OrderHistory({ dbUser }) {
 
       {/* Filters */}
       <div className="flex items-center gap-12 mb-16" style={{ flexWrap: 'wrap' }}>
-        <input
-          className="form-input"
-          placeholder="🔍 Search by address or order ID…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ flex: '1 1 220px', maxWidth: '340px' }}
-        />
+        <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: '340px' }}>
+          <SearchIcon size={15} color="var(--text-3)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          <input
+            className="form-input"
+            placeholder="Search by address or order ID…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ paddingLeft: '36px' }}
+          />
+        </div>
         <div className="flex gap-8" style={{ flexWrap: 'wrap' }}>
           {[['all','All'],['searching','Searching'],['accepted','Active'],['delivered','Delivered'],['cancelled','Cancelled']].map(([val, label]) => (
             <button
@@ -145,7 +157,9 @@ function OrderHistory({ dbUser }) {
       ) : filtered.length === 0 ? (
         <div className="card">
           <div className="empty-state">
-            <div className="empty-state-icon">📋</div>
+            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ClipboardIcon size={48} color="var(--text-3)" />
+            </div>
             <div className="empty-state-title">{search || filter !== 'all' ? 'No matching orders found' : 'No deliveries on record'}</div>
             <div className="empty-state-desc">
               {search ? 'No orders matched your search. Try a different address or order ID.' : filter !== 'all' ? 'No orders match the selected filter.' : dbUser.role === 'driver' ? 'Deliveries you complete will appear here.' : 'You have not placed any delivery orders yet. Your booking history will be shown here once a delivery has been made.'}
@@ -155,7 +169,7 @@ function OrderHistory({ dbUser }) {
       ) : (
         <div className="card" style={{ overflow: 'hidden' }}>
           {filtered.map(o => {
-            const cfg = STATUS_CONFIG[o.status] || { label: o.status, badge: 'badge-gray', icon: '📦' };
+            const cfg = STATUS_CONFIG[o.status] || { label: o.status, badge: 'badge-gray', Icon: PackageIcon };
             const isOpen = expanded === o.id;
             const isActive = !['delivered', 'completed', 'cancelled'].includes(o.status);
             return (
@@ -167,19 +181,19 @@ function OrderHistory({ dbUser }) {
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   onClick={() => setExpanded(isOpen ? null : o.id)}
                 >
-                  <div style={{ width: 44, height: 44, borderRadius: 10, background: isActive ? 'var(--primary-light)' : 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
-                    {VEHICLE_ICONS[o.vehicleType] || cfg.icon}
+                  <div style={{ width: 44, height: 44, borderRadius: 10, background: isActive ? 'var(--primary-light)' : 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <VehicleIcon type={o.vehicleType} size={22} color={isActive ? 'var(--primary)' : 'var(--text-3)'} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="flex items-center justify-between mb-4">
                       <span className={`badge ${cfg.badge}`}>{cfg.label}</span>
                       <span className="text-xs text-muted">{formatDate(o.createdAt)}</span>
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      📍 {o.pickupAddress}
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <MapPinIcon size={13} color="var(--primary)" style={{ flexShrink: 0 }} /> {o.pickupAddress}
                     </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      🏁 {o.deliveryAddress}
+                    <div style={{ fontSize: '13px', color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <FlagIcon size={13} color="var(--red)" style={{ flexShrink: 0 }} /> {o.deliveryAddress}
                     </div>
                     <div className="flex gap-12 mt-8">
                       <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--primary)' }}>₱{o.totalAmount}</span>
@@ -187,7 +201,9 @@ function OrderHistory({ dbUser }) {
                       {o.itemType && <span className="badge badge-gray">{o.itemType}</span>}
                     </div>
                   </div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '18px', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</div>
+                  <div style={{ color: 'var(--text-3)', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                    {isOpen ? <ChevronUpIcon size={18} /> : <ChevronDownIcon size={18} />}
+                  </div>
                 </div>
 
                 {/* Expanded detail */}
@@ -223,14 +239,16 @@ function OrderHistory({ dbUser }) {
                       </button>
                     )}
                     {['delivered', 'completed'].includes(o.status) && !o.driverRating && dbUser.role === 'customer' && (
-                      <button onClick={() => navigate(`/rate/${o.id}`)} className="btn btn-secondary btn-sm mt-16">
-                        ⭐ Rate Driver
+                      <button onClick={() => navigate(`/rate/${o.id}`)} className="btn btn-secondary btn-sm mt-16" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <StarIcon size={14} color="var(--amber)" /> Rate Driver
                       </button>
                     )}
                     {o.driverRating && (
                       <div style={{ marginTop: '14px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', color: 'var(--text-3)' }}>Your rating:</span>
-                        <span style={{ fontWeight: 700 }}>{'⭐'.repeat(o.driverRating)}</span>
+                        <span style={{ display: 'flex', gap: '2px' }}>
+                          {Array.from({ length: o.driverRating }, (_, i) => <StarIcon key={i} size={14} color="#F59E0B" filled />)}
+                        </span>
                       </div>
                     )}
                   </div>

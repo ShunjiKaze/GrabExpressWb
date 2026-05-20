@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBooking } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
+import { MapPinIcon, FlagIcon } from '../../components/Icons';
 
 const STEPS = ['Address', 'Details', 'Item', 'Review'];
 
@@ -99,7 +100,9 @@ function AddressStep() {
               onMouseEnter={e => e.currentTarget.style.background = field === 'pickup' ? 'var(--primary-light)' : '#FFF1F2'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <span style={{ color: dotColor, flexShrink: 0 }}>{field === 'pickup' ? '📍' : '🏁'}</span>
+              {field === 'pickup'
+                ? <MapPinIcon size={14} color={dotColor} style={{ flexShrink: 0 }} />
+                : <FlagIcon   size={14} color={dotColor} style={{ flexShrink: 0 }} />}
               <span>{s}</span>
             </div>
           ))}

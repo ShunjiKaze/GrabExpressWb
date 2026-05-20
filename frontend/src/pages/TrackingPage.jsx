@@ -3,18 +3,25 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { SearchIcon, MotorcycleIcon, CarIcon, VanIcon, PackageIcon, ZapIcon,
+         CheckCircleIcon, XCircleIcon, PhoneIcon, StarIcon, LinkIcon, ClockIcon, SparklesIcon } from '../components/Icons';
+
+function VehicleIcon({ type, size = 22, color = 'rgba(255,255,255,0.8)' }) {
+  const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
+  const Icon = icons[type] || MotorcycleIcon;
+  return <Icon size={size} color={color} />;
+}
 
 const STATUS_STEPS = [
-  { key: 'searching',  label: 'Searching for a driver',          icon: '🔍', desc: 'We are finding the nearest available rider for you.' },
-  { key: 'accepted',   label: 'Driver accepted your order',      icon: '🛵', desc: 'Your rider is heading to the pickup location.' },
-  { key: 'picked_up',  label: 'Item has been picked up',         icon: '📦', desc: 'The rider has collected your package and is preparing to deliver.' },
-  { key: 'in_transit', label: 'En route to destination',         icon: '🚀', desc: 'Your package is on the way to the recipient.' },
-  { key: 'delivered',  label: 'Delivered!',                       icon: '✅', desc: 'Your package has been delivered successfully.' },
+  { key: 'searching',  label: 'Searching for a driver',      Icon: SearchIcon,      desc: 'We are finding the nearest available rider for you.' },
+  { key: 'accepted',   label: 'Driver accepted your order',  Icon: MotorcycleIcon,  desc: 'Your rider is heading to the pickup location.' },
+  { key: 'picked_up',  label: 'Item has been picked up',     Icon: PackageIcon,     desc: 'The rider has collected your package and is preparing to deliver.' },
+  { key: 'in_transit', label: 'En route to destination',     Icon: ZapIcon,         desc: 'Your package is on the way to the recipient.' },
+  { key: 'delivered',  label: 'Delivered!',                   Icon: CheckCircleIcon, desc: 'Your package has been delivered successfully.' },
 ];
 
 const STATUS_ORDER = ['searching', 'accepted', 'picked_up', 'in_transit', 'delivered'];
 
-const VEHICLE_ICONS  = { motorcycle: '🛵', car: '🚗', van: '🚐' };
 const PAYMENT_LABELS = {
   grabpay:        'GrabPay Wallet',
   card:           'Credit/Debit Card',
@@ -28,7 +35,7 @@ function ETABadge({ status }) {
   if (!eta) return null;
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: '20px', padding: '5px 12px', fontSize: '13px', fontWeight: 700, color: '#4ADE80' }}>
-      ⏱ ETA: {eta}
+      <ClockIcon size={13} color="#4ADE80" /> ETA: {eta}
     </div>
   );
 }
@@ -103,8 +110,13 @@ function TrackingPage({ dbUser }) {
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
               Order #{id.slice(-8).toUpperCase()}
             </div>
-            <h1 style={{ fontSize: '24px', fontWeight: 900, marginTop: '6px' }}>
-              {isCancelled ? '❌ Order Cancelled' : currentStep ? `${currentStep.icon} ${currentStep.label}` : '✅ Delivered!'}
+            <h1 style={{ fontSize: '24px', fontWeight: 900, marginTop: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {isCancelled
+                ? <><XCircleIcon size={24} color="#F87171" /> Order Cancelled</>
+                : currentStep
+                  ? <><currentStep.Icon size={24} color="white" /> {currentStep.label}</>
+                  : <><CheckCircleIcon size={24} color="#4ADE80" /> Delivered!</>
+              }
             </h1>
             {!isCancelled && !isComplete && currentStep && (
               <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginTop: '6px' }}>
@@ -153,8 +165,8 @@ function TrackingPage({ dbUser }) {
           <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginTop: '8px' }}>
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '12px' }}>Your Driver</div>
             <div className="flex items-center gap-16">
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
-                {VEHICLE_ICONS[booking.vehicleType] || '🛵'}
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <VehicleIcon type={booking.vehicleType} size={24} color="rgba(255,255,255,0.8)" />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 800, fontSize: '17px' }}>{booking.driverName}</div>
@@ -168,8 +180,8 @@ function TrackingPage({ dbUser }) {
                 </div>
               )}
               {booking.driverPhone && (
-                <a href={`tel:${booking.driverPhone}`} style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', textDecoration: 'none', flexShrink: 0 }} title="Call driver">
-                  📞
+                <a href={`tel:${booking.driverPhone}`} style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }} title="Call driver">
+                  <PhoneIcon size={18} color="white" />
                 </a>
               )}
             </div>
@@ -187,7 +199,6 @@ function TrackingPage({ dbUser }) {
             {STATUS_STEPS.map((step, i) => {
               const done    = !isCancelled && i < currentIdx;
               const active  = !isCancelled && i === currentIdx;
-              const pending = !done && !active;
               const isLast  = i === STATUS_STEPS.length - 1;
 
               return (
@@ -210,7 +221,9 @@ function TrackingPage({ dbUser }) {
 
                   {/* Content */}
                   <div style={{ paddingBottom: isLast ? 0 : '28px', paddingTop: '0' }}>
-                    <div style={{ fontSize: '16px', marginBottom: '2px' }}>{step.icon}</div>
+                    <div style={{ marginBottom: '2px', display: 'flex', alignItems: 'center' }}>
+                      <step.Icon size={16} color={done ? 'var(--primary)' : active ? 'var(--text)' : 'var(--text-3)'} />
+                    </div>
                     <div style={{
                       fontWeight: done || active ? 700 : 500,
                       fontSize: '14px',
@@ -233,7 +246,9 @@ function TrackingPage({ dbUser }) {
               <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
                 <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--red)', border: '2px solid var(--red)', flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--red)' }}>❌ Order Cancelled</div>
+                  <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--red)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <XCircleIcon size={14} color="var(--red)" /> Order Cancelled
+                  </div>
                   <div style={{ fontSize: '13px', color: 'var(--text-3)', marginTop: '2px' }}>This booking was cancelled.</div>
                 </div>
               </div>
@@ -243,15 +258,20 @@ function TrackingPage({ dbUser }) {
           {/* Rating CTA */}
           {isComplete && (
             <div style={{ marginTop: '24px', padding: '16px', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(0,177,79,0.2)', textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', marginBottom: '8px' }}>{booking.driverRating ? '⭐' : '🎉'}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                {booking.driverRating
+                  ? <StarIcon size={28} color="#F59E0B" filled />
+                  : <SparklesIcon size={28} color="var(--primary)" />
+                }
+              </div>
               <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--navy)', marginBottom: '6px' }}>Delivery Complete!</div>
               {booking.driverRating ? (
                 <p style={{ fontSize: '13px', color: 'var(--text-2)' }}>You rated your driver {booking.driverRating} star{booking.driverRating !== 1 ? 's' : ''}. Thanks for your feedback!</p>
               ) : (
                 <>
                   <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px' }}>How was your delivery experience?</p>
-                  <button onClick={() => navigate(`/rate/${id}`)} className="btn btn-primary btn-full">
-                    ⭐ Rate Your Driver
+                  <button onClick={() => navigate(`/rate/${id}`)} className="btn btn-primary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <StarIcon size={16} color="white" /> Rate Your Driver
                   </button>
                 </>
               )}
@@ -299,7 +319,7 @@ function TrackingPage({ dbUser }) {
           <div className="card" style={{ padding: '20px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>Package</div>
             {[
-              ['Vehicle',   `${VEHICLE_ICONS[booking.vehicleType] || ''} ${booking.vehicleType}`],
+              ['Vehicle',   booking.vehicleType],
               ['Item',      booking.itemType],
               ['Size',      booking.itemSize],
               ['Weight',    booking.itemWeight ? `${booking.itemWeight} kg` : '—'],
@@ -316,13 +336,16 @@ function TrackingPage({ dbUser }) {
           {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {!isCancelled && !isComplete && (
-              <button onClick={handleShare} className="btn btn-secondary btn-full">
-                {copied ? '✅ Copied!' : '🔗 Share Tracking Info'}
+              <button onClick={handleShare} className="btn btn-secondary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                {copied
+                  ? <><CheckCircleIcon size={16} color="var(--primary)" /> Copied!</>
+                  : <><LinkIcon size={16} /> Share Tracking Info</>
+                }
               </button>
             )}
             {canCancel && (
-              <button onClick={handleCancel} className="btn btn-danger btn-full" disabled={cancelling}>
-                {cancelling ? 'Cancelling…' : '❌ Cancel Booking'}
+              <button onClick={handleCancel} className="btn btn-danger btn-full" disabled={cancelling} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                {cancelling ? 'Cancelling…' : <><XCircleIcon size={16} color="white" /> Cancel Booking</>}
               </button>
             )}
             <button onClick={() => navigate('/book')} className="btn btn-ghost btn-full">← Dashboard</button>

@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { UsersIcon, MotorcycleIcon, PackageIcon, ActivityIcon, XCircleIcon,
+         SearchIcon, ZapIcon, CheckCircleIcon } from '../components/Icons';
 
 const STATUS_CONFIG = {
-  searching:  { label: 'Searching',  badge: 'badge-amber',  icon: '🔍' },
-  accepted:   { label: 'Accepted',   badge: 'badge-blue',   icon: '🛵' },
-  picked_up:  { label: 'Picked Up',  badge: 'badge-purple', icon: '📦' },
-  in_transit: { label: 'In Transit', badge: 'badge-blue',   icon: '🚀' },
-  delivered:  { label: 'Delivered',  badge: 'badge-green',  icon: '✅' },
-  completed:  { label: 'Completed',  badge: 'badge-green',  icon: '✅' },
-  cancelled:  { label: 'Cancelled',  badge: 'badge-red',    icon: '❌' },
+  searching:  { label: 'Searching',  badge: 'badge-amber',  Icon: SearchIcon },
+  accepted:   { label: 'Accepted',   badge: 'badge-blue',   Icon: MotorcycleIcon },
+  picked_up:  { label: 'Picked Up',  badge: 'badge-purple', Icon: PackageIcon },
+  in_transit: { label: 'In Transit', badge: 'badge-blue',   Icon: ZapIcon },
+  delivered:  { label: 'Delivered',  badge: 'badge-green',  Icon: CheckCircleIcon },
+  completed:  { label: 'Completed',  badge: 'badge-green',  Icon: CheckCircleIcon },
+  cancelled:  { label: 'Cancelled',  badge: 'badge-red',    Icon: XCircleIcon },
 };
 
 function AdminDashboard() {
@@ -53,6 +55,14 @@ function AdminDashboard() {
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
+  const STAT_CARDS = [
+    { label: 'Customers',   value: stats.customers, Icon: UsersIcon,      cls: 'green'  },
+    { label: 'Drivers',     value: stats.drivers,   Icon: MotorcycleIcon,  cls: 'blue'   },
+    { label: 'Total Orders',value: stats.total,     Icon: PackageIcon,     cls: 'purple' },
+    { label: 'Active Now',  value: stats.active,    Icon: ActivityIcon,    cls: 'amber'  },
+    { label: 'Cancelled',   value: stats.cancelled, Icon: XCircleIcon,     cls: 'green'  },
+  ];
+
   return (
     <div className="dashboard-container">
       {/* Hero */}
@@ -72,15 +82,11 @@ function AdminDashboard() {
 
       {/* Stats */}
       <div className="stats-grid mb-28">
-        {[
-          { label: 'Customers', value: stats.customers, icon: '👥', cls: 'green' },
-          { label: 'Drivers',   value: stats.drivers,   icon: '🛵', cls: 'blue' },
-          { label: 'Total Orders', value: stats.total,  icon: '📦', cls: 'purple' },
-          { label: 'Active Now',   value: stats.active, icon: '🔴', cls: 'amber' },
-          { label: 'Cancelled',    value: stats.cancelled, icon: '❌', cls: 'green' },
-        ].map(s => (
+        {STAT_CARDS.map(s => (
           <div key={s.label} className={`stat-card ${s.cls}`}>
-            <div className="stat-icon">{s.icon}</div>
+            <div className="stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <s.Icon size={28} />
+            </div>
             <div className="stat-label">{s.label}</div>
             <div className="stat-value">{s.value}</div>
           </div>

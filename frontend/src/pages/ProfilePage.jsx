@@ -4,8 +4,9 @@ import { updateProfile, deleteUser, signOut, reauthenticateWithPopup, GoogleAuth
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, auth, storage } from '../firebase';
 import { useToast } from '../components/Toast';
+import { CameraIcon, EditIcon, CheckIcon, MotorcycleIcon, CarIcon, VanIcon, StarIcon } from '../components/Icons';
 
-const VEHICLE_ICONS = { motorcycle: '🛵', car: '🚗', van: '🚐' };
+const VEHICLE_ICON_MAP = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
 const ROLE_CONFIG = {
   customer: { label: 'Customer', color: '#15803D', bg: '#DCFCE7', dot: '#22C55E' },
   driver:   { label: 'Driver',   color: '#1E40AF', bg: '#DBEAFE', dot: '#3B82F6' },
@@ -160,13 +161,13 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
     ? [
         { v: stats?.total     ?? '—', l: 'Total Orders' },
         { v: stats?.completed ?? '—', l: 'Delivered' },
-        { v: stats?.avg ? `${stats.avg} ★` : '—', l: `Rating (${stats?.ratingCount ?? 0})` },
+        { v: stats?.avg ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>{stats.avg}<StarIcon size={16} color="#F59E0B" filled /></span> : '—', l: `Rating (${stats?.ratingCount ?? 0})` },
       ]
     : [
         { v: stats?.total     ?? '—', l: 'Total Bookings' },
         { v: stats?.completed ?? '—', l: 'Completed' },
         { v: stats?.cancelled ?? '—', l: 'Cancelled' },
-        { v: stats?.avg ? `${stats.avg} ★` : '—', l: 'Avg Rating' },
+        { v: stats?.avg ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>{stats.avg}<StarIcon size={16} color="#F59E0B" filled /></span> : '—', l: 'Avg Rating' },
       ];
 
   return (
@@ -198,9 +199,9 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
             </div>
             <div
               onClick={() => !photoUploading && fileInputRef.current?.click()}
-              style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: '50%', background: photoUploading ? '#aaa' : 'var(--primary)', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)', fontSize: '12px' }}
+              style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: '50%', background: photoUploading ? '#aaa' : 'var(--primary)', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}
             >
-              {photoUploading ? '⏳' : '📷'}
+              <CameraIcon size={13} color="white" />
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
           </div>
@@ -214,10 +215,14 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
           <div style={{ paddingTop: '40px', flexShrink: 0, display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
             {isEditing
               ? <>
-                  <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm">{saving ? 'Saving…' : '✓ Save Changes'}</button>
+                  <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    {saving ? 'Saving…' : <><CheckIcon size={13} color="white" /> Save Changes</>}
+                  </button>
                   <button onClick={handleCancel} className="btn btn-secondary btn-sm">Cancel</button>
                 </>
-              : <button onClick={() => setIsEditing(true)} className="btn btn-secondary btn-sm">✏️ Edit Profile</button>
+              : <button onClick={() => setIsEditing(true)} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <EditIcon size={13} /> Edit Profile
+                </button>
             }
             <button
               onClick={() => setShowSignOutConfirm(true)}
@@ -269,7 +274,10 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
             {role === 'driver' && dbUser?.vehicle_type && <>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Vehicle Type</label>
-                <div style={readField}>{VEHICLE_ICONS[dbUser.vehicle_type]} {dbUser.vehicle_type?.charAt(0).toUpperCase() + dbUser.vehicle_type?.slice(1)}</div>
+                <div style={{ ...readField, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {VEHICLE_ICON_MAP[dbUser.vehicle_type] && (() => { const Icon = VEHICLE_ICON_MAP[dbUser.vehicle_type]; return <Icon size={15} color="var(--text-2)" />; })()}
+                  {dbUser.vehicle_type?.charAt(0).toUpperCase() + dbUser.vehicle_type?.slice(1)}
+                </div>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Plate Number</label>

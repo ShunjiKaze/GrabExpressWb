@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import Logo from './Logo';
 import { useTheme } from '../context/ThemeContext';
+import { MenuIcon, XIcon } from './Icons';
 
 function NavAvatar({ photoURL, name, isHome }) {
   const [imgError, setImgError] = useState(false);
@@ -190,7 +191,7 @@ function Navbar({ user, dbUser }) {
           className="mobile-menu-btn"
           aria-label="Toggle menu"
         >
-          {menuOpen ? '✕' : '☰'}
+          {menuOpen ? <XIcon size={20} color={isHome ? (dark ? 'white' : '#111827') : 'var(--text)'} /> : <MenuIcon size={20} color={isHome ? (dark ? 'white' : '#111827') : 'var(--text)'} />}
         </button>
       </div>
 

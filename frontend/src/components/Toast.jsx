@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { CheckCircleIcon, XCircleIcon, InfoIcon, AlertTriangleIcon } from './Icons';
 
 const ToastContext = createContext(null);
 
@@ -13,7 +14,12 @@ export function ToastProvider({ children }) {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration);
   }, []);
 
-  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  const icons = {
+    success: <CheckCircleIcon size={18} />,
+    error:   <XCircleIcon size={18} />,
+    info:    <InfoIcon size={18} />,
+    warning: <AlertTriangleIcon size={18} />,
+  };
 
   return (
     <ToastContext.Provider value={show}>

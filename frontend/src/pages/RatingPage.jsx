@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
+import { StarIcon, SparklesIcon, CheckIcon } from '../components/Icons';
 
 const QUICK_TAGS = ['Great attitude!', 'Very punctual', 'Safe driving', 'Communicated well', 'Handle with care', 'Professional'];
 
@@ -17,9 +18,9 @@ function StarRating({ value, onChange }) {
           onClick={() => onChange(n)}
           onMouseEnter={() => setHovered(n)}
           onMouseLeave={() => setHovered(0)}
-          style={{ fontSize: '40px' }}
+          style={{ fontSize: '40px', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
         >
-          ⭐
+          <StarIcon size={38} color="#F59E0B" filled={n <= display} strokeWidth={1.5} />
         </button>
       ))}
     </div>
@@ -62,7 +63,9 @@ function RatingPage({ dbUser }) {
     return (
       <div className="dashboard-container" style={{ maxWidth: '480px', paddingTop: '60px', textAlign: 'center' }}>
         <div className="card" style={{ padding: '48px 32px' }}>
-          <div style={{ fontSize: '72px', marginBottom: '20px' }}>🎉</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <SparklesIcon size={72} color="var(--primary)" />
+          </div>
           <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--navy)', marginBottom: '12px' }}>Thank You!</h2>
           <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
             Your feedback helps make GrabExpress better for everyone. Your {rating}-star rating has been submitted.
@@ -77,7 +80,9 @@ function RatingPage({ dbUser }) {
     <div className="dashboard-container" style={{ maxWidth: '520px', paddingTop: '40px' }}>
       <div className="card" style={{ padding: '40px 32px' }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '52px', marginBottom: '12px' }}>⭐</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+            <StarIcon size={52} color="#F59E0B" filled />
+          </div>
           <h2 style={{ fontSize: '22px', fontWeight: 900, color: 'var(--navy)', marginBottom: '8px' }}>
             {dbUser?.role === 'driver' ? 'Rate the Customer' : 'Rate Your Driver'}
           </h2>
@@ -111,9 +116,11 @@ function RatingPage({ dbUser }) {
                     background: tags.includes(tag) ? 'var(--primary-light)' : 'var(--surface)',
                     color: tags.includes(tag) ? 'var(--primary)' : 'var(--text-2)',
                     transition: 'var(--transition)',
+                    display: 'flex', alignItems: 'center', gap: '5px',
                   }}
                 >
-                  {tags.includes(tag) ? '✓ ' : ''}{tag}
+                  {tags.includes(tag) && <CheckIcon size={12} color="var(--primary)" />}
+                  {tag}
                 </div>
               ))}
             </div>

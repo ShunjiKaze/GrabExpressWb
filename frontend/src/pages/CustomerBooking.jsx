@@ -1,5 +1,6 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GlobeIcon } from '../components/Icons';
 
 function CustomerBooking({ dbUser }) {
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ function CustomerBooking({ dbUser }) {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '15px', background: '#F8FAFC', borderRadius: '8px' }}>
               <span style={{ fontWeight: 600, color: '#64748B' }}>Estimated Price:</span>
-              <span style={{ fontSize: '24px', fontWeight: 800, color: '#00B14F' }}>₱{estimatedPrice}</span>
+              <span style={{ fontSize: '24px', fontWeight: 800, color: '#00B14F' }}>â‚±{estimatedPrice}</span>
             </div>
 
             {message && (
@@ -115,7 +116,7 @@ function CustomerBooking({ dbUser }) {
         {/* Map Placeholder */}
         <div style={{ flex: 1, minWidth: '300px', background: '#E2E8F0', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
           <div style={{ textAlign: 'center', color: '#64748B' }}>
-            <span style={{ fontSize: '40px' }}>🗺️</span>
+            <GlobeIcon size={48} color="#94A3B8" />
             <p style={{ marginTop: '10px' }}>Google Maps Integration<br/>(Coming Soon)</p>
           </div>
         </div>
@@ -125,3 +126,4 @@ function CustomerBooking({ dbUser }) {
 }
 
 export default CustomerBooking;
+

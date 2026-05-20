@@ -4,19 +4,25 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useBooking, calcTotal } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
+import { MotorcycleIcon, CarIcon, VanIcon, WalletIcon, CreditCardIcon, BanknoteIcon, HandshakeIcon } from '../../components/Icons';
 
 const STEPS = ['Address', 'Details', 'Item', 'Review'];
 
 const VEHICLE_BASE = { motorcycle: 60, car: 120, van: 250 };
 const SIZE_ADD     = { S: 0, M: 20, L: 50, XL: 100 };
 const TIER_ADD     = { Basic: 0, Standard: 50, Premium: 100 };
-const VEHICLE_ICONS = { motorcycle: '🛵', car: '🚗', van: '🚐' };
+
+function VehicleIcon({ type, size = 20, color = 'currentColor' }) {
+  const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
+  const Icon = icons[type] || MotorcycleIcon;
+  return <Icon size={size} color={color} />;
+}
 
 const PAYMENT_OPTIONS = [
-  { id: 'grabpay',      icon: '💚', title: 'GrabPay Wallet',   desc: 'Pay with your GrabPay balance' },
-  { id: 'card',         icon: '💳', title: 'Credit / Debit Card', desc: 'Visa, Mastercard, etc.' },
-  { id: 'cash_sender',  icon: '💵', title: 'Cash by Sender',    desc: 'You pay the driver on pickup' },
-  { id: 'cash_recipient', icon: '🤝', title: 'Cash by Recipient', desc: 'Recipient pays on delivery' },
+  { id: 'grabpay',        Icon: WalletIcon,      title: 'GrabPay Wallet',      desc: 'Pay with your GrabPay balance' },
+  { id: 'card',           Icon: CreditCardIcon,  title: 'Credit / Debit Card', desc: 'Visa, Mastercard, etc.' },
+  { id: 'cash_sender',    Icon: BanknoteIcon,    title: 'Cash by Sender',      desc: 'You pay the driver on pickup' },
+  { id: 'cash_recipient', Icon: HandshakeIcon,   title: 'Cash by Recipient',   desc: 'Recipient pays on delivery' },
 ];
 
 function ReviewSection({ title, children }) {
@@ -133,7 +139,7 @@ function ReviewOrder({ dbUser }) {
         {/* Options */}
         <ReviewSection title="Delivery Options">
           <DetailRow label="Delivery Type" value={bookingData.deliveryType === 'instant' ? 'Instant' : bookingData.deliveryType} />
-          <DetailRow label="Vehicle" value={`${VEHICLE_ICONS[bookingData.vehicleType]} ${bookingData.vehicleType.charAt(0).toUpperCase() + bookingData.vehicleType.slice(1)}`} />
+          <DetailRow label="Vehicle" value={bookingData.vehicleType.charAt(0).toUpperCase() + bookingData.vehicleType.slice(1)} />
           <DetailRow label="Item Size" value={bookingData.itemSize} />
           <DetailRow label="Item Type" value={bookingData.itemType} />
           <DetailRow label="Weight" value={`${bookingData.itemWeight} kg`} />
@@ -155,7 +161,9 @@ function ReviewOrder({ dbUser }) {
                   borderRadius: 'var(--radius-md)', cursor: 'pointer', transition: 'var(--transition)',
                 }}
               >
-                <span style={{ fontSize: '22px' }}>{p.icon}</span>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: '50%', background: bookingData.paymentMethod === p.id ? 'var(--primary)' : 'var(--surface-2)' }}>
+                  <p.Icon size={18} color={bookingData.paymentMethod === p.id ? 'white' : 'var(--text-2)'} />
+                </span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: '14px' }}>{p.title}</div>
                   <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>{p.desc}</div>

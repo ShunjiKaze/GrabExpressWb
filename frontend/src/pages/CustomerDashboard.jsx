@@ -3,15 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import riderIllustration from '../assets/rider-illustration.jpg';
+import { SearchIcon, MotorcycleIcon, PackageIcon, ZapIcon, CheckCircleIcon, XCircleIcon,
+         MapPinIcon, FlagIcon, StarIcon } from '../components/Icons';
 
 const STATUS_CONFIG = {
-  searching:  { label: 'Searching Driver', badge: 'badge-amber',  icon: '🔍' },
-  accepted:   { label: 'Driver Assigned',  badge: 'badge-blue',   icon: '🛵' },
-  picked_up:  { label: 'Picked Up',        badge: 'badge-purple', icon: '📦' },
-  in_transit: { label: 'In Transit',       badge: 'badge-blue',   icon: '🚀' },
-  delivered:  { label: 'Delivered',        badge: 'badge-green',  icon: '✅' },
-  completed:  { label: 'Completed',        badge: 'badge-green',  icon: '✅' },
-  cancelled:  { label: 'Cancelled',        badge: 'badge-red',    icon: '❌' },
+  searching:  { label: 'Searching Driver', badge: 'badge-amber',  Icon: SearchIcon },
+  accepted:   { label: 'Driver Assigned',  badge: 'badge-blue',   Icon: MotorcycleIcon },
+  picked_up:  { label: 'Picked Up',        badge: 'badge-purple', Icon: PackageIcon },
+  in_transit: { label: 'In Transit',       badge: 'badge-blue',   Icon: ZapIcon },
+  delivered:  { label: 'Delivered',        badge: 'badge-green',  Icon: CheckCircleIcon },
+  completed:  { label: 'Completed',        badge: 'badge-green',  Icon: CheckCircleIcon },
+  cancelled:  { label: 'Cancelled',        badge: 'badge-red',    Icon: XCircleIcon },
 };
 
 function CustomerDashboard({ dbUser }) {
@@ -44,7 +46,7 @@ function CustomerDashboard({ dbUser }) {
   };
 
   const BookingCard = ({ b }) => {
-    const cfg = STATUS_CONFIG[b.status] || { label: b.status, badge: 'badge-gray', icon: '📦' };
+    const cfg = STATUS_CONFIG[b.status] || { label: b.status, badge: 'badge-gray', Icon: PackageIcon };
     const isActive    = !['delivered', 'completed', 'cancelled'].includes(b.status);
     const isCancelled = b.status === 'cancelled';
     const isComplete  = ['delivered', 'completed'].includes(b.status);
@@ -56,32 +58,35 @@ function CustomerDashboard({ dbUser }) {
         style={{ cursor: isCancelled ? 'default' : 'pointer' }}
         onClick={() => !isCancelled && navigate(`/book/tracking/${b.id}`)}
       >
-        <div className="history-icon" style={{ background: isActive ? 'var(--primary-light)' : isCancelled ? 'var(--red-light)' : 'var(--surface-2)' }}>
-          {cfg.icon}
+        <div className="history-icon" style={{
+          background: isActive ? 'var(--primary-light)' : isCancelled ? 'var(--red-light)' : 'var(--surface-2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <cfg.Icon size={22} color={isActive ? 'var(--primary)' : isCancelled ? 'var(--red)' : 'var(--text-3)'} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center justify-between mb-4">
             <span className={`badge ${cfg.badge}`}>{cfg.label}</span>
             <span className="text-sm text-muted">{formatDate(b.createdAt)}</span>
           </div>
-          <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            📍 {b.pickupAddress}
+          <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <MapPinIcon size={13} color="var(--primary)" style={{ flexShrink: 0 }} /> {b.pickupAddress}
           </div>
-          <div style={{ fontSize: '13px', color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            🏁 {b.deliveryAddress}
+          <div style={{ fontSize: '13px', color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <FlagIcon size={13} color="var(--red)" style={{ flexShrink: 0 }} /> {b.deliveryAddress}
           </div>
           <div className="flex items-center gap-12 mt-8">
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary)' }}>₱{b.totalAmount}</span>
             <span className="badge badge-gray">{b.vehicleType}</span>
             {b.itemType && <span className="badge badge-gray">{b.itemType}</span>}
             {needsRating && (
-              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--amber)', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '12px', padding: '2px 10px' }}>
-                ⭐ Rate Driver
+              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--amber)', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '12px', padding: '2px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <StarIcon size={11} color="var(--amber)" filled /> Rate Driver
               </span>
             )}
             {isComplete && b.driverRating && (
-              <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-                {'⭐'.repeat(b.driverRating)}
+              <span style={{ fontSize: '12px', color: 'var(--amber)', display: 'flex', gap: '1px' }}>
+                {Array.from({ length: b.driverRating }, (_, i) => <StarIcon key={i} size={12} color="#F59E0B" filled />)}
               </span>
             )}
           </div>
@@ -103,7 +108,7 @@ function CustomerDashboard({ dbUser }) {
       <div className="flex items-center justify-between mb-24">
         <div>
           <h1 className="page-title">My Deliveries</h1>
-          <p className="page-subtitle">Hi {dbUser.full_name?.split(' ')[0] || 'there'} 👋 — manage and track your packages</p>
+          <p className="page-subtitle">Hi {dbUser.full_name?.split(' ')[0] || 'there'} — manage and track your packages</p>
         </div>
         <Link to="/book/new/address" className="btn btn-primary btn-lg">
           + New Booking
@@ -113,8 +118,9 @@ function CustomerDashboard({ dbUser }) {
       {/* Active Orders */}
       {active.length > 0 && (
         <div className="mb-24">
-          <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--navy)', marginBottom: '12px' }}>
-            🔴 Active Orders ({active.length})
+          <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--navy)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red)', display: 'inline-block' }} />
+            Active Orders ({active.length})
           </h2>
           <div className="card" style={{ overflow: 'hidden' }}>
             {active.map(b => <BookingCard key={b.id} b={b} />)}
@@ -143,7 +149,9 @@ function CustomerDashboard({ dbUser }) {
               <div style={{ width: 180, height: 180, borderRadius: '50%', background: 'linear-gradient(135deg, #fce4ec, #f8bbd0)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: '0 0 0 8px rgba(252,228,236,0.5), 0 16px 48px rgba(236,72,153,0.15)' }}>
                 <img src={riderIllustration} alt="Delivery rider" style={{ width: '90%', height: '90%', objectFit: 'contain' }} />
               </div>
-              <div style={{ position: 'absolute', bottom: 4, right: 4, width: 36, height: 36, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', boxShadow: '0 4px 12px rgba(0,177,79,0.4), 0 0 0 3px white' }}>🛵</div>
+              <div style={{ position: 'absolute', bottom: 4, right: 4, width: 36, height: 36, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,177,79,0.4), 0 0 0 3px white' }}>
+                <MotorcycleIcon size={18} color="white" />
+              </div>
             </div>
             <div className="empty-state-title">No deliveries yet</div>
             <div className="empty-state-desc">Book your first delivery and we'll match you with a nearby rider in minutes!</div>
@@ -155,8 +163,8 @@ function CustomerDashboard({ dbUser }) {
           {/* Past Orders */}
           {past.length > 0 && (
             <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--navy)', marginBottom: '12px' }}>
-                📋 Past Orders ({past.length})
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--navy)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <PackageIcon size={16} color="var(--text-2)" /> Past Orders ({past.length})
               </h2>
               <div className="card" style={{ overflow: 'hidden' }}>
                 {past.map(b => <BookingCard key={b.id} b={b} />)}
