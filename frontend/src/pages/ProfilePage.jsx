@@ -287,15 +287,17 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
           </div>
         </div>
 
-        {/* Stats strip */}
-        <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
-          {statItems.map((s, i, arr) => (
-            <div key={s.l} style={{ flex: 1, padding: '20px 16px', textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--navy)', lineHeight: 1 }}>{s.v}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 600, marginTop: '6px' }}>{s.l}</div>
-            </div>
-          ))}
-        </div>
+        {/* Stats strip — only for customer and driver */}
+        {role !== 'admin' && (
+          <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
+            {statItems.map((s, i, arr) => (
+              <div key={s.l} style={{ flex: 1, padding: '20px 16px', textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--navy)', lineHeight: 1 }}>{s.v}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 600, marginTop: '6px' }}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Sign Out Confirmation Modal ── */}
