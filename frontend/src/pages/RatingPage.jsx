@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { StarIcon, SparklesIcon, CheckIcon } from '../components/Icons';
+import { StarIcon, SparklesIcon, CheckIcon, FileTextIcon } from '../components/Icons';
 
 const QUICK_TAGS = ['Great attitude!', 'Very punctual', 'Safe driving', 'Communicated well', 'Handle with care', 'Professional'];
 
@@ -70,7 +70,10 @@ function RatingPage({ dbUser }) {
           <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
             Your feedback helps make GrabExpress better for everyone. Your {rating}-star rating has been submitted.
           </p>
-          <button onClick={() => navigate(dbUser?.role === 'driver' ? '/driver/deliveries' : '/book')} className="btn btn-primary btn-full btn-lg">Back to Dashboard</button>
+          <button onClick={() => navigate(dbUser?.role === 'driver' ? '/driver/deliveries' : '/book')} className="btn btn-primary btn-full btn-lg" style={{ marginBottom: '10px' }}>Back to Dashboard</button>
+          <button onClick={() => navigate(`/receipt/${id}`)} className="btn btn-secondary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <FileTextIcon size={16} /> View Receipt
+          </button>
         </div>
       </div>
     );

@@ -542,3 +542,9 @@ body { font-weight: 450; }
 
 [data-theme="dark"] .section-divider { background: rgba(255,255,255,0.08); }
 [data-theme="dark"] .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.06) 75%); }
+
+@media print {
+  .navbar-custom, .receipt-no-print { display: none !important; }
+  .dashboard-container { padding: 0 !important; }
+  body { background: white !important; }
+}

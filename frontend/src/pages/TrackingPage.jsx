@@ -4,7 +4,7 @@ import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { SearchIcon, MotorcycleIcon, CarIcon, VanIcon, PackageIcon, ZapIcon,
-         CheckCircleIcon, XCircleIcon, PhoneIcon, StarIcon, LinkIcon, ClockIcon, SparklesIcon } from '../components/Icons';
+         CheckCircleIcon, XCircleIcon, PhoneIcon, StarIcon, LinkIcon, ClockIcon, SparklesIcon, FileTextIcon } from '../components/Icons';
 
 function VehicleIcon({ type, size = 22, color = 'rgba(255,255,255,0.8)' }) {
   const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
@@ -266,15 +266,18 @@ function TrackingPage({ dbUser }) {
               </div>
               <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--navy)', marginBottom: '6px' }}>Delivery Complete!</div>
               {booking.driverRating ? (
-                <p style={{ fontSize: '13px', color: 'var(--text-2)' }}>You rated your driver {booking.driverRating} star{booking.driverRating !== 1 ? 's' : ''}. Thanks for your feedback!</p>
+                <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '12px' }}>You rated your driver {booking.driverRating} star{booking.driverRating !== 1 ? 's' : ''}. Thanks for your feedback!</p>
               ) : (
                 <>
                   <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px' }}>How was your delivery experience?</p>
-                  <button onClick={() => navigate(`/rate/${id}`)} className="btn btn-primary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <button onClick={() => navigate(`/rate/${id}`)} className="btn btn-primary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
                     <StarIcon size={16} color="white" /> Rate Your Driver
                   </button>
                 </>
               )}
+              <button onClick={() => navigate(`/receipt/${id}`)} className="btn btn-secondary btn-full receipt-no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <FileTextIcon size={16} /> View Receipt
+              </button>
             </div>
           )}
         </div>

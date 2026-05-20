@@ -19,6 +19,7 @@ import ItemDetailsStep   from './pages/booking/ItemDetailsStep';
 import ReviewOrder       from './pages/booking/ReviewOrder';
 import TrackingPage      from './pages/TrackingPage';
 import RatingPage        from './pages/RatingPage';
+import ReceiptPage       from './pages/ReceiptPage';
 import DriverDeliveries  from './pages/DriverDeliveries';
 import DriverActiveOrder from './pages/DriverActiveOrder';
 import OrderHistory      from './pages/OrderHistory';
@@ -156,6 +157,11 @@ function App() {
             {/* Rating */}
             <Route path="/rate/:id" element={
               <ProtectedRoute allow={isLoggedIn}><RatingPage dbUser={dbUser} /></ProtectedRoute>
+            } />
+
+            {/* Receipt */}
+            <Route path="/receipt/:id" element={
+              <ProtectedRoute allow={isLoggedIn}><ReceiptPage dbUser={dbUser} /></ProtectedRoute>
             } />
 
             {/* Driver */}

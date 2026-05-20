@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { SearchIcon, MotorcycleIcon, CarIcon, VanIcon, PackageIcon, ZapIcon,
          CheckCircleIcon, XCircleIcon, MapPinIcon, FlagIcon, StarIcon,
-         ClipboardIcon, ChevronUpIcon, ChevronDownIcon, CreditCardIcon, BanknoteIcon } from '../components/Icons';
+         ClipboardIcon, ChevronUpIcon, ChevronDownIcon, CreditCardIcon, BanknoteIcon, FileTextIcon } from '../components/Icons';
 
 function VehicleIcon({ type, size = 20, color = 'currentColor' }) {
   const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
@@ -250,6 +250,11 @@ function OrderHistory({ dbUser }) {
                           {Array.from({ length: o.driverRating }, (_, i) => <StarIcon key={i} size={14} color="#F59E0B" filled />)}
                         </span>
                       </div>
+                    )}
+                    {['delivered', 'completed', 'cancelled'].includes(o.status) && (
+                      <button onClick={() => navigate(`/receipt/${o.id}`)} className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
+                        <FileTextIcon size={14} color="var(--text-2)" /> View Receipt
+                      </button>
                     )}
                   </div>
                 )}

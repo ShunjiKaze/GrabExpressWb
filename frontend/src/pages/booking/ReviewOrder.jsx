@@ -2,15 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { useBooking, calcTotal } from '../../context/BookingContext';
+import { useBooking, calcTotal, VEHICLE_BASE, SIZE_ADD, TIER_ADD } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
 import { MotorcycleIcon, CarIcon, VanIcon, WalletIcon, CreditCardIcon, BanknoteIcon, HandshakeIcon } from '../../components/Icons';
 
 const STEPS = ['Address', 'Details', 'Item', 'Review'];
 
-const VEHICLE_BASE = { motorcycle: 60, car: 120, van: 250 };
-const SIZE_ADD     = { S: 0, M: 20, L: 50, XL: 100 };
-const TIER_ADD     = { Basic: 0, Standard: 50, Premium: 100 };
 
 function VehicleIcon({ type, size = 20, color = 'currentColor' }) {
   const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };

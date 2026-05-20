@@ -71,7 +71,6 @@ function AdminDashboard() {
           <div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Admin Panel</div>
             <h1 style={{ fontSize: '28px', fontWeight: 900, marginTop: '6px' }}>GrabExpress Dashboard</h1>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', marginTop: '4px' }}>Real-time data via Firestore</div>
           </div>
           <div style={{ background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: 'var(--radius-md)', padding: '16px 24px', textAlign: 'center' }}>
             <div style={{ fontSize: '32px', fontWeight: 900, color: '#4ADE80' }}>₱{stats.revenue.toLocaleString()}</div>

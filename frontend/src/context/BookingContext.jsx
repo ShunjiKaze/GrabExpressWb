@@ -32,9 +32,9 @@ const INITIAL = {
   paymentMethod: 'cash_sender',
 };
 
-const VEHICLE_BASE = { motorcycle: 60, car: 120, van: 250 };
-const SIZE_ADD     = { S: 0, M: 20, L: 50, XL: 100 };
-const TIER_ADD     = { Basic: 0, Standard: 50, Premium: 100 };
+export const VEHICLE_BASE = { motorcycle: 60, car: 120, van: 250 };
+export const SIZE_ADD     = { S: 0, M: 20, L: 50, XL: 100 };
+export const TIER_ADD     = { Basic: 0, Standard: 50, Premium: 100 };
 
 export function calcTotal(data) {
   const base = VEHICLE_BASE[data.vehicleType] ?? 60;
