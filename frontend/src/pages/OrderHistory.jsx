@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,6 +19,7 @@ function OrderHistory({ dbUser }) {
   const navigate = useNavigate();
   const [orders, setOrders]     = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
   const [filter, setFilter]     = useState('all');
   const [search, setSearch]     = useState('');
   const [expanded, setExpanded] = useState(null);
@@ -27,17 +28,25 @@ function OrderHistory({ dbUser }) {
     const field = dbUser.role === 'driver' ? 'driverId' : 'customerId';
     const q = query(
       collection(db, 'bookings'),
-      where(field, '==', dbUser.user_id),
-      orderBy('createdAt', 'desc')
+      where(field, '==', dbUser.user_id)
     );
     const unsub = onSnapshot(
       q,
       snap => {
-        setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const docs = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => {
+            const ta = a.createdAt?.toMillis?.() ?? 0;
+            const tb = b.createdAt?.toMillis?.() ?? 0;
+            return tb - ta;
+          });
+        setOrders(docs);
+        setError(null);
         setLoading(false);
       },
       err => {
         console.error('OrderHistory query error:', err);
+        setError('Failed to load orders. Please refresh the page.');
         setLoading(false);
       }
     );
@@ -111,6 +120,13 @@ function OrderHistory({ dbUser }) {
           ))}
         </div>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="card mb-16" style={{ padding: '16px 20px', background: 'var(--red-light)', border: '1px solid var(--red)', color: 'var(--red)', fontWeight: 600, fontSize: '14px' }}>
+          {error}
+        </div>
+      )}
 
       {/* List */}
       {loading ? (

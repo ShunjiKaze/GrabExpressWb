@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeCtx = createContext(null);
 
@@ -7,6 +7,10 @@ export function ThemeProvider({ children }) {
     const saved = localStorage.getItem('ge-theme');
     return saved ? saved === 'dark' : true;
   });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  }, [dark]);
 
   const toggle = () => setDark(d => {
     const next = !d;

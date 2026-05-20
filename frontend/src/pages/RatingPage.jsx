@@ -132,7 +132,7 @@ function RatingPage({ dbUser }) {
         </div>
 
         <button onClick={handleSubmit} className="btn btn-primary btn-full btn-lg" disabled={loading || !rating}>
-          {loading ? '⏳ Submitting…' : '✅ Submit Rating'}
+          {loading ? 'Submitting…' : 'Submit Rating'}
         </button>
         <button onClick={() => navigate(dbUser?.role === 'driver' ? '/driver/deliveries' : '/book')} className="btn btn-ghost btn-full mt-8">Skip for now</button>
       </div>

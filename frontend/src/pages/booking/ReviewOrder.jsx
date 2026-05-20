@@ -102,7 +102,7 @@ function ReviewOrder({ dbUser }) {
         <p className="text-sm text-muted mb-24">Double-check everything before booking. Once booked, a driver will be assigned.</p>
 
         {/* Route */}
-        <ReviewSection title="📍 Route">
+        <ReviewSection title="Route">
           <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0, marginTop: '3px' }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0 }} />
@@ -118,12 +118,12 @@ function ReviewOrder({ dbUser }) {
 
         {/* Sender & Recipient */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-          <ReviewSection title="📤 Sender">
+          <ReviewSection title="Sender">
             <DetailRow label="Name" value={bookingData.senderName} />
             <DetailRow label="Phone" value={bookingData.senderPhone} />
             {bookingData.senderFloor && <DetailRow label="Floor/Unit" value={bookingData.senderFloor} />}
           </ReviewSection>
-          <ReviewSection title="📥 Recipient">
+          <ReviewSection title="Recipient">
             <DetailRow label="Name" value={bookingData.recipientName} />
             <DetailRow label="Phone" value={bookingData.recipientPhone} />
             {bookingData.recipientFloor && <DetailRow label="Floor/Unit" value={bookingData.recipientFloor} />}
@@ -131,8 +131,8 @@ function ReviewOrder({ dbUser }) {
         </div>
 
         {/* Options */}
-        <ReviewSection title="🚀 Delivery Options">
-          <DetailRow label="Delivery Type" value={bookingData.deliveryType === 'instant' ? '⚡ Instant' : bookingData.deliveryType} />
+        <ReviewSection title="Delivery Options">
+          <DetailRow label="Delivery Type" value={bookingData.deliveryType === 'instant' ? 'Instant' : bookingData.deliveryType} />
           <DetailRow label="Vehicle" value={`${VEHICLE_ICONS[bookingData.vehicleType]} ${bookingData.vehicleType.charAt(0).toUpperCase() + bookingData.vehicleType.slice(1)}`} />
           <DetailRow label="Item Size" value={bookingData.itemSize} />
           <DetailRow label="Item Type" value={bookingData.itemType} />
@@ -142,7 +142,7 @@ function ReviewOrder({ dbUser }) {
 
         {/* Payment Selection */}
         <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>💳 Payment Method</div>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>Payment Method</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {PAYMENT_OPTIONS.map(p => (
               <div
@@ -190,7 +190,7 @@ function ReviewOrder({ dbUser }) {
         <div className="flex gap-12">
           <button onClick={() => navigate('/book/new/items')} className="btn btn-secondary" style={{ flex: 1 }} disabled={loading}>← Back</button>
           <button onClick={handleBook} className="btn btn-primary btn-lg" style={{ flex: 2 }} disabled={loading}>
-            {loading ? '⏳ Booking...' : '🚀 Book Delivery'}
+            {loading ? 'Booking...' : 'Book Delivery'}
           </button>
         </div>
 

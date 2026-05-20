@@ -191,7 +191,7 @@ function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={() => setStep(1)} className="btn btn-secondary" style={{ flex: 1 }}>← Back</button>
                 <button onClick={handleSubmit} className="btn btn-primary" style={{ flex: 2 }} disabled={loading}>
-                  {loading ? '⏳ Registering…' : '🚀 Register as Driver'}
+                  {loading ? 'Registering…' : 'Register as Driver'}
                 </button>
               </div>
             </>

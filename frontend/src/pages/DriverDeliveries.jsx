@@ -158,7 +158,7 @@ function DriverDeliveries({ dbUser }) {
                   className="btn btn-primary"
                   style={{ whiteSpace: 'nowrap' }}
                 >
-                  {accepting === d.id ? '⏳ Accepting…' : '✅ Accept Order'}
+                  {accepting === d.id ? 'Accepting…' : 'Accept Order'}
                 </button>
               </div>
             </div>

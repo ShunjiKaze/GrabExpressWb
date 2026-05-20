@@ -77,10 +77,10 @@ function Home({ user, dbUser }) {
             </p>
 
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '52px' }}>
-              {!user && <Link to="/login" className="btn btn-primary btn-lg">🚀 Get Started — Sign In Free</Link>}
-              {user && dbUser?.role === 'customer' && <Link to="/book" className="btn btn-primary btn-lg">📦 Book a Delivery Now</Link>}
-              {user && dbUser?.role === 'driver'   && <Link to="/driver/deliveries" className="btn btn-primary btn-lg">🛵 Find Available Orders</Link>}
-              {user && dbUser?.role === 'admin'    && <Link to="/admin/dashboard" className="btn btn-primary btn-lg">📊 Go to Dashboard</Link>}
+              {!user && <Link to="/login" className="btn btn-primary btn-lg">Get Started — Sign In Free</Link>}
+              {user && dbUser?.role === 'customer' && <Link to="/book" className="btn btn-primary btn-lg">Book a Delivery Now</Link>}
+              {user && dbUser?.role === 'driver'   && <Link to="/driver/deliveries" className="btn btn-primary btn-lg">Find Available Orders</Link>}
+              {user && dbUser?.role === 'admin'    && <Link to="/admin/dashboard" className="btn btn-primary btn-lg">Go to Dashboard</Link>}
               <a href="#how-it-works" className="btn btn-lg" style={{ background: t.howBtn.bg, color: t.howBtn.color, border: t.howBtn.border, backdropFilter: 'blur(6px)' }}>
                 How It Works ↓
               </a>
@@ -267,7 +267,7 @@ function Home({ user, dbUser }) {
 
             {!user && <button onClick={handleLogin} className="btn btn-primary btn-lg">Sign In to Register as Driver</button>}
             {user && dbUser?.role === 'customer' && (
-              <button onClick={() => setShowDriverModal(true)} className="btn btn-primary btn-lg">🛵 Become a Driver Now</button>
+              <button onClick={() => setShowDriverModal(true)} className="btn btn-primary btn-lg">Become a Driver Now</button>
             )}
             {user && dbUser?.role === 'driver' && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: t.alreadyDriverBg, border: `1px solid ${t.alreadyDriverBorder}`, borderRadius: '14px', padding: '13px 22px', color: t.alreadyDriverText, fontWeight: 700, fontSize: '14px' }}>

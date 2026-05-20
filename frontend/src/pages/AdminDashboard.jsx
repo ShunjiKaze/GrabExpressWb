@@ -89,7 +89,7 @@ function AdminDashboard() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '0' }}>
-        {[['overview','📊 Overview'],['bookings','📦 All Bookings'],['users','👥 Users']].map(([val, label]) => (
+        {[['overview','Overview'],['bookings','All Bookings'],['users','Users']].map(([val, label]) => (
           <button
             key={val}
             onClick={() => setTab(val)}

@@ -44,6 +44,24 @@ function Navbar({ user, dbUser }) {
   const ROLE_BADGE = isHome ? ROLE_BADGE_DARK : ROLE_BADGE_LIGHT;
 
   const isPublicPage = ['/', '/about', '/faq', '/contact'].includes(location.pathname);
+  const MoonIcon = ({ color }) => (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill={color} style={{ display: 'block', flexShrink: 0 }}>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
+  const SunIcon = ({ color }) => (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" style={{ display: 'block', flexShrink: 0 }}>
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1"  x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
 
   const navStyle = isHome ? {
     background: dark ? 'rgba(10,18,35,0.78)' : 'rgba(244,247,244,0.92)',
@@ -98,7 +116,7 @@ function Navbar({ user, dbUser }) {
     ? (dark ? 'rgba(255,255,255,0.7)' : 'rgba(17,24,39,0.65)')
     : 'var(--text-2)';
 
-  const ThemeToggle = ({ mobile }) => isPublicPage ? (
+  const ThemeToggle = ({ mobile }) => (
     <button
       onClick={toggle}
       title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -116,25 +134,26 @@ function Navbar({ user, dbUser }) {
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        fontSize: '16px',
-        color: toggleBtnColor,
         flexShrink: 0,
         transition: 'background 0.2s',
         gap: mobile ? '8px' : 0,
         padding: mobile ? '0 14px' : 0,
       }}
     >
-      {dark ? '☀️' : '🌙'}
-      {mobile && <span style={{ fontSize: '13px', fontWeight: 600 }}>{dark ? 'Light Mode' : 'Dark Mode'}</span>}
+      {dark
+        ? <SunIcon color={isHome ? 'rgba(255,255,255,0.75)' : '#94a3b8'} />
+        : <MoonIcon color={isHome ? 'rgba(17,24,39,0.6)' : '#475569'} />
+      }
+      {mobile && <span style={{ fontSize: '13px', fontWeight: 600, color: toggleBtnColor }}>{dark ? 'Light Mode' : 'Dark Mode'}</span>}
     </button>
-  ) : null;
+  );
 
   return (
     <nav className="navbar-custom" style={navStyle}>
       <div className="navbar-container">
         {/* Brand */}
         <Link to="/" className="brand-name" onClick={() => setMenuOpen(false)} style={{ gap: '12px', color: isHome ? (dark ? 'white' : '#111827') : undefined }}>
-          <Logo size="sm" textColor={isHome ? (dark ? 'white' : '#111827') : undefined} />
+          <Logo size="sm" textColor={dark ? 'white' : '#111827'} />
         </Link>
 
         {/* Desktop nav */}

@@ -21,6 +21,7 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
   const [stats, setStats]                 = useState(null);
   const [displayName,  setDisplayName]    = useState(dbUser?.full_name || '');
   const [displayPhone, setDisplayPhone]   = useState(dbUser?.phone || '');
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword]       = useState('');
   const [deleting, setDeleting]           = useState(false);
@@ -219,7 +220,7 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
               : <button onClick={() => setIsEditing(true)} className="btn btn-secondary btn-sm">✏️ Edit Profile</button>
             }
             <button
-              onClick={() => signOut(auth)}
+              onClick={() => setShowSignOutConfirm(true)}
               className="btn btn-sm"
               style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}
             >
@@ -288,6 +289,40 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
           ))}
         </div>
       </div>
+
+      {/* ── Sign Out Confirmation Modal ── */}
+      {showSignOutConfirm && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+          onClick={() => setShowSignOutConfirm(false)}
+        >
+          <div
+            style={{ background: 'var(--surface)', borderRadius: '16px', padding: '32px', maxWidth: '400px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.25)', animation: 'fadeInUp 0.2s ease' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ width: 48, height: 48, borderRadius: '12px', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Sign Out?</h2>
+            <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '24px' }}>
+              Are you sure you want to sign out of your account?
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setShowSignOutConfirm(false)} className="btn btn-secondary" style={{ flex: 1 }}>
+                Cancel
+              </button>
+              <button
+                onClick={() => signOut(auth)}
+                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: 'none', background: '#DC2626', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+              >
+                Yes, Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Delete Account Modal ── */}
       {showDeleteConfirm && (
