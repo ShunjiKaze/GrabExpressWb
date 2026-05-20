@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, getDocs } from 'firebase/firestore';
-import { db, storage } from '../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '../firebase';
 import { MotorcycleIcon, CarIcon, VanIcon, MapPinIcon, FlagIcon, PackageIcon,
          CheckCircleIcon, CameraIcon, UserIcon, PhoneIcon, BuildingIcon, MessageIcon, XIcon, XCircleIcon } from '../components/Icons';
 
@@ -72,31 +71,15 @@ function DriverCancelModal({ onConfirm, onClose, cancelling }) {
   );
 }
 
-function ProofCaptureModal({ onCapture, onClose, label, bookingId, proofKey }) {
-  const [file, setFile]         = useState(null);
-  const [preview, setPreview]   = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const fileRef                 = useRef(null);
+function ProofCaptureModal({ onCapture, onClose, label }) {
+  const [captured, setCaptured] = useState(false);
 
-  const handleFileChange = (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
+  const handleTap = () => {
+    setCaptured(true);
   };
 
-  const handleConfirm = async () => {
-    if (!file) return;
-    setUploading(true);
-    try {
-      const storageRef = ref(storage, `delivery-proofs/${bookingId}/${proofKey}.jpg`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      onCapture(url);
-    } catch (err) {
-      console.error('Upload failed:', err);
-      setUploading(false);
-    }
+  const handleConfirm = () => {
+    onCapture(null);
   };
 
   return (
@@ -111,18 +94,23 @@ function ProofCaptureModal({ onCapture, onClose, label, bookingId, proofKey }) {
           </button>
         </div>
         <div className="modal-body" style={{ textAlign: 'center' }}>
-          <input type="file" accept="image/*" capture="environment" ref={fileRef} style={{ display: 'none' }} onChange={handleFileChange} />
           <div
-            onClick={() => fileRef.current?.click()}
+            onClick={handleTap}
             style={{
-              border: `3px dashed ${preview ? 'var(--primary)' : 'var(--border)'}`,
-              background: preview ? 'var(--primary-light)' : 'var(--surface-2)',
-              borderRadius: 'var(--radius-lg)', padding: preview ? '8px' : '40px 24px',
+              border: `3px dashed ${captured ? 'var(--primary)' : 'var(--border)'}`,
+              background: captured ? 'var(--primary-light)' : 'var(--surface-2)',
+              borderRadius: 'var(--radius-lg)', padding: '40px 24px',
               cursor: 'pointer', marginBottom: '20px', transition: 'var(--transition)',
             }}
           >
-            {preview ? (
-              <img src={preview} alt="" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+            {captured ? (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                  <CheckCircleIcon size={52} color="var(--primary)" />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--primary)' }}>Photo Taken!</div>
+                <div className="text-sm text-muted mt-8">Tap again to retake</div>
+              </>
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
@@ -135,10 +123,10 @@ function ProofCaptureModal({ onCapture, onClose, label, bookingId, proofKey }) {
           </div>
           <button
             onClick={handleConfirm}
-            className={`btn btn-full btn-lg ${preview ? 'btn-primary' : 'btn-secondary'}`}
-            disabled={!preview || uploading}
+            className={`btn btn-full btn-lg ${captured ? 'btn-primary' : 'btn-secondary'}`}
+            disabled={!captured}
           >
-            {uploading ? 'Uploading…' : preview ? 'Confirm & Continue' : 'Take Photo First'}
+            {captured ? 'Confirm & Continue' : 'Take Photo First'}
           </button>
         </div>
       </div>
