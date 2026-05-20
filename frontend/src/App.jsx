@@ -19,8 +19,10 @@ import ItemDetailsStep   from './pages/booking/ItemDetailsStep';
 import ReviewOrder       from './pages/booking/ReviewOrder';
 import TrackingPage      from './pages/TrackingPage';
 import RatingPage        from './pages/RatingPage';
+import ReceiptPage       from './pages/ReceiptPage';
 import DriverDeliveries  from './pages/DriverDeliveries';
 import DriverActiveOrder from './pages/DriverActiveOrder';
+import DriverVehiclePage from './pages/DriverVehiclePage';
 import OrderHistory      from './pages/OrderHistory';
 import ProfilePage       from './pages/ProfilePage';
 import LoginPage         from './pages/LoginPage';
@@ -158,12 +160,20 @@ function App() {
               <ProtectedRoute allow={isLoggedIn}><RatingPage dbUser={dbUser} /></ProtectedRoute>
             } />
 
+            {/* Receipt */}
+            <Route path="/receipt/:id" element={
+              <ProtectedRoute allow={isLoggedIn}><ReceiptPage dbUser={dbUser} /></ProtectedRoute>
+            } />
+
             {/* Driver */}
             <Route path="/driver/deliveries" element={
               <ProtectedRoute allow={isDriver}><DriverDeliveries dbUser={dbUser} /></ProtectedRoute>
             } />
             <Route path="/driver/active" element={
               <ProtectedRoute allow={isDriver}><DriverActiveOrder dbUser={dbUser} /></ProtectedRoute>
+            } />
+            <Route path="/driver/vehicles" element={
+              <ProtectedRoute allow={isDriver}><DriverVehiclePage dbUser={dbUser} /></ProtectedRoute>
             } />
 
             {/* History */}

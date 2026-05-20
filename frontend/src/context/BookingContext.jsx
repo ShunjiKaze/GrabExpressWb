@@ -25,6 +25,7 @@ const INITIAL = {
   itemSize: 'M',
   itemWeight: '',
   itemType: 'Document',
+  itemTypeOther: '',
   itemPhotoTaken: false,
   guaranteeTier: 'Basic',
 
@@ -32,15 +33,17 @@ const INITIAL = {
   paymentMethod: 'cash_sender',
 };
 
-const VEHICLE_BASE = { motorcycle: 60, car: 120, van: 250 };
-const SIZE_ADD     = { S: 0, M: 20, L: 50, XL: 100 };
-const TIER_ADD     = { Basic: 0, Standard: 50, Premium: 100 };
+export const VEHICLE_BASE   = { motorcycle: 60, car: 120, van: 250 };
+export const SIZE_ADD       = { S: 0, M: 20, L: 50, XL: 100 };
+export const TIER_ADD       = { Basic: 0, Standard: 50, Premium: 100 };
+export const DELIVERY_ADD   = { instant: 0, same_day: 30, bulk: 60 };
 
 export function calcTotal(data) {
-  const base = VEHICLE_BASE[data.vehicleType] ?? 60;
-  const size = SIZE_ADD[data.itemSize] ?? 0;
-  const tier = TIER_ADD[data.guaranteeTier] ?? 0;
-  return base + size + tier;
+  const base     = VEHICLE_BASE[data.vehicleType] ?? 60;
+  const size     = SIZE_ADD[data.itemSize] ?? 0;
+  const tier     = TIER_ADD[data.guaranteeTier] ?? 0;
+  const delivery = DELIVERY_ADD[data.deliveryType] ?? 0;
+  return base + size + tier + delivery;
 }
 
 export function vehicleForSize(size) {

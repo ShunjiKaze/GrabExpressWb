@@ -10,6 +10,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import Logo from '../components/Logo';
+import { EyeIcon, EyeOffIcon } from '../components/Icons';
 
 const validateEmail  = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const validatePhone  = (v) => !v || /^09\d{9}$/.test(v);
@@ -232,7 +233,7 @@ function AuthPage() {
             onChange={e => setPw(e.target.value)}
             placeholder={mode === 'register' ? 'At least 8 characters' : '••••••••'}
             error={errors.pw}
-            rightEl={<span onClick={() => setShowPw(v => !v)}>{showPw ? '🙈' : '👁️'}</span>}
+            rightEl={<span onClick={() => setShowPw(v => !v)} style={{ display: 'flex' }}>{showPw ? <EyeOffIcon size={16} color="rgba(255,255,255,0.5)" /> : <EyeIcon size={16} color="rgba(255,255,255,0.5)" />}</span>}
           />
 
           {mode === 'register' && (
@@ -243,7 +244,7 @@ function AuthPage() {
               onChange={e => setCpw(e.target.value)}
               placeholder="Re-enter your password"
               error={errors.cpw}
-              rightEl={<span onClick={() => setShowCpw(v => !v)}>{showCpw ? '🙈' : '👁️'}</span>}
+              rightEl={<span onClick={() => setShowCpw(v => !v)} style={{ display: 'flex' }}>{showCpw ? <EyeOffIcon size={16} color="rgba(255,255,255,0.5)" /> : <EyeIcon size={16} color="rgba(255,255,255,0.5)" />}</span>}
             />
           )}
 

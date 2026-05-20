@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { doc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { updateProfile, deleteUser, signOut, reauthenticateWithPopup, GoogleAuthProvider, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { updateProfile, signOut } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, auth, storage } from '../firebase';
 import { useToast } from '../components/Toast';
+import { CameraIcon, EditIcon, CheckIcon, MotorcycleIcon, CarIcon, VanIcon, StarIcon } from '../components/Icons';
 
-const VEHICLE_ICONS = { motorcycle: '🛵', car: '🚗', van: '🚐' };
+const VEHICLE_ICON_MAP = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
 const ROLE_CONFIG = {
   customer: { label: 'Customer', color: '#15803D', bg: '#DCFCE7', dot: '#22C55E' },
   driver:   { label: 'Driver',   color: '#1E40AF', bg: '#DBEAFE', dot: '#3B82F6' },
@@ -21,9 +22,7 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
   const [stats, setStats]                 = useState(null);
   const [displayName,  setDisplayName]    = useState(dbUser?.full_name || '');
   const [displayPhone, setDisplayPhone]   = useState(dbUser?.phone || '');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletePassword, setDeletePassword]       = useState('');
-  const [deleting, setDeleting]           = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const fileInputRef = useRef(null);
   const showToast = useToast();
   // Use prop (from App state) first, fall back to auth.currentUser
@@ -116,31 +115,6 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
     setIsEditing(false);
   };
 
-  const handleDeleteAccount = async () => {
-    setDeleting(true);
-    try {
-      if (isGoogleUser) {
-        await reauthenticateWithPopup(firebaseUser, new GoogleAuthProvider());
-      } else {
-        if (!deletePassword) { showToast('Please enter your password to confirm.', 'error'); setDeleting(false); return; }
-        const cred = EmailAuthProvider.credential(firebaseUser.email, deletePassword);
-        await reauthenticateWithCredential(firebaseUser, cred);
-      }
-      await deleteDoc(doc(db, 'users', dbUser.user_id));
-      await deleteUser(firebaseUser);
-    } catch (err) {
-      console.error('Delete account error:', err);
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        showToast('Incorrect password. Account not deleted.', 'error');
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        showToast('Re-authentication cancelled.', 'error');
-      } else {
-        showToast('Failed to delete account. Try again.', 'error');
-      }
-      setDeleting(false);
-    }
-  };
-
   const formatDate = (ts) => {
     if (!ts) return '—';
     const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -159,13 +133,13 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
     ? [
         { v: stats?.total     ?? '—', l: 'Total Orders' },
         { v: stats?.completed ?? '—', l: 'Delivered' },
-        { v: stats?.avg ? `${stats.avg} ★` : '—', l: `Rating (${stats?.ratingCount ?? 0})` },
+        { v: stats?.avg ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>{stats.avg}<StarIcon size={16} color="#F59E0B" filled /></span> : '—', l: `Rating (${stats?.ratingCount ?? 0})` },
       ]
     : [
         { v: stats?.total     ?? '—', l: 'Total Bookings' },
         { v: stats?.completed ?? '—', l: 'Completed' },
         { v: stats?.cancelled ?? '—', l: 'Cancelled' },
-        { v: stats?.avg ? `${stats.avg} ★` : '—', l: 'Avg Rating' },
+        { v: stats?.avg ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>{stats.avg}<StarIcon size={16} color="#F59E0B" filled /></span> : '—', l: 'Avg Rating' },
       ];
 
   return (
@@ -197,9 +171,9 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
             </div>
             <div
               onClick={() => !photoUploading && fileInputRef.current?.click()}
-              style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: '50%', background: photoUploading ? '#aaa' : 'var(--primary)', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)', fontSize: '12px' }}
+              style={{ position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: '50%', background: photoUploading ? '#aaa' : 'var(--primary)', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: photoUploading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}
             >
-              {photoUploading ? '⏳' : '📷'}
+              <CameraIcon size={13} color="white" />
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
           </div>
@@ -213,28 +187,21 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
           <div style={{ paddingTop: '40px', flexShrink: 0, display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
             {isEditing
               ? <>
-                  <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm">{saving ? 'Saving…' : '✓ Save Changes'}</button>
+                  <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    {saving ? 'Saving…' : <><CheckIcon size={13} color="white" /> Save Changes</>}
+                  </button>
                   <button onClick={handleCancel} className="btn btn-secondary btn-sm">Cancel</button>
                 </>
-              : <button onClick={() => setIsEditing(true)} className="btn btn-secondary btn-sm">✏️ Edit Profile</button>
+              : <button onClick={() => setIsEditing(true)} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <EditIcon size={13} /> Edit Profile
+                </button>
             }
             <button
-              onClick={() => signOut(auth)}
+              onClick={() => setShowSignOutConfirm(true)}
               className="btn btn-sm"
               style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA' }}
             >
               Sign Out
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              title="Delete account"
-              style={{ background: 'none', border: '1px solid #FECACA', borderRadius: 'var(--radius-sm)', padding: '6px 8px', cursor: 'pointer', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-              </svg>
             </button>
           </div>
         </div>
@@ -268,7 +235,10 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
             {role === 'driver' && dbUser?.vehicle_type && <>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Vehicle Type</label>
-                <div style={readField}>{VEHICLE_ICONS[dbUser.vehicle_type]} {dbUser.vehicle_type?.charAt(0).toUpperCase() + dbUser.vehicle_type?.slice(1)}</div>
+                <div style={{ ...readField, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {VEHICLE_ICON_MAP[dbUser.vehicle_type] && (() => { const Icon = VEHICLE_ICON_MAP[dbUser.vehicle_type]; return <Icon size={15} color="var(--text-2)" />; })()}
+                  {dbUser.vehicle_type?.charAt(0).toUpperCase() + dbUser.vehicle_type?.slice(1)}
+                </div>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Plate Number</label>
@@ -278,69 +248,47 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
           </div>
         </div>
 
-        {/* Stats strip */}
-        <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
-          {statItems.map((s, i, arr) => (
-            <div key={s.l} style={{ flex: 1, padding: '20px 16px', textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--navy)', lineHeight: 1 }}>{s.v}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 600, marginTop: '6px' }}>{s.l}</div>
-            </div>
-          ))}
-        </div>
+        {/* Stats strip — only for customer and driver */}
+        {role !== 'admin' && (
+          <div style={{ display: 'flex', borderTop: '1px solid var(--border)' }}>
+            {statItems.map((s, i, arr) => (
+              <div key={s.l} style={{ flex: 1, padding: '20px 16px', textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--navy)', lineHeight: 1 }}>{s.v}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 600, marginTop: '6px' }}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* ── Delete Account Modal ── */}
-      {showDeleteConfirm && (
+      {/* ── Sign Out Confirmation Modal ── */}
+      {showSignOutConfirm && (
         <div
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
-          onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
+          onClick={() => setShowSignOutConfirm(false)}
         >
           <div
-            style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '440px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.25)', animation: 'fadeInUp 0.2s ease' }}
+            style={{ background: 'var(--surface)', borderRadius: '16px', padding: '32px', maxWidth: '400px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.25)', animation: 'fadeInUp 0.2s ease' }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ width: 48, height: 48, borderRadius: '12px', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
             </div>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Delete Your Account?</h2>
-            <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '20px' }}>
-              This will permanently remove your account and all associated data. <strong>This action cannot be undone.</strong>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Sign Out?</h2>
+            <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '24px' }}>
+              Are you sure you want to sign out of your account?
             </p>
-
-            {!isGoogleUser && (
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Confirm your password</label>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={e => setDeletePassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="form-input"
-                />
-              </div>
-            )}
-            {isGoogleUser && (
-              <p style={{ fontSize: '13px', color: 'var(--text-3)', marginBottom: '16px', background: '#F9FAFB', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 14px' }}>
-                You will be prompted to re-authenticate with Google to confirm.
-              </p>
-            )}
-
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-              >
+              <button onClick={() => setShowSignOutConfirm(false)} className="btn btn-secondary" style={{ flex: 1 }}>
                 Cancel
               </button>
               <button
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: 'none', background: deleting ? '#f87171' : '#DC2626', color: 'white', fontWeight: 700, fontSize: '14px', cursor: deleting ? 'not-allowed' : 'pointer', transition: 'background 0.15s' }}
+                onClick={() => signOut(auth)}
+                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: 'none', background: '#DC2626', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
               >
-                {deleting ? 'Deleting…' : 'Yes, Delete Account'}
+                Yes, Sign Out
               </button>
             </div>
           </div>

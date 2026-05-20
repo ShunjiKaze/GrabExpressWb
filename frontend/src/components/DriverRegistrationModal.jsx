@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { XIcon, InfoIcon, MotorcycleIcon, CarIcon, VanIcon } from './Icons';
 
 const VEHICLE_OPTIONS = [
-  { id: 'motorcycle', icon: '🛵', title: 'Motorcycle', desc: 'Best for small packages, fastest' },
-  { id: 'car',        icon: '🚗', title: 'Car',        desc: 'Medium items, comfortable' },
-  { id: 'van',        icon: '🚐', title: 'Van',        desc: 'Large or bulk items' },
+  { id: 'motorcycle', Icon: MotorcycleIcon, title: 'Motorcycle', desc: 'Best for small packages, fastest' },
+  { id: 'car',        Icon: CarIcon,        title: 'Car',        desc: 'Medium items, comfortable' },
+  { id: 'van',        Icon: VanIcon,        title: 'Van',        desc: 'Large or bulk items' },
 ];
 
 function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) {
@@ -26,7 +27,6 @@ function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) 
   const validateStep2 = () => {
     const e = {};
     const plateClean = vehiclePlate.trim().toUpperCase();
-    // Philippine plate format: ABC 1234 or ABC1234 (3 letters + 3-4 digits)
     if (!plateClean) {
       e.vehiclePlate = 'Vehicle plate is required.';
     } else if (!/^[A-Z]{2,3}\s?\d{3,4}$/.test(plateClean)) {
@@ -73,12 +73,16 @@ function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) 
         {/* Header */}
         <div className="modal-header">
           <div>
-            <div className="modal-title">🛵 Become a GrabExpress Driver</div>
+            <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MotorcycleIcon size={20} color="var(--primary)" /> Become a GrabExpress Driver
+            </div>
             <p className="text-sm text-muted mt-8">
               Step {step} of 2 — {step === 1 ? 'Choose your vehicle' : 'Enter your details'}
             </p>
           </div>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <XIcon size={18} />
+          </button>
         </div>
 
         <div className="modal-body">
@@ -106,7 +110,9 @@ function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) 
                       borderRadius: 'var(--radius-md)', cursor: 'pointer', transition: 'var(--transition)',
                     }}
                   >
-                    <span style={{ fontSize: '32px' }}>{v.icon}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40 }}>
+                      <v.Icon size={32} color={vehicleType === v.id ? 'var(--primary)' : 'var(--text-2)'} />
+                    </span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: '15px' }}>{v.title}</div>
                       <div style={{ fontSize: '13px', color: 'var(--text-2)' }}>{v.desc}</div>
@@ -143,7 +149,6 @@ function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) 
                   value={vehiclePlate}
                   maxLength={8}
                   onChange={e => {
-                    // Only allow letters, numbers, and space
                     const val = e.target.value.replace(/[^A-Za-z0-9 ]/g, '').toUpperCase();
                     setVehiclePlate(val);
                     setErrors(prev => ({ ...prev, vehiclePlate: '' }));
@@ -184,14 +189,14 @@ function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) 
               {errors.submit && <div className="alert alert-error mb-16">{errors.submit}</div>}
 
               <div className="alert alert-info mb-20">
-                <span>ℹ️</span>
+                <InfoIcon size={16} />
                 <span>By registering as a driver, you agree to follow GrabExpress safety guidelines and maintain a professional standard of service.</span>
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={() => setStep(1)} className="btn btn-secondary" style={{ flex: 1 }}>← Back</button>
                 <button onClick={handleSubmit} className="btn btn-primary" style={{ flex: 2 }} disabled={loading}>
-                  {loading ? '⏳ Registering…' : '🚀 Register as Driver'}
+                  {loading ? 'Registering…' : 'Register as Driver'}
                 </button>
               </div>
             </>

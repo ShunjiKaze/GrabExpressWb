@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc, where } from 'firebase/firestore';
 import { db } from '../firebase';
+import { UsersIcon, MotorcycleIcon, PackageIcon, ActivityIcon, XCircleIcon,
+         SearchIcon, ZapIcon, CheckCircleIcon, BanknoteIcon } from '../components/Icons';
 
 const STATUS_CONFIG = {
-  searching:  { label: 'Searching',  badge: 'badge-amber',  icon: '🔍' },
-  accepted:   { label: 'Accepted',   badge: 'badge-blue',   icon: '🛵' },
-  picked_up:  { label: 'Picked Up',  badge: 'badge-purple', icon: '📦' },
-  in_transit: { label: 'In Transit', badge: 'badge-blue',   icon: '🚀' },
-  delivered:  { label: 'Delivered',  badge: 'badge-green',  icon: '✅' },
-  completed:  { label: 'Completed',  badge: 'badge-green',  icon: '✅' },
-  cancelled:  { label: 'Cancelled',  badge: 'badge-red',    icon: '❌' },
+  searching:  { label: 'Searching',  badge: 'badge-amber',  Icon: SearchIcon },
+  accepted:   { label: 'Accepted',   badge: 'badge-blue',   Icon: MotorcycleIcon },
+  picked_up:  { label: 'Picked Up',  badge: 'badge-purple', Icon: PackageIcon },
+  in_transit: { label: 'In Transit', badge: 'badge-blue',   Icon: ZapIcon },
+  delivered:  { label: 'Delivered',  badge: 'badge-green',  Icon: CheckCircleIcon },
+  completed:  { label: 'Completed',  badge: 'badge-green',  Icon: CheckCircleIcon },
+  cancelled:  { label: 'Cancelled',  badge: 'badge-red',    Icon: XCircleIcon },
 };
 
 function AdminDashboard() {
   const [bookings, setBookings] = useState([]);
   const [users, setUsers]       = useState([]);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [tab, setTab]           = useState('overview');
   const [updatingRole, setUpdatingRole] = useState(null);
@@ -28,7 +31,11 @@ function AdminDashboard() {
       query(collection(db, 'users'), limit(100)),
       snap => setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     );
-    return () => { bUnsub(); uUnsub(); };
+    const pUnsub = onSnapshot(
+      query(collection(db, 'payments'), limit(200)),
+      snap => setPayments(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    );
+    return () => { bUnsub(); uUnsub(); pUnsub(); };
   }, []);
 
   const changeRole = async (userId, role) => {
@@ -43,8 +50,9 @@ function AdminDashboard() {
     drivers:   users.filter(u => u.role === 'driver').length,
     total:     bookings.length,
     active:    bookings.filter(b => !['delivered','completed','cancelled'].includes(b.status)).length,
-    revenue:   bookings.filter(b => ['delivered','completed'].includes(b.status)).reduce((s, b) => s + (b.totalAmount || 0), 0),
-    cancelled: bookings.filter(b => b.status === 'cancelled').length,
+    revenue:    bookings.filter(b => ['delivered','completed'].includes(b.status)).reduce((s, b) => s + (b.totalAmount || 0), 0),
+    cancelled:  bookings.filter(b => b.status === 'cancelled').length,
+    commission: payments.filter(p => p.status === 'paid').reduce((s, p) => s + (p.platformComm || 0), 0),
   };
 
   const formatDate = ts => {
@@ -52,6 +60,15 @@ function AdminDashboard() {
     const d = ts.toDate ? ts.toDate() : new Date(ts);
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
+
+  const STAT_CARDS = [
+    { label: 'Customers',   value: stats.customers, Icon: UsersIcon,      cls: 'green'  },
+    { label: 'Drivers',     value: stats.drivers,   Icon: MotorcycleIcon,  cls: 'blue'   },
+    { label: 'Total Orders',value: stats.total,     Icon: PackageIcon,     cls: 'purple' },
+    { label: 'Active Now',  value: stats.active,    Icon: ActivityIcon,    cls: 'amber'  },
+    { label: 'Cancelled',   value: stats.cancelled,                           Icon: XCircleIcon,    cls: 'green'  },
+    { label: 'Commission',  value: `₱${stats.commission.toLocaleString()}`,   Icon: BanknoteIcon,   cls: 'amber'  },
+  ];
 
   return (
     <div className="dashboard-container">
@@ -61,7 +78,6 @@ function AdminDashboard() {
           <div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Admin Panel</div>
             <h1 style={{ fontSize: '28px', fontWeight: 900, marginTop: '6px' }}>GrabExpress Dashboard</h1>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', marginTop: '4px' }}>Real-time data via Firestore</div>
           </div>
           <div style={{ background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: 'var(--radius-md)', padding: '16px 24px', textAlign: 'center' }}>
             <div style={{ fontSize: '32px', fontWeight: 900, color: '#4ADE80' }}>₱{stats.revenue.toLocaleString()}</div>
@@ -72,15 +88,11 @@ function AdminDashboard() {
 
       {/* Stats */}
       <div className="stats-grid mb-28">
-        {[
-          { label: 'Customers', value: stats.customers, icon: '👥', cls: 'green' },
-          { label: 'Drivers',   value: stats.drivers,   icon: '🛵', cls: 'blue' },
-          { label: 'Total Orders', value: stats.total,  icon: '📦', cls: 'purple' },
-          { label: 'Active Now',   value: stats.active, icon: '🔴', cls: 'amber' },
-          { label: 'Cancelled',    value: stats.cancelled, icon: '❌', cls: 'green' },
-        ].map(s => (
+        {STAT_CARDS.map(s => (
           <div key={s.label} className={`stat-card ${s.cls}`}>
-            <div className="stat-icon">{s.icon}</div>
+            <div className="stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <s.Icon size={28} />
+            </div>
             <div className="stat-label">{s.label}</div>
             <div className="stat-value">{s.value}</div>
           </div>
@@ -89,7 +101,7 @@ function AdminDashboard() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '0' }}>
-        {[['overview','📊 Overview'],['bookings','📦 All Bookings'],['users','👥 Users']].map(([val, label]) => (
+        {[['overview','Overview'],['bookings','All Bookings'],['users','Users']].map(([val, label]) => (
           <button
             key={val}
             onClick={() => setTab(val)}

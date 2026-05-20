@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme, palette } from '../context/ThemeContext';
+import { MapPinIcon, MailIcon, PhoneIcon, ClockIcon, CheckCircleIcon } from '../components/Icons';
 
 const INFO = [
-  { icon: '📍', label: 'Address',       value: 'Cebu City, Philippines' },
-  { icon: '📧', label: 'Email',         value: 'support@grabexpress.ph' },
-  { icon: '📞', label: 'Phone',         value: '+63 32 000 0000' },
-  { icon: '🕐', label: 'Support Hours', value: 'Monday – Sunday, 7AM – 10PM' },
+  { Icon: MapPinIcon, label: 'Address',       value: 'Cebu City, Philippines' },
+  { Icon: MailIcon,   label: 'Email',         value: 'support@grabexpress.ph' },
+  { Icon: PhoneIcon,  label: 'Phone',         value: '+63 32 000 0000' },
+  { Icon: ClockIcon,  label: 'Support Hours', value: 'Monday – Sunday, 7AM – 10PM' },
 ];
 
 function FormField({ label, type = 'text', value, onChange, placeholder, error, t }) {
@@ -76,7 +77,7 @@ function ContactPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
             {INFO.map(c => (
               <div key={c.label} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '16px 18px', background: t.infoCardBg, border: `1px solid ${t.infoCardBorder}`, borderRadius: '14px', boxShadow: dark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <span style={{ fontSize: '22px', flexShrink: 0 }}>{c.icon}</span>
+                <span style={{ flexShrink: 0, marginTop: '2px' }}><c.Icon size={20} color={t.accent} /></span>
                 <div>
                   <div style={{ fontSize: '11px', fontWeight: 700, color: t.infoLabel, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>{c.label}</div>
                   <div style={{ fontSize: '14px', color: t.infoValue, fontWeight: 500 }}>{c.value}</div>
@@ -95,7 +96,7 @@ function ContactPage() {
         <div style={{ background: t.formCardBg, border: `1px solid ${t.formCardBorder}`, borderRadius: '20px', padding: '36px', boxShadow: dark ? 'none' : '0 4px 20px rgba(0,0,0,0.07)' }}>
           {sent ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+              <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><CheckCircleIcon size={56} color="#00B14F" /></div>
               <h3 style={{ fontSize: '20px', fontWeight: 800, color: t.text, marginBottom: '8px' }}>Message Sent!</h3>
               <p style={{ color: t.textMuted, fontSize: '14px', lineHeight: 1.7 }}>
                 Thanks for reaching out. Our support team will get back to you within 24 hours.

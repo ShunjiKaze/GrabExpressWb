@@ -469,3 +469,82 @@ body {
   .navbar-container { padding: 0 16px; }
   .option-grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ─── Text readability improvements ─────────────────────────── */
+.nav-link-custom { font-weight: 600; }
+.form-label { font-weight: 700; color: var(--text-2); }
+.page-subtitle { font-size: 15px; color: var(--text-2); font-weight: 500; }
+.stat-label { font-weight: 700; }
+.data-table td { font-weight: 500; color: var(--text); }
+body { font-weight: 450; }
+
+/* ─── Dark theme CSS variable overrides ─────────────────────── */
+[data-theme="dark"] {
+  --bg:          #0A1223;
+  --surface:     #0D1829;
+  --surface-2:   #111f35;
+  --text:        #f1f5f9;
+  --text-2:      rgba(241,245,249,0.7);
+  --text-3:      rgba(241,245,249,0.42);
+  --border:      rgba(255,255,255,0.1);
+  --navy:        #e2e8f0;
+  --navy-mid:    rgba(255,255,255,0.75);
+  --primary-light: rgba(0,177,79,0.14);
+  --red-light:   rgba(239,68,68,0.15);
+  --blue-light:  rgba(59,130,246,0.15);
+  --amber-light: rgba(245,158,11,0.15);
+  --purple-light:rgba(139,92,246,0.15);
+  --shadow-xs:   0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.2);
+  --shadow-md:   0 8px 24px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.25);
+  --shadow-lg:   0 20px 48px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] body { background: var(--bg); color: var(--text); }
+
+[data-theme="dark"] .navbar-custom {
+  background: rgba(10,18,35,0.92);
+  border-bottom-color: rgba(255,255,255,0.07);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .nav-link-custom { color: rgba(241,245,249,0.7); }
+[data-theme="dark"] .nav-link-custom:hover { background: rgba(0,177,79,0.12); color: #4ADE80; }
+[data-theme="dark"] .nav-link-custom.active { background: rgba(0,177,79,0.15); color: #4ADE80; }
+[data-theme="dark"] .brand-name { color: #f1f5f9; }
+
+[data-theme="dark"] .card { background: var(--surface); border: 1px solid var(--border); }
+[data-theme="dark"] .stat-card { background: var(--surface); }
+[data-theme="dark"] .badge-green  { background: rgba(0,177,79,0.15);  color: #4ADE80; }
+[data-theme="dark"] .badge-blue   { background: rgba(59,130,246,0.15); color: #60A5FA; }
+[data-theme="dark"] .badge-amber  { background: rgba(245,158,11,0.15); color: #FCD34D; }
+[data-theme="dark"] .badge-red    { background: rgba(239,68,68,0.15);  color: #F87171; }
+[data-theme="dark"] .badge-purple { background: rgba(139,92,246,0.15); color: #A78BFA; }
+[data-theme="dark"] .badge-gray   { background: rgba(255,255,255,0.08); color: rgba(241,245,249,0.5); }
+
+[data-theme="dark"] .form-input  { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.13); color: #f1f5f9; }
+[data-theme="dark"] .form-select { background-color: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.13); color: #f1f5f9; }
+[data-theme="dark"] .form-input::placeholder { color: rgba(241,245,249,0.3); }
+
+[data-theme="dark"] .data-table th { background: rgba(255,255,255,0.04); color: rgba(241,245,249,0.4); }
+[data-theme="dark"] .data-table td { border-bottom-color: rgba(255,255,255,0.07); }
+[data-theme="dark"] .data-table tr:hover td { background: rgba(255,255,255,0.04); }
+
+[data-theme="dark"] .option-card { background: var(--surface); border-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .option-card:hover { background: rgba(0,177,79,0.1); }
+[data-theme="dark"] .tier-card { border-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .tier-card.selected { background: rgba(0,177,79,0.12); }
+
+[data-theme="dark"] .btn-secondary { background: rgba(255,255,255,0.07); color: rgba(241,245,249,0.75); border-color: rgba(255,255,255,0.13); }
+[data-theme="dark"] .btn-secondary:hover:not(:disabled) { background: rgba(0,177,79,0.12); color: #4ADE80; border-color: rgba(0,177,79,0.35); }
+[data-theme="dark"] .btn-ghost { color: rgba(241,245,249,0.65); }
+[data-theme="dark"] .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.07); color: #f1f5f9; }
+
+[data-theme="dark"] .section-divider { background: rgba(255,255,255,0.08); }
+[data-theme="dark"] .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.06) 75%); }
+
+@media print {
+  .navbar-custom, .receipt-no-print { display: none !important; }
+  .dashboard-container { padding: 0 !important; }
+  body { background: white !important; }
+}

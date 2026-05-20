@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import Logo from '../components/Logo';
 import { PageShell, Field, SelectField, ErrorBanner, SubmitBtn, Divider, GoogleBtn, EyeOpen, EyeOff } from './LoginPage';
+import { useTheme } from '../context/ThemeContext';
 import { sanitizeName, isValidName } from '../utils/validate';
 
 const SUFFIXES = [
@@ -105,8 +106,10 @@ function RegisterPage() {
     }
   };
 
+  const { dark } = useTheme();
+
   const eyeBtn = (show, setShow) => (
-    <button type="button" onClick={() => setShow(v => !v)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
+    <button type="button" onClick={() => setShow(v => !v)} style={{ background: 'none', border: 'none', color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
       {show ? <EyeOff /> : <EyeOpen />}
     </button>
   );
@@ -114,8 +117,8 @@ function RegisterPage() {
   return (
     <PageShell wide>
       <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-        <Logo size="md" textColor="white" />
-        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', marginTop: '8px' }}>
+        <Logo size="md" textColor={dark ? 'white' : '#0F172A'} />
+        <p style={{ color: dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)', fontSize: '13px', marginTop: '8px' }}>
           Create your account to get started.
         </p>
       </div>
@@ -128,13 +131,13 @@ function RegisterPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: '12px' }}>
           <Field label="First Name" value={first} onChange={e => setFirst(sanitizeName(e.target.value))} placeholder="Juan" error={errors.first} />
           <div style={{ marginBottom: '16px', textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              M.I. <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, textTransform: 'none', fontSize: '11px' }}>(opt.)</span>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: dark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              M.I. <span style={{ color: dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontWeight: 400, textTransform: 'none', fontSize: '11px' }}>(opt.)</span>
             </label>
             <input
               value={middle} onChange={e => setMiddle(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 1).toUpperCase())}
               placeholder="M" maxLength={1} className="auth-input"
-              style={{ width: '100%', padding: '11px 14px', textAlign: 'center', background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.13)', borderRadius: '10px', fontSize: '16px', fontWeight: 700, color: 'white' }}
+              style={{ width: '100%', padding: '11px 14px', textAlign: 'center', background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', border: dark ? '1.5px solid rgba(255,255,255,0.13)' : '1.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', fontSize: '16px', fontWeight: 700, color: dark ? 'white' : '#0F172A' }}
             />
           </div>
         </div>
@@ -170,9 +173,9 @@ function RegisterPage() {
       <Divider />
       <GoogleBtn loading={gLoading} onClick={handleGoogle} />
 
-      <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>
+      <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px', color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)' }}>
         Already have an account?{' '}
-        <Link to="/login" style={{ color: '#4ADE80', fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>
+        <Link to="/login" style={{ color: '#00B14F', fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>
       </p>
     </PageShell>
   );

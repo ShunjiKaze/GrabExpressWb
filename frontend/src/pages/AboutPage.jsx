@@ -1,14 +1,15 @@
 import { Link } from 'react-router-dom';
 import ScrollReveal from '../components/ScrollReveal';
 import { useTheme, palette } from '../context/ThemeContext';
+import { ZapIcon, LockIcon, LeafIcon, WifiIcon, MotorcycleIcon, PackageIcon, StarIcon, BuildingIcon } from '../components/Icons';
 import driverPhoto from '../assets/driver-photo.png';
 import customerDelivery from '../assets/customer-delivery.jpg';
 
 const VALUES = [
-  { icon: '⚡', title: 'Speed First',       desc: 'We believe every minute matters. Our platform is built to dispatch drivers and complete deliveries as fast as humanly possible.' },
-  { icon: '🔒', title: 'Trust & Safety',    desc: 'From verified drivers to guarantee tiers covering item value, we put safety at the center of every delivery.' },
-  { icon: '🌱', title: 'Community Driven',  desc: 'We are built for Cebu, by people who live here. Every driver and customer is part of the GrabExpress community.' },
-  { icon: '📡', title: 'Transparent Tech',  desc: 'Real-time tracking, live status updates, and proof of delivery — because you deserve to know exactly where your package is.' },
+  { Icon: ZapIcon,     title: 'Speed First',       desc: 'We believe every minute matters. Our platform is built to dispatch drivers and complete deliveries as fast as humanly possible.' },
+  { Icon: LockIcon,    title: 'Trust & Safety',    desc: 'From verified drivers to guarantee tiers covering item value, we put safety at the center of every delivery.' },
+  { Icon: LeafIcon,    title: 'Community Driven',  desc: 'We are built for Cebu, by people who live here. Every driver and customer is part of the GrabExpress community.' },
+  { Icon: WifiIcon,    title: 'Transparent Tech',  desc: 'Real-time tracking, live status updates, and proof of delivery — because you deserve to know exactly where your package is.' },
 ];
 
 function AboutPage() {
@@ -30,9 +31,14 @@ function AboutPage() {
             GrabExpress was born from a simple idea: everyone in Cebu deserves fast, affordable, and trustworthy parcel delivery — without the hassle.
           </p>
           <div style={{ display: 'flex', gap: '28px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {[['🛵','200+ Drivers'],['📦','10K+ Deliveries'],['⭐','4.8 Avg Rating'],['🏙️','Metro Cebu']].map(([icon, text]) => (
+            {[
+              { Icon: MotorcycleIcon, text: '200+ Drivers' },
+              { Icon: PackageIcon,    text: '10K+ Deliveries' },
+              { Icon: StarIcon,       text: '4.8 Avg Rating', filled: true },
+              { Icon: BuildingIcon,   text: 'Metro Cebu' },
+            ].map(({ Icon, text, filled }) => (
               <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: t.textStat, fontSize: '13px', fontWeight: 600 }}>
-                <span style={{ fontSize: '18px' }}>{icon}</span>{text}
+                <Icon size={18} color={t.accent} filled={filled} />{text}
               </div>
             ))}
           </div>
@@ -82,7 +88,7 @@ function AboutPage() {
                   onMouseEnter={e => { e.currentTarget.style.background = t.cardHoverBg; e.currentTarget.style.borderColor = 'rgba(0,177,79,0.25)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
                   onMouseLeave={e => { e.currentTarget.style.background = t.cardBg; e.currentTarget.style.borderColor = t.cardBorder; e.currentTarget.style.transform = ''; }}
                 >
-                  <div style={{ fontSize: '30px', marginBottom: '16px' }}>{v.icon}</div>
+                  <div style={{ marginBottom: '16px' }}><v.Icon size={28} color={t.accent} /></div>
                   <h3 style={{ fontSize: '16px', fontWeight: 800, color: t.text, marginBottom: '8px' }}>{v.title}</h3>
                   <p style={{ fontSize: '14px', color: t.textMuted, lineHeight: 1.7 }}>{v.desc}</p>
                 </div>

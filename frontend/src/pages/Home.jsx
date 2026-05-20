@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -6,6 +6,9 @@ import DriverRegistrationModal from '../components/DriverRegistrationModal';
 import Logo from '../components/Logo';
 import ScrollReveal from '../components/ScrollReveal';
 import { useTheme, palette } from '../context/ThemeContext';
+import { MapPinIcon, ClipboardIcon, CreditCardIcon, MotorcycleIcon, ZapIcon, LockIcon, WifiIcon,
+         CarIcon, StarIcon, CameraIcon, PackageIcon, CheckCircleIcon, CheckIcon,
+         MailIcon, PhoneIcon, ClockIcon, UsersIcon } from '../components/Icons';
 
 import heroBg           from '../assets/hero-bg.jpg';
 import heroRider        from '../assets/hero-rider.png';
@@ -21,19 +24,19 @@ function Home({ user, dbUser }) {
   const handleDriverSuccess = () => { setShowDriverModal(false); window.location.reload(); };
 
   const steps = [
-    { icon: '📍', title: 'Set Pickup & Delivery',  desc: 'Enter your pickup and recipient address — fast and simple.' },
-    { icon: '📋', title: 'Fill in Details',         desc: 'Sender/recipient info, item type, and your guarantee tier.' },
-    { icon: '💳', title: 'Review & Confirm',        desc: 'Check your order summary, pick payment, confirm booking.' },
-    { icon: '🛵', title: 'Track in Real-Time',      desc: 'Live status updates from pickup all the way to delivered.' },
+    { Icon: MapPinIcon,     title: 'Set Pickup & Delivery',  desc: 'Enter your pickup and recipient address — fast and simple.' },
+    { Icon: ClipboardIcon,  title: 'Fill in Details',         desc: 'Sender/recipient info, item type, and your guarantee tier.' },
+    { Icon: CreditCardIcon, title: 'Review & Confirm',        desc: 'Check your order summary, pick payment, confirm booking.' },
+    { Icon: MotorcycleIcon, title: 'Track in Real-Time',      desc: 'Live status updates from pickup all the way to delivered.' },
   ];
 
   const features = [
-    { icon: '⚡', title: 'Instant Pickup',     desc: 'Items collected within minutes — no waiting, no hassle.' },
-    { icon: '🔒', title: 'Safe & Secured',     desc: 'Guarantee tiers protect your items up to ₱10,000.' },
-    { icon: '📡', title: 'Live Tracking',      desc: 'Real-time status from accepted all the way to delivered.' },
-    { icon: '🚗', title: 'Multiple Vehicles',  desc: 'Motorcycle, Car, or Van — matched to your package size.' },
-    { icon: '⭐', title: 'Rated Drivers',      desc: 'Community-rated drivers ensure quality every single time.' },
-    { icon: '📸', title: 'Proof of Delivery',  desc: 'Photo proof at pickup and drop-off for peace of mind.' },
+    { Icon: ZapIcon,        title: 'Instant Pickup',     desc: 'Items collected within minutes — no waiting, no hassle.' },
+    { Icon: LockIcon,       title: 'Safe & Secured',     desc: 'Guarantee tiers protect your items up to ₱10,000.' },
+    { Icon: WifiIcon,       title: 'Live Tracking',      desc: 'Real-time status from accepted all the way to delivered.' },
+    { Icon: CarIcon,        title: 'Multiple Vehicles',  desc: 'Motorcycle, Car, or Van — matched to your package size.' },
+    { Icon: StarIcon,       title: 'Rated Drivers',      desc: 'Community-rated drivers ensure quality every single time.' },
+    { Icon: CameraIcon,     title: 'Proof of Delivery',  desc: 'Photo proof at pickup and drop-off for peace of mind.' },
   ];
 
   return (
@@ -77,19 +80,24 @@ function Home({ user, dbUser }) {
             </p>
 
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', marginBottom: '52px' }}>
-              {!user && <Link to="/login" className="btn btn-primary btn-lg">🚀 Get Started — Sign In Free</Link>}
-              {user && dbUser?.role === 'customer' && <Link to="/book" className="btn btn-primary btn-lg">📦 Book a Delivery Now</Link>}
-              {user && dbUser?.role === 'driver'   && <Link to="/driver/deliveries" className="btn btn-primary btn-lg">🛵 Find Available Orders</Link>}
-              {user && dbUser?.role === 'admin'    && <Link to="/admin/dashboard" className="btn btn-primary btn-lg">📊 Go to Dashboard</Link>}
+              {!user && <Link to="/login" className="btn btn-primary btn-lg">Get Started — Sign In Free</Link>}
+              {user && dbUser?.role === 'customer' && <Link to="/book" className="btn btn-primary btn-lg">Book a Delivery Now</Link>}
+              {user && dbUser?.role === 'driver'   && <Link to="/driver/deliveries" className="btn btn-primary btn-lg">Find Available Orders</Link>}
+              {user && dbUser?.role === 'admin'    && <Link to="/admin/dashboard" className="btn btn-primary btn-lg">Go to Dashboard</Link>}
               <a href="#how-it-works" className="btn btn-lg" style={{ background: t.howBtn.bg, color: t.howBtn.color, border: t.howBtn.border, backdropFilter: 'blur(6px)' }}>
                 How It Works ↓
               </a>
             </div>
 
             <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap' }}>
-              {[['🛵','200+ Drivers'],['📦','10K+ Deliveries'],['⭐','4.8 Rating'],['🏙️','Cebu-wide']].map(([icon, text]) => (
+              {[
+                [MotorcycleIcon, '200+ Drivers'],
+                [PackageIcon,    '10K+ Deliveries'],
+                [StarIcon,       '4.8 Rating'],
+                [WifiIcon,       'Cebu-wide'],
+              ].map(([Icon, text]) => (
                 <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '7px', color: t.textStat, fontSize: '13px', fontWeight: 600 }}>
-                  <span style={{ fontSize: '18px' }}>{icon}</span> {text}
+                  <Icon size={16} color={t.accent} /> {text}
                 </div>
               ))}
             </div>
@@ -105,7 +113,7 @@ function Home({ user, dbUser }) {
 
             {/* pickup card */}
             <div className="float-anim" style={{ position: 'absolute', top: '22%', left: '-16px', zIndex: 10, background: t.floatCardBg, backdropFilter: 'blur(16px)', border: `1px solid ${t.floatCardBorder}`, borderRadius: '16px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '10px', background: t.floatIconBg, border: `1px solid ${t.floatCardBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📦</div>
+              <div style={{ width: 36, height: 36, borderRadius: '10px', background: t.floatIconBg, border: `1px solid ${t.floatCardBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><PackageIcon size={18} color={t.accent} /></div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '12px', color: t.floatText, lineHeight: 1 }}>Package picked up!</div>
                 <div style={{ fontSize: '10px', color: t.floatMuted, marginTop: '3px' }}>En route · 3 min away</div>
@@ -118,7 +126,7 @@ function Home({ user, dbUser }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '22px', fontWeight: 900, color: t.floatText, lineHeight: 1 }}>4.9</span>
                 <div>
-                  <div style={{ display: 'flex', gap: '2px' }}>{[1,2,3,4,5].map(i => <span key={i} style={{ fontSize: '11px', color: '#F59E0B' }}>★</span>)}</div>
+                  <div style={{ display: 'flex', gap: '1px' }}>{[1,2,3,4,5].map(i => <StarIcon key={i} size={11} color="#F59E0B" filled />)}</div>
                   <div style={{ fontSize: '10px', color: t.floatMuted, marginTop: '1px' }}>2,841 trips</div>
                 </div>
               </div>
@@ -156,7 +164,7 @@ function Home({ user, dbUser }) {
 
             {/* delivered badge */}
             <div style={{ position: 'absolute', bottom: '8px', left: '16px', zIndex: 5, background: t.floatCardBg, backdropFilter: 'blur(16px)', border: `1px solid ${t.floatCardBorder}`, borderRadius: '14px', padding: '12px 16px', display: 'flex', gap: '10px', alignItems: 'center', boxShadow: '0 12px 32px rgba(0,0,0,0.15)' }}>
-              <div style={{ width: 34, height: 34, borderRadius: '10px', background: t.floatIconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>✅</div>
+              <div style={{ width: 34, height: 34, borderRadius: "10px", background: t.floatIconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><CheckCircleIcon size={18} color={t.accent} /></div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '12px', color: t.floatText, lineHeight: 1 }}>Package Delivered!</div>
                 <div style={{ fontSize: '10px', color: t.floatMuted, marginTop: '3px' }}>Ayala Center, Cebu · Just now</div>
@@ -185,8 +193,8 @@ function Home({ user, dbUser }) {
                   {i < steps.length - 1 && (
                     <div style={{ position: 'absolute', left: '25px', top: '50px', width: '2px', height: 'calc(100% - 22px)', background: `linear-gradient(to bottom, ${t.stepConnector}, rgba(0,177,79,0.04))`, zIndex: 0 }} />
                   )}
-                  <div style={{ width: 50, height: 50, borderRadius: '14px', flexShrink: 0, background: i === 0 ? t.stepIconFirst.bg : t.stepIconRest, border: i !== 0 ? t.stepIconBorder : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', boxShadow: i === 0 ? t.stepIconFirst.shadow : 'none', position: 'relative', zIndex: 1 }}>
-                    {step.icon}
+                  <div style={{ width: 50, height: 50, borderRadius: '14px', flexShrink: 0, background: i === 0 ? t.stepIconFirst.bg : t.stepIconRest, border: i !== 0 ? t.stepIconBorder : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: i === 0 ? t.stepIconFirst.shadow : 'none', position: 'relative', zIndex: 1 }}>
+                    <step.Icon size={24} color={i === 0 ? 'white' : t.accent} />
                   </div>
                   <div style={{ paddingTop: '8px' }}>
                     <div style={{ fontWeight: 800, fontSize: '15px', color: t.text, marginBottom: '5px' }}>
@@ -226,8 +234,8 @@ function Home({ user, dbUser }) {
                 onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.background = t.cardBg; e.currentTarget.style.borderColor = t.cardBorder; }}
               >
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(to right, #00b14f, rgba(0,177,79,0.2), transparent)` }} />
-                <div style={{ width: 52, height: 52, borderRadius: '14px', background: t.featureIconBg, border: `1px solid ${t.featureIconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '18px' }}>
-                  {f.icon}
+                <div style={{ width: 52, height: 52, borderRadius: '14px', background: t.featureIconBg, border: `1px solid ${t.featureIconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '18px' }}>
+                  <f.Icon size={26} color={t.accent} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: t.text, marginBottom: '8px' }}>{f.title}</h3>
                 <p style={{ fontSize: '14px', color: t.textMuted, lineHeight: 1.65 }}>{f.desc}</p>
@@ -260,18 +268,18 @@ function Home({ user, dbUser }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', marginBottom: '32px' }}>
               {['Earn ₱60–₱250 per delivery', 'Flexible hours — work when you want', 'Motorcycle, car, or van accepted', 'Real-time order notifications'].map(item => (
                 <div key={item} style={{ display: 'flex', gap: '10px', alignItems: 'center', color: t.textMuted, fontSize: '14px' }}>
-                  <span style={{ color: t.accent, fontWeight: 900, flexShrink: 0 }}>✓</span> {item}
+                  <CheckIcon size={14} color={t.accent} style={{ flexShrink: 0 }} /> {item}
                 </div>
               ))}
             </div>
 
             {!user && <button onClick={handleLogin} className="btn btn-primary btn-lg">Sign In to Register as Driver</button>}
             {user && dbUser?.role === 'customer' && (
-              <button onClick={() => setShowDriverModal(true)} className="btn btn-primary btn-lg">🛵 Become a Driver Now</button>
+              <button onClick={() => setShowDriverModal(true)} className="btn btn-primary btn-lg">Become a Driver Now</button>
             )}
             {user && dbUser?.role === 'driver' && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: t.alreadyDriverBg, border: `1px solid ${t.alreadyDriverBorder}`, borderRadius: '14px', padding: '13px 22px', color: t.alreadyDriverText, fontWeight: 700, fontSize: '14px' }}>
-                ✅ You are already registered as a driver!
+                <CheckCircleIcon size={16} color={t.alreadyDriverText} /> You are already registered as a driver!
               </div>
             )}
           </div>
@@ -369,13 +377,13 @@ function Home({ user, dbUser }) {
           <div>
             <div style={{ fontSize: '11px', fontWeight: 800, color: t.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Contact</div>
             {[
-              { icon: '📍', text: 'Cebu City, Philippines' },
-              { icon: '📧', text: 'support@grabexpress.ph' },
-              { icon: '📞', text: '+63 32 000 0000' },
-              { icon: '🕐', text: 'Mon–Sun, 7AM–10PM' },
+              { Icon: MapPinIcon, text: 'Cebu City, Philippines' },
+              { Icon: MailIcon,   text: 'support@grabexpress.ph' },
+              { Icon: PhoneIcon,  text: '+63 32 000 0000' },
+              { Icon: ClockIcon,  text: 'Mon–Sun, 7AM–10PM' },
             ].map(c => (
-              <div key={c.icon} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '10px', color: t.textMuted, fontSize: '13px' }}>
-                <span style={{ flexShrink: 0 }}>{c.icon}</span>
+              <div key={c.text} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '10px', color: t.textMuted, fontSize: '13px' }}>
+                <c.Icon size={14} color={t.textMuted} style={{ flexShrink: 0, marginTop: '1px' }} />
                 <span>{c.text}</span>
               </div>
             ))}

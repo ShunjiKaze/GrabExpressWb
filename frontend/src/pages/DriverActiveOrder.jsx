@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import { MotorcycleIcon, CarIcon, VanIcon, MapPinIcon, FlagIcon, PackageIcon,
+         CheckCircleIcon, CameraIcon, UserIcon, PhoneIcon, BuildingIcon, MessageIcon, XIcon, XCircleIcon } from '../components/Icons';
 
-const VEHICLE_ICONS = { motorcycle: '🛵', car: '🚗', van: '🚐' };
+function VehicleIcon({ type, size = 20, color = 'currentColor' }) {
+  const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
+  const Icon = icons[type] || MotorcycleIcon;
+  return <Icon size={size} color={color} />;
+}
 
 const ACTION_STEPS = {
-  accepted:   { btn: "Arrived at Pickup Location",      next: 'picked_up',  color: 'var(--blue)',    emoji: '📍' },
-  picked_up:  { btn: 'Take Proof & Start Delivery',    next: 'in_transit', color: 'var(--purple)',  emoji: '📦' },
-  in_transit: { btn: 'Mark as Delivered',              next: 'delivered',  color: 'var(--primary)', emoji: '✅' },
+  accepted:   { btn: "Arrived at Pickup Location",   next: 'picked_up',  color: 'var(--blue)',    Icon: MapPinIcon },
+  picked_up:  { btn: 'Take Proof & Start Delivery',  next: 'in_transit', color: 'var(--purple)',  Icon: PackageIcon },
+  in_transit: { btn: 'Mark as Delivered',            next: 'delivered',  color: 'var(--primary)', Icon: CheckCircleIcon },
 };
 
 function StatusBadge({ status }) {
@@ -25,34 +31,98 @@ function StatusBadge({ status }) {
   );
 }
 
-function ProofCaptureModal({ onCapture, onClose, label }) {
-  const [captured, setCaptured] = useState(false);
+const CANCEL_REASONS_DRIVER = ['Unable to locate sender', 'Vehicle breakdown', 'Safety concern', 'Package too large', 'Other'];
+
+function DriverCancelModal({ onConfirm, onClose, cancelling }) {
+  const [reason, setReason] = useState('');
+  const [note, setNote]     = useState('');
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <div className="modal-title">📸 {label}</div>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <XCircleIcon size={18} color="var(--red)" /> Cancel Order
+          </div>
+          <button className="modal-close" onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <XIcon size={18} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <div className="form-group mb-16">
+            <label className="form-label">Reason for cancellation</label>
+            <select className="form-input" value={reason} onChange={e => setReason(e.target.value)}>
+              <option value="">Select a reason…</option>
+              {CANCEL_REASONS_DRIVER.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="form-group mb-24">
+            <label className="form-label">Additional details <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(optional)</span></label>
+            <textarea className="form-input form-textarea" rows={3} placeholder="Any additional context…" value={note} onChange={e => setNote(e.target.value)} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={onClose} className="btn btn-secondary" style={{ flex: 1 }}>Keep Order</button>
+            <button onClick={() => onConfirm(reason, note)} className="btn btn-danger" style={{ flex: 1 }} disabled={!reason || cancelling}>
+              {cancelling ? 'Cancelling…' : 'Cancel Order'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProofCaptureModal({ onCapture, onClose, label }) {
+  const [captured, setCaptured] = useState(false);
+
+  const handleTap = () => {
+    setCaptured(true);
+  };
+
+  const handleConfirm = () => {
+    onCapture(null);
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CameraIcon size={18} /> {label}
+          </div>
+          <button className="modal-close" onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <XIcon size={18} />
+          </button>
         </div>
         <div className="modal-body" style={{ textAlign: 'center' }}>
           <div
-            onClick={() => setCaptured(true)}
+            onClick={handleTap}
             style={{
               border: `3px dashed ${captured ? 'var(--primary)' : 'var(--border)'}`,
               background: captured ? 'var(--primary-light)' : 'var(--surface-2)',
-              borderRadius: 'var(--radius-lg)', padding: '40px 24px', cursor: 'pointer', marginBottom: '20px', transition: 'var(--transition)',
+              borderRadius: 'var(--radius-lg)', padding: '40px 24px',
+              cursor: 'pointer', marginBottom: '20px', transition: 'var(--transition)',
             }}
           >
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>{captured ? '✅' : '📷'}</div>
-            <div style={{ fontWeight: 700, fontSize: '15px', color: captured ? 'var(--primary)' : 'var(--text-2)' }}>
-              {captured ? 'Photo Captured!' : 'Tap to Take Photo'}
-            </div>
-            <div className="text-sm text-muted mt-8">
-              {captured ? 'Proof recorded successfully' : 'Take a clear photo of the package'}
-            </div>
+            {captured ? (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                  <CheckCircleIcon size={52} color="var(--primary)" />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--primary)' }}>Photo Taken!</div>
+                <div className="text-sm text-muted mt-8">Tap again to retake</div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                  <CameraIcon size={52} color="var(--text-3)" />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-2)' }}>Tap to Take Photo</div>
+                <div className="text-sm text-muted mt-8">Take a clear photo of the package</div>
+              </>
+            )}
           </div>
           <button
-            onClick={() => captured && onCapture()}
+            onClick={handleConfirm}
             className={`btn btn-full btn-lg ${captured ? 'btn-primary' : 'btn-secondary'}`}
             disabled={!captured}
           >
@@ -66,11 +136,13 @@ function ProofCaptureModal({ onCapture, onClose, label }) {
 
 function DriverActiveOrder({ dbUser }) {
   const navigate = useNavigate();
-  const [order, setOrder]           = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [updating, setUpdating]     = useState(false);
-  const [showProof, setShowProof]   = useState(false);
+  const [order, setOrder]                 = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [updating, setUpdating]           = useState(false);
+  const [showProof, setShowProof]         = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [driverCancelling, setDriverCancelling] = useState(false);
 
   useEffect(() => {
     const q = query(
@@ -97,7 +169,7 @@ function DriverActiveOrder({ dbUser }) {
     await doUpdate(nextStatus);
   };
 
-  const doUpdate = async (nextStatus) => {
+  const doUpdate = async (nextStatus, proofURL = null) => {
     setUpdating(true);
     setShowProof(false);
     try {
@@ -106,15 +178,48 @@ function DriverActiveOrder({ dbUser }) {
         in_transit: { transitAt: serverTimestamp() },
         delivered:  { deliveredAt: serverTimestamp() },
       };
+      const proofFields = {};
+      if (nextStatus === 'in_transit' && proofURL) proofFields.pickupProofURL   = proofURL;
+      if (nextStatus === 'delivered'  && proofURL) proofFields.deliveryProofURL = proofURL;
       await updateDoc(doc(db, 'bookings', order.id), {
         status: nextStatus,
         ...(timestamps[nextStatus] || {}),
+        ...proofFields,
       });
       if (nextStatus === 'delivered') {
+        try {
+          const paySnap = await getDocs(query(collection(db, 'payments'), where('bookingId', '==', order.id)));
+          if (!paySnap.empty) {
+            await updateDoc(doc(db, 'payments', paySnap.docs[0].id), {
+              driverId: dbUser.user_id,
+              status:   'paid',
+              paidAt:   serverTimestamp(),
+            });
+          }
+        } catch (payErr) { console.error('Payment update failed:', payErr); }
         navigate(`/rate/${order.id}`);
       }
     } catch (err) { console.error(err); }
     setUpdating(false);
+  };
+
+  const confirmDriverCancel = async (reason, note) => {
+    setDriverCancelling(true);
+    try {
+      await updateDoc(doc(db, 'bookings', order.id), {
+        status:       'cancelled',
+        cancelledAt:  serverTimestamp(),
+        cancelReason: reason,
+        cancelNote:   note.trim() || null,
+        cancelledBy:  'driver',
+      });
+      const paySnap = await getDocs(query(collection(db, 'payments'), where('bookingId', '==', order.id)));
+      if (!paySnap.empty) await updateDoc(paySnap.docs[0].ref, { status: 'cancelled' });
+      navigate('/driver/deliveries');
+    } catch (err) {
+      console.error(err);
+      setDriverCancelling(false);
+    }
   };
 
   if (loading) {
@@ -130,7 +235,9 @@ function DriverActiveOrder({ dbUser }) {
     return (
       <div className="dashboard-container" style={{ maxWidth: '500px', paddingTop: '60px' }}>
         <div className="card" style={{ padding: '48px', textAlign: 'center' }}>
-          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🛵</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+            <MotorcycleIcon size={64} color="var(--text-3)" />
+          </div>
           <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--navy)', marginBottom: '10px' }}>No Active Order</h2>
           <p className="text-muted mb-24">You don't have an active delivery right now. Find new orders to start earning!</p>
           <button onClick={() => navigate('/driver/deliveries')} className="btn btn-primary btn-lg btn-full">Find Orders</button>
@@ -142,17 +249,27 @@ function DriverActiveOrder({ dbUser }) {
   const action = ACTION_STEPS[order.status];
 
   return (
-    <div className="dashboard-container" style={{ maxWidth: '720px' }}>
+    <>
       {showProof && (
         <ProofCaptureModal
           label={pendingStatus === 'in_transit' ? 'Proof of Pickup' : 'Proof of Delivery'}
-          onCapture={() => doUpdate(pendingStatus)}
+          bookingId={order.id}
+          proofKey={pendingStatus === 'in_transit' ? 'pickup' : 'delivery'}
+          onCapture={(url) => doUpdate(pendingStatus, url)}
           onClose={() => { setShowProof(false); setPendingStatus(null); }}
         />
       )}
+      {showCancelModal && (
+        <DriverCancelModal
+          onConfirm={confirmDriverCancel}
+          onClose={() => setShowCancelModal(false)}
+          cancelling={driverCancelling}
+        />
+      )}
+    <div className="dashboard-container" style={{ maxWidth: '720px' }}>
 
       {/* Mission header */}
-      <div style={{ background: 'linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px' }}>
+      <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px' }}>
         <div className="flex items-center justify-between mb-16">
           <div>
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Current Mission</div>
@@ -185,32 +302,38 @@ function DriverActiveOrder({ dbUser }) {
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '16px' }}>Delivery Route</div>
 
             <div style={{ display: 'flex', gap: '14px', marginBottom: '16px', padding: '16px', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(0,177,79,0.2)' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📍</div>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <MapPinIcon size={18} color="white" />
+              </div>
               <div>
                 <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '3px' }}>Pickup From</div>
-                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--navy)' }}>{order.pickupAddress}</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '3px' }}>
-                  👤 {order.senderName} &nbsp;•&nbsp;
-                  <a href={`tel:${order.senderPhone}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>📞 {order.senderPhone}</a>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{order.pickupAddress}</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><UserIcon size={12} /> {order.senderName}</span>
+                  <span>•</span>
+                  <a href={`tel:${order.senderPhone}`} style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}><PhoneIcon size={12} /> {order.senderPhone}</a>
                 </div>
-                {order.senderFloor && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>🏢 {order.senderFloor}</div>}
-                {order.senderNote && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>💬 "{order.senderNote}"</div>}
+                {order.senderFloor && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}><BuildingIcon size={12} /> {order.senderFloor}</div>}
+                {order.senderNote && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}><MessageIcon size={12} /> "{order.senderNote}"</div>}
               </div>
             </div>
 
             <div style={{ width: 2, height: 20, background: 'var(--border)', margin: '0 17px 0' }} />
 
-            <div style={{ display: 'flex', gap: '14px', padding: '16px', background: '#FFF1F2', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239,68,68,0.2)' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>🏁</div>
+            <div style={{ display: 'flex', gap: '14px', padding: '16px', background: 'var(--red-light)', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239,68,68,0.2)' }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <FlagIcon size={18} color="white" />
+              </div>
               <div>
                 <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--red)', textTransform: 'uppercase', marginBottom: '3px' }}>Deliver To</div>
-                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--navy)' }}>{order.deliveryAddress}</div>
-                <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '3px' }}>
-                  👤 {order.recipientName} &nbsp;•&nbsp;
-                  <a href={`tel:${order.recipientPhone}`} style={{ color: 'var(--red)', textDecoration: 'none', fontWeight: 600 }}>📞 {order.recipientPhone}</a>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{order.deliveryAddress}</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><UserIcon size={12} /> {order.recipientName}</span>
+                  <span>•</span>
+                  <a href={`tel:${order.recipientPhone}`} style={{ color: 'var(--red)', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}><PhoneIcon size={12} /> {order.recipientPhone}</a>
                 </div>
-                {order.recipientFloor && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>🏢 {order.recipientFloor}</div>}
-                {order.recipientNote && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>💬 "{order.recipientNote}"</div>}
+                {order.recipientFloor && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}><BuildingIcon size={12} /> {order.recipientFloor}</div>}
+                {order.recipientNote && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}><MessageIcon size={12} /> "{order.recipientNote}"</div>}
               </div>
             </div>
           </div>
@@ -221,9 +344,22 @@ function DriverActiveOrder({ dbUser }) {
               onClick={() => progressToStatus(action.next)}
               disabled={updating}
               className="btn btn-lg btn-full"
-              style={{ background: action.color, color: 'white', fontWeight: 800, fontSize: '16px', padding: '18px', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', boxShadow: `0 4px 16px ${action.color}40` }}
+              style={{ background: action.color, color: 'white', fontWeight: 800, fontSize: '16px', padding: '18px', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', boxShadow: `0 4px 16px ${action.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
             >
-              {updating ? '⏳ Updating…' : `${action.emoji} ${action.btn}`}
+              {updating
+                ? 'Updating…'
+                : <><action.Icon size={20} color="white" /> {action.btn}</>
+              }
+            </button>
+          )}
+          {order.status === 'accepted' && (
+            <button
+              onClick={() => setShowCancelModal(true)}
+              className="btn btn-ghost btn-full"
+              style={{ color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              disabled={driverCancelling}
+            >
+              <XCircleIcon size={15} color="var(--red)" /> Cancel Order
             </button>
           )}
         </div>
@@ -234,12 +370,12 @@ function DriverActiveOrder({ dbUser }) {
           <div className="card" style={{ padding: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '14px' }}>Package</div>
             {[
-              ['Vehicle',  `${VEHICLE_ICONS[order.vehicleType] || ''} ${order.vehicleType}`],
-              ['Item',     order.itemType],
-              ['Size',     order.itemSize],
-              ['Weight',   order.itemWeight ? `${order.itemWeight}kg` : '—'],
-              ['Guarantee',order.guaranteeTier],
-              ['Payment',  (order.paymentMethod || '').replace(/_/g, ' ')],
+              ['Vehicle',   order.vehicleType],
+              ['Item',      order.itemType],
+              ['Size',      order.itemSize],
+              ['Weight',    order.itemWeight ? `${order.itemWeight}kg` : '—'],
+              ['Guarantee', order.guaranteeTier],
+              ['Payment',   (order.paymentMethod || '').replace(/_/g, ' ')],
             ].map(([l, v]) => (
               <div key={l} className="flex justify-between mb-8">
                 <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>{l}</span>
@@ -251,12 +387,16 @@ function DriverActiveOrder({ dbUser }) {
           {/* Earnings */}
           <div style={{ background: 'linear-gradient(135deg, #052e16, #15803d)', borderRadius: 'var(--radius-md)', padding: '20px', color: 'white', textAlign: 'center' }}>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Your Earnings</div>
-            <div style={{ fontSize: '36px', fontWeight: 900, color: '#4ADE80' }}>₱{order.totalAmount}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Upon successful delivery</div>
+            <div style={{ fontSize: '36px', fontWeight: 900, color: '#4ADE80' }}>₱{Math.round(order.totalAmount * 0.80)}</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Your 80% upon delivery</div>
+            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+              <span>Platform (20%)</span><span>₱{Math.round(order.totalAmount * 0.20)}</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 }
 

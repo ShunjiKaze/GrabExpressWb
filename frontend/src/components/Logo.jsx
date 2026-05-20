@@ -1,4 +1,5 @@
-function Logo({ size = 'md', showText = true, textColor = '#0F172A' }) {
+function Logo({ size = 'md', showText = true, textColor }) {
+  const resolvedColor = textColor ?? (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#0F172A');
   const dims = { sm: 28, md: 36, lg: 48 };
   const px = dims[size] ?? 36;
   const textSize = { sm: '15px', md: '19px', lg: '26px' };
@@ -24,7 +25,7 @@ function Logo({ size = 'md', showText = true, textColor = '#0F172A' }) {
           fontSize: textSize[size] ?? '19px',
           fontWeight: 900,
           letterSpacing: '-0.5px',
-          color: textColor,
+          color: resolvedColor,
           lineHeight: 1,
           userSelect: 'none',
         }}>
