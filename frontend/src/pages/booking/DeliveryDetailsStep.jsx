@@ -15,7 +15,7 @@ const DELIVERY_TYPES = [
 
 function Field({ label, required, optional, error, hint, children }) {
   return (
-    <div className="form-group">
+    <div className="form-group" style={{ marginBottom: 0 }}>
       <label className="form-label">
         {label}
         {required && <span className="req"> *</span>}
@@ -28,36 +28,38 @@ function Field({ label, required, optional, error, hint, children }) {
   );
 }
 
-function PersonSection({ title, prefix, fields, onUpdate, errors, onClearError }) {
+function PersonSection({ title, prefix, fields, onUpdate, errors, onClearError, iconColor }) {
   const nameKey  = `${prefix}Name`;
   const phoneKey = `${prefix}Phone`;
   const floorKey = `${prefix}Floor`;
   const noteKey  = `${prefix}Note`;
+  const saveKey  = `save${prefix.charAt(0).toUpperCase()}${prefix.slice(1)}`;
 
   return (
-    <div style={{ background: 'var(--surface-2)', borderRadius: 'var(--radius-md)', padding: '20px' }}>
-      <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--navy)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {prefix === 'sender'
-          ? <><UserIcon size={15} color="var(--primary)" /> {title}</>
-          : <><UserIcon size={15} color="var(--red)" /> {title}</>
-        }
+    <div style={{
+      background: 'var(--surface-2)',
+      borderRadius: 'var(--radius-md)',
+      padding: '20px',
+      border: `1.5px solid transparent`,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '14px',
+    }}>
+      <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+        <UserIcon size={15} color={iconColor} /> {title}
       </h3>
 
-      <div className="grid grid-2 gap-12 mb-12">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <Field label="Contact Name" required error={errors[nameKey]}>
           <input
             className="form-input"
             placeholder="Full name"
             value={fields[nameKey]}
             maxLength={60}
-            onChange={e => {
-              onUpdate({ [nameKey]: sanitizeName(e.target.value) });
-              onClearError(nameKey);
-            }}
+            onChange={e => { onUpdate({ [nameKey]: sanitizeName(e.target.value) }); onClearError(nameKey); }}
             style={errors[nameKey] ? { borderColor: 'var(--red)' } : {}}
           />
         </Field>
-
         <Field label="Contact Number" required error={errors[phoneKey]}>
           <input
             className="form-input"
@@ -65,41 +67,38 @@ function PersonSection({ title, prefix, fields, onUpdate, errors, onClearError }
             value={fields[phoneKey]}
             maxLength={11}
             inputMode="numeric"
-            onChange={e => {
-              onUpdate({ [phoneKey]: digitsOnly(e.target.value) });
-              onClearError(phoneKey);
-            }}
+            onChange={e => { onUpdate({ [phoneKey]: digitsOnly(e.target.value) }); onClearError(phoneKey); }}
             style={errors[phoneKey] ? { borderColor: 'var(--red)' } : {}}
           />
         </Field>
       </div>
 
-      <Field label="Floor / Unit No." optional>
-        <input
-          className="form-input"
-          placeholder="e.g. Unit 3B, 2nd Floor"
-          value={fields[floorKey]}
-          maxLength={60}
-          onChange={e => onUpdate({ [floorKey]: e.target.value })}
-        />
-      </Field>
-
-      <div className="form-group mt-12 mb-12">
-        <label className="form-label">Note to Driver <span className="opt">(optional)</span></label>
-        <input
-          className="form-input"
-          placeholder="e.g. Leave at the guard post"
-          value={fields[noteKey]}
-          maxLength={120}
-          onChange={e => onUpdate({ [noteKey]: e.target.value })}
-        />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <Field label="Floor / Unit No." optional>
+          <input
+            className="form-input"
+            placeholder="e.g. Unit 3B, 2nd Floor"
+            value={fields[floorKey]}
+            maxLength={60}
+            onChange={e => onUpdate({ [floorKey]: e.target.value })}
+          />
+        </Field>
+        <Field label="Note to Driver" optional>
+          <input
+            className="form-input"
+            placeholder="e.g. Leave at the guard post"
+            value={fields[noteKey]}
+            maxLength={120}
+            onChange={e => onUpdate({ [noteKey]: e.target.value })}
+          />
+        </Field>
       </div>
 
       <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-2)' }}>
         <input
           type="checkbox"
-          checked={fields[`save${prefix.charAt(0).toUpperCase()}${prefix.slice(1)}`]}
-          onChange={e => onUpdate({ [`save${prefix.charAt(0).toUpperCase()}${prefix.slice(1)}`]: e.target.checked })}
+          checked={fields[saveKey]}
+          onChange={e => onUpdate({ [saveKey]: e.target.checked })}
           style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
         />
         Save details for future bookings
@@ -139,7 +138,7 @@ function DeliveryDetailsStep() {
   };
 
   return (
-    <div className="dashboard-container" style={{ maxWidth: '760px' }}>
+    <div className="dashboard-container" style={{ maxWidth: '900px' }}>
       <div className="card" style={{ padding: '32px' }}>
         <StepBar steps={STEPS} currentStep={1} />
 
@@ -147,19 +146,23 @@ function DeliveryDetailsStep() {
         <p className="text-sm text-muted mb-24">Fill in the sender and recipient information for this delivery.</p>
 
         {/* Route summary */}
-        <div style={{ background: 'var(--primary-light)', border: '1px solid rgba(0,177,79,0.2)', borderRadius: 'var(--radius-md)', padding: '14px 18px', marginBottom: '24px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{
+          background: 'var(--primary-light)', border: '1px solid rgba(0,177,79,0.2)',
+          borderRadius: 'var(--radius-md)', padding: '14px 18px', marginBottom: '24px',
+          fontSize: '13px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px',
+        }}>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <span style={{ color: 'var(--primary)', fontWeight: 700, width: '60px', flexShrink: 0 }}>FROM</span>
+            <span style={{ color: 'var(--primary)', fontWeight: 700, width: '50px', flexShrink: 0 }}>FROM</span>
             <span style={{ color: 'var(--text)', fontWeight: 600 }}>{bookingData.pickupAddress}</span>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <span style={{ color: 'var(--red)', fontWeight: 700, width: '60px', flexShrink: 0 }}>TO</span>
+            <span style={{ color: 'var(--red)', fontWeight: 700, width: '50px', flexShrink: 0 }}>TO</span>
             <span style={{ color: 'var(--text)', fontWeight: 600 }}>{bookingData.deliveryAddress}</span>
           </div>
         </div>
 
         {/* Delivery Type */}
-        <div className="form-group mb-20">
+        <div className="form-group mb-24">
           <label className="form-label">Delivery Type</label>
           <div className="option-grid option-grid-3">
             {DELIVERY_TYPES.map(t => (
@@ -182,23 +185,21 @@ function DeliveryDetailsStep() {
           </div>
         </div>
 
-        {/* Sender */}
-        <div className="mb-16">
+        {/* Sender & Recipient side by side */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
           <PersonSection
             title="Sender's Details"
             prefix="sender"
+            iconColor="var(--primary)"
             fields={bookingData}
             onUpdate={updateBooking}
             errors={errors}
             onClearError={clearError}
           />
-        </div>
-
-        {/* Recipient */}
-        <div className="mb-16">
           <PersonSection
             title="Recipient's Details"
             prefix="recipient"
+            iconColor="var(--red)"
             fields={bookingData}
             onUpdate={updateBooking}
             errors={errors}

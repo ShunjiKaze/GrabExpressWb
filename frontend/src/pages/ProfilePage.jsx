@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { doc, updateDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { updateProfile, deleteUser, signOut, reauthenticateWithPopup, GoogleAuthProvider, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { updateProfile, signOut } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, auth, storage } from '../firebase';
 import { useToast } from '../components/Toast';
@@ -23,9 +23,6 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
   const [displayName,  setDisplayName]    = useState(dbUser?.full_name || '');
   const [displayPhone, setDisplayPhone]   = useState(dbUser?.phone || '');
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletePassword, setDeletePassword]       = useState('');
-  const [deleting, setDeleting]           = useState(false);
   const fileInputRef = useRef(null);
   const showToast = useToast();
   // Use prop (from App state) first, fall back to auth.currentUser
@@ -118,31 +115,6 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
     setIsEditing(false);
   };
 
-  const handleDeleteAccount = async () => {
-    setDeleting(true);
-    try {
-      if (isGoogleUser) {
-        await reauthenticateWithPopup(firebaseUser, new GoogleAuthProvider());
-      } else {
-        if (!deletePassword) { showToast('Please enter your password to confirm.', 'error'); setDeleting(false); return; }
-        const cred = EmailAuthProvider.credential(firebaseUser.email, deletePassword);
-        await reauthenticateWithCredential(firebaseUser, cred);
-      }
-      await deleteDoc(doc(db, 'users', dbUser.user_id));
-      await deleteUser(firebaseUser);
-    } catch (err) {
-      console.error('Delete account error:', err);
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        showToast('Incorrect password. Account not deleted.', 'error');
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        showToast('Re-authentication cancelled.', 'error');
-      } else {
-        showToast('Failed to delete account. Try again.', 'error');
-      }
-      setDeleting(false);
-    }
-  };
-
   const formatDate = (ts) => {
     if (!ts) return '—';
     const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -231,17 +203,6 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
             >
               Sign Out
             </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              title="Delete account"
-              style={{ background: 'none', border: '1px solid #FECACA', borderRadius: 'var(--radius-sm)', padding: '6px 8px', cursor: 'pointer', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -328,64 +289,6 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
                 style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: 'none', background: '#DC2626', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
               >
                 Yes, Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Delete Account Modal ── */}
-      {showDeleteConfirm && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
-          onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
-        >
-          <div
-            style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '440px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.25)', animation: 'fadeInUp 0.2s ease' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ width: 48, height: 48, borderRadius: '12px', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-            </div>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--navy)', marginBottom: '8px' }}>Delete Your Account?</h2>
-            <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '20px' }}>
-              This will permanently remove your account and all associated data. <strong>This action cannot be undone.</strong>
-            </p>
-
-            {!isGoogleUser && (
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Confirm your password</label>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={e => setDeletePassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="form-input"
-                />
-              </div>
-            )}
-            {isGoogleUser && (
-              <p style={{ fontSize: '13px', color: 'var(--text-3)', marginBottom: '16px', background: '#F9FAFB', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 14px' }}>
-                You will be prompted to re-authenticate with Google to confirm.
-              </p>
-            )}
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); }}
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-                style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: 'none', background: deleting ? '#f87171' : '#DC2626', color: 'white', fontWeight: 700, fontSize: '14px', cursor: deleting ? 'not-allowed' : 'pointer', transition: 'background 0.15s' }}
-              >
-                {deleting ? 'Deleting…' : 'Yes, Delete Account'}
               </button>
             </div>
           </div>

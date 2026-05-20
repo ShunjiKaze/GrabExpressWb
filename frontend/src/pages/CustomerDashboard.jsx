@@ -158,21 +158,7 @@ function CustomerDashboard({ dbUser }) {
             <Link to="/book/new/address" className="btn btn-primary mt-16">Book Now</Link>
           </div>
         </div>
-      ) : (
-        <>
-          {/* Past Orders */}
-          {past.length > 0 && (
-            <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--navy)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <PackageIcon size={16} color="var(--text-2)" /> Past Orders ({past.length})
-              </h2>
-              <div className="card" style={{ overflow: 'hidden' }}>
-                {past.map(b => <BookingCard key={b.id} b={b} />)}
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      ) : null}
     </div>
   );
 }

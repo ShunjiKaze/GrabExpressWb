@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { SearchIcon, MotorcycleIcon, CarIcon, VanIcon, PackageIcon, ZapIcon,
          CheckCircleIcon, XCircleIcon, MapPinIcon, FlagIcon, StarIcon,
-         ClipboardIcon, ChevronUpIcon, ChevronDownIcon, CreditCardIcon, BanknoteIcon, FileTextIcon } from '../components/Icons';
+         ClipboardIcon, ChevronUpIcon, ChevronDownIcon, FileTextIcon } from '../components/Icons';
 
 function VehicleIcon({ type, size = 20, color = 'currentColor' }) {
   const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
@@ -73,7 +73,6 @@ function OrderHistory({ dbUser }) {
     return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  const total = orders.reduce((sum, o) => o.status !== 'cancelled' ? sum + (o.totalAmount || 0) : sum, 0);
   const completed = orders.filter(o => ['delivered', 'completed'].includes(o.status)).length;
 
   return (
@@ -98,10 +97,10 @@ function OrderHistory({ dbUser }) {
         </div>
         <div className="stat-card amber">
           <div className="stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {dbUser.role === 'driver' ? <BanknoteIcon size={28} /> : <CreditCardIcon size={28} />}
+            <XCircleIcon size={28} />
           </div>
-          <div className="stat-label">{dbUser.role === 'driver' ? 'Total Earned' : 'Total Spent'}</div>
-          <div className="stat-value" style={{ fontSize: '22px' }}>₱{total.toLocaleString()}</div>
+          <div className="stat-label">Cancellations</div>
+          <div className="stat-value">{orders.filter(o => o.status === 'cancelled').length}</div>
         </div>
       </div>
 

@@ -74,6 +74,7 @@ function ReviewOrder({ dbUser }) {
         itemSize:       bookingData.itemSize,
         itemWeight:     parseFloat(bookingData.itemWeight) || 0,
         itemType:       bookingData.itemType,
+        itemTypeOther:  bookingData.itemType === 'Others' ? bookingData.itemTypeOther : '',
         itemPhotoTaken: bookingData.itemPhotoTaken,
         guaranteeTier:  bookingData.guaranteeTier,
         paymentMethod:  bookingData.paymentMethod,
@@ -115,7 +116,7 @@ function ReviewOrder({ dbUser }) {
   };
 
   return (
-    <div className="dashboard-container" style={{ maxWidth: '680px' }}>
+    <div className="dashboard-container" style={{ maxWidth: '900px' }}>
       <div className="card" style={{ padding: '32px' }}>
         <StepBar steps={STEPS} currentStep={3} />
 
@@ -156,56 +157,59 @@ function ReviewOrder({ dbUser }) {
           <DetailRow label="Delivery Type" value={bookingData.deliveryType === 'instant' ? 'Instant' : bookingData.deliveryType} />
           <DetailRow label="Vehicle" value={bookingData.vehicleType.charAt(0).toUpperCase() + bookingData.vehicleType.slice(1)} />
           <DetailRow label="Item Size" value={bookingData.itemSize} />
-          <DetailRow label="Item Type" value={bookingData.itemType} />
+          <DetailRow label="Item Type" value={bookingData.itemType === 'Others' && bookingData.itemTypeOther ? `Others – ${bookingData.itemTypeOther}` : bookingData.itemType} />
           <DetailRow label="Weight" value={`${bookingData.itemWeight} kg`} />
           <DetailRow label="Guarantee" value={bookingData.guaranteeTier} />
         </ReviewSection>
 
-        {/* Payment Selection */}
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>Payment Method</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {PAYMENT_OPTIONS.map(p => (
-              <div
-                key={p.id}
-                onClick={() => updateBooking({ paymentMethod: p.id })}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
-                  border: `2px solid ${bookingData.paymentMethod === p.id ? 'var(--primary)' : 'var(--border)'}`,
-                  background: bookingData.paymentMethod === p.id ? 'var(--primary-light)' : 'var(--surface)',
-                  borderRadius: 'var(--radius-md)', cursor: 'pointer', transition: 'var(--transition)',
-                }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: '50%', background: bookingData.paymentMethod === p.id ? 'var(--primary)' : 'var(--surface-2)' }}>
-                  <p.Icon size={18} color={bookingData.paymentMethod === p.id ? 'white' : 'var(--text-2)'} />
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: '14px' }}>{p.title}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>{p.desc}</div>
+        {/* Payment + Price: 2-column layout */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px', alignItems: 'start' }}>
+          {/* Payment Selection */}
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>Payment Method</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {PAYMENT_OPTIONS.map(p => (
+                <div
+                  key={p.id}
+                  onClick={() => updateBooking({ paymentMethod: p.id })}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px',
+                    border: `2px solid ${bookingData.paymentMethod === p.id ? 'var(--primary)' : 'var(--border)'}`,
+                    background: bookingData.paymentMethod === p.id ? 'var(--primary-light)' : 'var(--surface)',
+                    borderRadius: 'var(--radius-md)', cursor: 'pointer', transition: 'var(--transition)',
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: '50%', background: bookingData.paymentMethod === p.id ? 'var(--primary)' : 'var(--surface-2)', flexShrink: 0 }}>
+                    <p.Icon size={16} color={bookingData.paymentMethod === p.id ? 'white' : 'var(--text-2)'} />
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '13px' }}>{p.title}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.desc}</div>
+                  </div>
+                  <div style={{ width: 16, height: 16, borderRadius: '50%', border: `2px solid ${bookingData.paymentMethod === p.id ? 'var(--primary)' : 'var(--border)'}`, background: bookingData.paymentMethod === p.id ? 'var(--primary)' : 'transparent', flexShrink: 0 }} />
                 </div>
-                <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2px solid ${bookingData.paymentMethod === p.id ? 'var(--primary)' : 'var(--border)'}`, background: bookingData.paymentMethod === p.id ? 'var(--primary)' : 'transparent', flexShrink: 0 }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Price Breakdown */}
+          <div style={{ background: '#0F172A', borderRadius: 'var(--radius-md)', padding: '20px', color: 'white', height: 'fit-content' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginBottom: '14px' }}>Price Breakdown</div>
+            {[
+              [`Base Fare (${bookingData.vehicleType})`, `₱${base}`],
+              [`Size (${bookingData.itemSize})`, sizeAdd > 0 ? `+₱${sizeAdd}` : '₱0'],
+              [`Delivery (${bookingData.deliveryType === 'instant' ? 'Instant' : bookingData.deliveryType})`, deliveryAdd > 0 ? `+₱${deliveryAdd}` : 'Included'],
+              [`Guarantee (${bookingData.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '₱0'],
+            ].map(([l, v]) => (
+              <div key={l} className="flex justify-between" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', marginBottom: '8px' }}>
+                <span>{l}</span><span style={{ fontWeight: 600, color: 'white' }}>{v}</span>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Price Breakdown */}
-        <div style={{ background: '#0F172A', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '20px', color: 'white' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginBottom: '14px' }}>Price Breakdown</div>
-          {[
-            [`Base Fare (${bookingData.vehicleType})`, `₱${base}`],
-            [`Size (${bookingData.itemSize})`, sizeAdd > 0 ? `+₱${sizeAdd}` : '₱0'],
-            [`Delivery (${bookingData.deliveryType === 'instant' ? 'Instant' : bookingData.deliveryType})`, deliveryAdd > 0 ? `+₱${deliveryAdd}` : 'Included'],
-            [`Guarantee (${bookingData.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '₱0'],
-          ].map(([l, v]) => (
-            <div key={l} className="flex justify-between" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', marginBottom: '8px' }}>
-              <span>{l}</span><span style={{ fontWeight: 600, color: 'white' }}>{v}</span>
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', margin: '12px 0' }} />
+            <div className="flex justify-between">
+              <span style={{ fontWeight: 700, fontSize: '16px' }}>Total</span>
+              <span style={{ fontWeight: 900, fontSize: '24px', color: '#4ADE80' }}>₱{total}</span>
             </div>
-          ))}
-          <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', margin: '12px 0' }} />
-          <div className="flex justify-between">
-            <span style={{ fontWeight: 700, fontSize: '16px' }}>Total</span>
-            <span style={{ fontWeight: 900, fontSize: '24px', color: '#4ADE80' }}>₱{total}</span>
           </div>
         </div>
 

@@ -25,6 +25,7 @@ const INITIAL = {
   itemSize: 'M',
   itemWeight: '',
   itemType: 'Document',
+  itemTypeOther: '',
   itemPhotoTaken: false,
   guaranteeTier: 'Basic',
 

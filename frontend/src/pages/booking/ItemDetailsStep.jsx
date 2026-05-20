@@ -17,13 +17,13 @@ const SIZES = [
 ];
 
 const ITEM_TYPES = [
-  { id: 'Document',    Icon: DocumentIcon  },
-  { id: 'Food',        Icon: FoodIcon      },
-  { id: 'Clothing',    Icon: ShirtIcon     },
-  { id: 'Electronics', Icon: LaptopIcon    },
-  { id: 'Fragile',     Icon: FrameIcon     },
-  { id: 'Medical',     Icon: HeartPulseIcon},
-  { id: 'Others',      Icon: PackageIcon   },
+  { id: 'Document',    Icon: DocumentIcon   },
+  { id: 'Food',        Icon: FoodIcon       },
+  { id: 'Clothing',    Icon: ShirtIcon      },
+  { id: 'Electronics', Icon: LaptopIcon     },
+  { id: 'Fragile',     Icon: FrameIcon      },
+  { id: 'Medical',     Icon: HeartPulseIcon },
+  { id: 'Others',      Icon: PackageIcon    },
 ];
 
 const TIERS = [
@@ -67,9 +67,22 @@ function ItemDetailsStep() {
       } else if (sizeInfo && n < sizeInfo.minKg) {
         e.itemWeight = `Too light for ${sizeInfo.title} (${sizeInfo.weight}). Choose a smaller size.`;
       } else if (sizeInfo && n > sizeInfo.maxKg) {
-        e.itemWeight = `Too heavy for ${sizeInfo.title} (${sizeInfo.weight}). Choose a larger size.`;
+        // For XL (max size), give a clear message that 50 kg is the absolute max
+        if (sizeInfo.id === 'XL') {
+          e.itemWeight = `${sizeInfo.title} supports up to ${sizeInfo.maxKg} kg. That is our maximum weight limit.`;
+        } else {
+          e.itemWeight = `Too heavy for ${sizeInfo.title} (${sizeInfo.weight}). Choose a larger size.`;
+        }
       }
     }
+
+    if (!bookingData.itemType) {
+      e.itemType = 'Please select an item type.';
+    }
+    if (bookingData.itemType === 'Others' && !bookingData.itemTypeOther?.trim()) {
+      e.itemTypeOther = 'Please describe your item.';
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -81,7 +94,7 @@ function ItemDetailsStep() {
   const VehicleRecommendIcon = VEHICLE_ICON[bookingData.vehicleType] || CarIcon;
 
   return (
-    <div className="dashboard-container" style={{ maxWidth: '680px' }}>
+    <div className="dashboard-container" style={{ maxWidth: '900px' }}>
       {showProhibited && <ProhibitedModal onClose={() => setShowProhibited(false)} />}
 
       <div className="card" style={{ padding: '32px' }}>
@@ -98,138 +111,194 @@ function ItemDetailsStep() {
         </div>
         <p className="text-sm text-muted mb-24">Tell us about your package so we can recommend the right vehicle.</p>
 
-        {/* Size */}
-        <div className="form-group mb-20">
-          <label className="form-label">Package Size <span className="req">*</span></label>
-          <div className="option-grid option-grid-4">
-            {SIZES.map(s => (
-              <div
-                key={s.id}
-                className={`option-card${bookingData.itemSize === s.id ? ' selected' : ''}`}
-                onClick={() => handleSizeChange(s.id)}
-              >
-                <div className="option-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <s.Icon size={22} color={bookingData.itemSize === s.id ? 'var(--primary)' : 'var(--text-3)'} />
-                </div>
-                <div className="option-title">{s.title}</div>
-                <div className="option-desc">{s.desc}</div>
-                <div className="option-desc" style={{ marginTop: '2px' }}>{s.weight}</div>
+        {/* Two-column layout */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px', alignItems: 'start' }}>
+
+          {/* LEFT COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* Package Size */}
+            <div className="form-group">
+              <label className="form-label">Package Size <span className="req">*</span></label>
+              <div className="option-grid option-grid-2">
+                {SIZES.map(s => (
+                  <div
+                    key={s.id}
+                    className={`option-card${bookingData.itemSize === s.id ? ' selected' : ''}`}
+                    onClick={() => handleSizeChange(s.id)}
+                  >
+                    <div className="option-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <s.Icon size={22} color={bookingData.itemSize === s.id ? 'var(--primary)' : 'var(--text-3)'} />
+                    </div>
+                    <div className="option-title">{s.title}</div>
+                    <div className="option-desc">{s.desc}</div>
+                    <div className="option-desc" style={{ marginTop: '2px' }}>{s.weight}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Auto-recommend notice */}
-        <div className="alert alert-info mb-20">
-          <VehicleRecommendIcon size={16} />
-          <span>
-            Size <strong>{bookingData.itemSize}</strong> → a <strong>{VEHICLE_LABEL[bookingData.vehicleType]}</strong> will be assigned for this delivery.
-          </span>
-        </div>
+            {/* Vehicle recommendation */}
+            <div className="alert alert-info">
+              <VehicleRecommendIcon size={16} />
+              <span>
+                Size <strong>{bookingData.itemSize}</strong> → a <strong>{VEHICLE_LABEL[bookingData.vehicleType]}</strong> will be assigned for this delivery.
+              </span>
+            </div>
 
-        {/* Weight */}
-        <div className="form-group mb-20">
-          <label className="form-label">Item Weight <span className="req">*</span></label>
-          <div style={{ position: 'relative' }}>
-            <input
-              className="form-input"
-              placeholder="e.g. 1.5"
-              value={bookingData.itemWeight}
-              onChange={handleWeightInput}
-              inputMode="decimal"
-              style={{
-                paddingRight: '52px',
-                borderColor: errors.itemWeight ? 'var(--red)' : undefined,
-              }}
-            />
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, pointerEvents: 'none' }}>kg</span>
-          </div>
-          {errors.itemWeight
-            ? <span style={{ fontSize: '12px', color: 'var(--red)', marginTop: '3px', display: 'block' }}>{errors.itemWeight}</span>
-            : <span className="text-xs text-muted">{SIZES.find(s => s.id === bookingData.itemSize)?.weight} for {SIZES.find(s => s.id === bookingData.itemSize)?.title}. Decimals allowed (e.g. 1.5)</span>
-          }
-        </div>
-
-        {/* Item Type */}
-        <div className="form-group mb-20">
-          <label className="form-label">Item Type <span className="req">*</span></label>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {ITEM_TYPES.map(t => {
-              const selected = bookingData.itemType === t.id;
-              return (
-                <div
-                  key={t.id}
-                  onClick={() => updateBooking({ itemType: t.id })}
+            {/* Item Weight */}
+            <div className="form-group">
+              <label className="form-label">Item Weight <span className="req">*</span></label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  className="form-input"
+                  placeholder="e.g. 1.5"
+                  value={bookingData.itemWeight}
+                  onChange={handleWeightInput}
+                  inputMode="decimal"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 14px',
-                    borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
-                    border: selected ? '2px solid var(--primary)' : '2px solid var(--border)',
-                    background: selected ? 'var(--primary-light)' : 'var(--surface)',
-                    color: selected ? 'var(--primary)' : 'var(--text-2)',
-                    transition: 'var(--transition)',
+                    paddingRight: '52px',
+                    borderColor: errors.itemWeight ? 'var(--red)' : undefined,
                   }}
-                >
-                  <t.Icon size={14} color={selected ? 'var(--primary)' : 'var(--text-3)'} /> {t.id}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Photo */}
-        <div className="form-group mb-20">
-          <label className="form-label">Item Photo <span className="opt">(optional)</span></label>
-          <div
-            onClick={() => updateBooking({ itemPhotoTaken: !bookingData.itemPhotoTaken })}
-            style={{
-              border: `2px dashed ${bookingData.itemPhotoTaken ? 'var(--primary)' : 'var(--border)'}`,
-              background: bookingData.itemPhotoTaken ? 'var(--primary-light)' : 'var(--surface-2)',
-              borderRadius: 'var(--radius-md)', padding: '28px', textAlign: 'center',
-              cursor: 'pointer', transition: 'var(--transition)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-              {bookingData.itemPhotoTaken
-                ? <CheckCircleIcon size={36} color="var(--primary)" />
-                : <CameraIcon size={36} color="var(--text-3)" />
+                />
+                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, pointerEvents: 'none' }}>kg</span>
+              </div>
+              {errors.itemWeight
+                ? <span style={{ fontSize: '12px', color: 'var(--red)', marginTop: '3px', display: 'block' }}>{errors.itemWeight}</span>
+                : <span className="text-xs text-muted">{SIZES.find(s => s.id === bookingData.itemSize)?.weight} for {SIZES.find(s => s.id === bookingData.itemSize)?.title}. Decimals allowed (e.g. 1.5)</span>
               }
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: bookingData.itemPhotoTaken ? 'var(--primary)' : 'var(--text-2)' }}>
-              {bookingData.itemPhotoTaken ? 'Photo confirmed' : 'Click to add item photo'}
-            </div>
-            <div className="text-xs text-muted mt-4">Proof of item contents for your protection</div>
-          </div>
-        </div>
 
-        {/* Guarantee Tier */}
-        <div className="form-group mb-24">
-          <label className="form-label">Delivery Guarantee <span className="req">*</span></label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {TIERS.map(tier => (
+            {/* Item Type */}
+            <div className="form-group">
+              <label className="form-label">Item Type <span className="req">*</span></label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {ITEM_TYPES.map(t => {
+                  const selected = bookingData.itemType === t.id;
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => {
+                        updateBooking({ itemType: t.id, ...(t.id !== 'Others' ? { itemTypeOther: '' } : {}) });
+                        setErrors(prev => ({ ...prev, itemType: '', itemTypeOther: '' }));
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 14px',
+                        borderRadius: '20px', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+                        border: selected ? '2px solid var(--primary)' : '2px solid var(--border)',
+                        background: selected ? 'var(--primary-light)' : 'var(--surface)',
+                        color: selected ? 'var(--primary)' : 'var(--text-2)',
+                        transition: 'var(--transition)',
+                      }}
+                    >
+                      <t.Icon size={14} color={selected ? 'var(--primary)' : 'var(--text-3)'} /> {t.id}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* "Others" inline text input */}
+              {bookingData.itemType === 'Others' && (
+                <div style={{
+                  marginTop: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 14px',
+                  background: 'var(--primary-light)',
+                  border: `1.5px solid ${errors.itemTypeOther ? 'var(--red)' : 'var(--primary)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  transition: 'var(--transition)',
+                }}>
+                  <PackageIcon size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
+                  <input
+                    className="form-input"
+                    placeholder="Describe your item (e.g. Bicycle parts, artwork…)"
+                    value={bookingData.itemTypeOther || ''}
+                    maxLength={80}
+                    onChange={e => {
+                      updateBooking({ itemTypeOther: e.target.value });
+                      setErrors(prev => ({ ...prev, itemTypeOther: '' }));
+                    }}
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      background: 'transparent',
+                      padding: '0',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: 'var(--text)',
+                      outline: 'none',
+                      boxShadow: 'none',
+                    }}
+                    autoFocus
+                  />
+                </div>
+              )}
+              {errors.itemType    && <span style={{ fontSize: '12px', color: 'var(--red)', marginTop: '4px', display: 'block' }}>{errors.itemType}</span>}
+              {errors.itemTypeOther && <span style={{ fontSize: '12px', color: 'var(--red)', marginTop: '4px', display: 'block' }}>{errors.itemTypeOther}</span>}
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* Item Photo */}
+            <div className="form-group">
+              <label className="form-label">Item Photo <span className="opt">(optional)</span></label>
               <div
-                key={tier.id}
-                className={`tier-card${bookingData.guaranteeTier === tier.id ? ' selected' : ''}`}
-                onClick={() => updateBooking({ guaranteeTier: tier.id })}
+                onClick={() => updateBooking({ itemPhotoTaken: !bookingData.itemPhotoTaken })}
+                style={{
+                  border: `2px dashed ${bookingData.itemPhotoTaken ? 'var(--primary)' : 'var(--border)'}`,
+                  background: bookingData.itemPhotoTaken ? 'var(--primary-light)' : 'var(--surface-2)',
+                  borderRadius: 'var(--radius-md)', padding: '28px', textAlign: 'center',
+                  cursor: 'pointer', transition: 'var(--transition)',
+                }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-12">
-                    <tier.Icon size={22} color={bookingData.guaranteeTier === tier.id ? tier.color : 'var(--text-3)'} />
-                    <div>
-                      <div className="tier-title" style={{ color: tier.color }}>{tier.title}</div>
-                      <div className="tier-coverage">{tier.coverage}</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                  {bookingData.itemPhotoTaken
+                    ? <CheckCircleIcon size={36} color="var(--primary)" />
+                    : <CameraIcon size={36} color="var(--text-3)" />
+                  }
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: bookingData.itemPhotoTaken ? 'var(--primary)' : 'var(--text-2)' }}>
+                  {bookingData.itemPhotoTaken ? 'Photo confirmed' : 'Click to add item photo'}
+                </div>
+                <div className="text-xs text-muted mt-4">Proof of item contents for your protection</div>
+              </div>
+            </div>
+
+            {/* Guarantee Tier */}
+            <div className="form-group">
+              <label className="form-label">Delivery Guarantee <span className="req">*</span></label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {TIERS.map(tier => (
+                  <div
+                    key={tier.id}
+                    className={`tier-card${bookingData.guaranteeTier === tier.id ? ' selected' : ''}`}
+                    onClick={() => updateBooking({ guaranteeTier: tier.id })}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-12">
+                        <tier.Icon size={22} color={bookingData.guaranteeTier === tier.id ? tier.color : 'var(--text-3)'} />
+                        <div>
+                          <div className="tier-title" style={{ color: tier.color }}>{tier.title}</div>
+                          <div className="tier-coverage">{tier.coverage}</div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div className="tier-price">{tier.add === 0 ? 'Free' : `+₱${tier.add}`}</div>
+                        {bookingData.guaranteeTier === tier.id && <CheckCircleIcon size={16} color="var(--primary)" />}
+                      </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div className="tier-price">{tier.add === 0 ? 'Free' : `+₱${tier.add}`}</div>
-                    {bookingData.guaranteeTier === tier.id && <CheckCircleIcon size={16} color="var(--primary)" />}
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-12">
+        <div className="flex gap-12 mt-28">
           <button onClick={() => navigate('/book/new/details')} className="btn btn-secondary" style={{ flex: 1 }}>← Back</button>
           <button onClick={handleNext} className="btn btn-primary" style={{ flex: 2 }}>Review Order →</button>
         </div>
