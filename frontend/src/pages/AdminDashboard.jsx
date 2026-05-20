@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase';
 import { UsersIcon, MotorcycleIcon, PackageIcon, ActivityIcon, XCircleIcon,
          SearchIcon, ZapIcon, CheckCircleIcon, BanknoteIcon } from '../components/Icons';
@@ -18,9 +18,12 @@ function AdminDashboard() {
   const [bookings, setBookings] = useState([]);
   const [users, setUsers]       = useState([]);
   const [payments, setPayments] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [tab, setTab]           = useState('overview');
-  const [updatingRole, setUpdatingRole] = useState(null);
+  const [activeRequestTab, setActiveRequestTab] = useState('pending'); // 'pending', 'approved', 'rejected'
+  const [reviewingUser, setReviewingUser] = useState(null);
+  const [reviewingType, setReviewingType] = useState('');
 
   useEffect(() => {
     const bUnsub = onSnapshot(
@@ -35,16 +38,210 @@ function AdminDashboard() {
       query(collection(db, 'payments'), limit(200)),
       snap => setPayments(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     );
-    return () => { bUnsub(); uUnsub(); pUnsub(); };
+    const vUnsub = onSnapshot(
+      collection(db, 'vehicles'),
+      snap => setVehicles(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    );
+    return () => { bUnsub(); uUnsub(); pUnsub(); vUnsub(); };
   }, []);
 
-  const changeRole = async (userId, role) => {
-    setUpdatingRole(userId);
-    try { await updateDoc(doc(db, 'users', userId), { role }); }
-    catch (err) { console.error(err); }
-    setUpdatingRole(null);
+  const handleVehicleRequest = async (vehicle, action) => {
+    try {
+      if (action === 'approve') {
+        if (vehicle.status === 'pending_add') {
+          // Approved vehicle addition → make it inactive (ready to be set active by driver)
+          await updateDoc(doc(db, 'vehicles', vehicle.id), { status: 'inactive', adminStatus: 'approved', adminProcessedAt: new Date().toISOString() });
+        } else {
+          // Approved vehicle deletion → soft delete so history is preserved
+          await updateDoc(doc(db, 'vehicles', vehicle.id), { status: 'deleted', adminStatus: 'approved', adminProcessedAt: new Date().toISOString() });
+        }
+      } else {
+        if (vehicle.status === 'pending_add') {
+          await updateDoc(doc(db, 'vehicles', vehicle.id), { status: 'rejected', adminStatus: 'rejected', adminProcessedAt: new Date().toISOString() });
+        } else {
+          // Rejected vehicle deletion → restore to inactive
+          await updateDoc(doc(db, 'vehicles', vehicle.id), { status: 'inactive', adminStatus: 'rejected', adminProcessedAt: new Date().toISOString() });
+        }
+      }
+      const driverUser = users.find(u => u.user_id === vehicle.driverId || u.id === vehicle.driverId);
+      if (driverUser) {
+        const isAdd = vehicle.status === 'pending_add';
+        const notif = {
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString(),
+          read: false,
+          title: action === 'approve'
+            ? (isAdd ? 'Vehicle Approved' : 'Vehicle Removal Approved')
+            : (isAdd ? 'Vehicle Rejected' : 'Vehicle Removal Rejected'),
+          message: action === 'approve'
+            ? (isAdd
+                ? `Your vehicle ${vehicle.plateNo} (${vehicle.type}) has been approved and added to your fleet.`
+                : `Your request to remove ${vehicle.plateNo} has been approved.`)
+            : (isAdd
+                ? `Your vehicle registration for ${vehicle.plateNo} was rejected. Please review your details and reapply.`
+                : `Your request to remove ${vehicle.plateNo} was rejected.`),
+        };
+        await updateDoc(doc(db, 'users', driverUser.id), { notifications: arrayUnion(notif) });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
+  const handleRequest = async (userId, type, action, details) => {
+    try {
+      const updates = {};
+      const newNotification = {
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+
+      if (type === 'driver_application') {
+        if (action === 'approve') {
+          updates.role = 'driver';
+          updates.driverApplicationStatus = 'approved';
+          updates.vehicle_type = details.vehicleType;
+          updates.vehicle_plate = details.plateNo;
+          updates.accountStatus = 'active';
+          newNotification.title = 'Application Approved';
+          newNotification.message = 'Congratulations! Your driver application has been approved. You can now accept deliveries.';
+        } else {
+          updates.driverApplicationStatus = 'rejected';
+          newNotification.title = 'Application Rejected';
+          newNotification.message = 'Your driver application has been rejected.';
+        }
+      } else if (type === 'deactivation') {
+        updates.accountStatus = action === 'approve' ? 'deactivated' : 'active';
+        updates.deactivationRequestStatus = action === 'approve' ? 'approved' : 'rejected';
+        newNotification.title = action === 'approve' ? 'Deactivation Approved' : 'Deactivation Rejected';
+        newNotification.message = action === 'approve'
+          ? 'Your account has been successfully deactivated.'
+          : 'Your request to deactivate your account was rejected.';
+      } else if (type === 'reactivation') {
+        updates.accountStatus = action === 'approve' ? 'active' : 'deactivated';
+        updates.reactivationRequestStatus = action === 'approve' ? 'approved' : 'rejected';
+        newNotification.title = action === 'approve' ? 'Reactivation Approved' : 'Reactivation Rejected';
+        newNotification.message = action === 'approve'
+          ? 'Your account has been successfully reactivated. Welcome back!'
+          : 'Your request to reactivate your account was rejected.';
+      }
+
+      updates.notifications = arrayUnion(newNotification);
+      await updateDoc(doc(db, 'users', userId), updates);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const getRequests = (statusFilter) => {
+    const userRequests = [];
+    users.forEach(u => {
+      if (statusFilter === 'pending') {
+        if (u.driverApplicationStatus === 'pending') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'driver_application' });
+        if (u.accountStatus === 'pending_deactivation') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'deactivation' });
+        if (u.accountStatus === 'pending_reactivation') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'reactivation' });
+      } else if (statusFilter === 'approved') {
+        if (u.driverApplicationStatus === 'approved') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'driver_application' });
+        if (u.deactivationRequestStatus === 'approved') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'deactivation' });
+        if (u.reactivationRequestStatus === 'approved') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'reactivation' });
+      } else if (statusFilter === 'rejected') {
+        if (u.driverApplicationStatus === 'rejected') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'driver_application' });
+        if (u.deactivationRequestStatus === 'rejected') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'deactivation' });
+        if (u.reactivationRequestStatus === 'rejected') userRequests.push({ ...u, _itemType: 'user', _typeKey: 'reactivation' });
+      }
+    });
+
+    const vehicleRequests = vehicles
+      .filter(v => {
+        if (statusFilter === 'pending') return v.status === 'pending_add' || v.status === 'pending_delete';
+        if (statusFilter === 'approved') return v.adminStatus === 'approved';
+        if (statusFilter === 'rejected') return v.adminStatus === 'rejected';
+        return false;
+      })
+      .map(v => ({ ...v, _itemType: 'vehicle' }));
+
+    return [...userRequests, ...vehicleRequests];
+  };
+
+  const ReviewRequestModal = () => {
+    if (!reviewingUser) return null;
+    const u = reviewingUser;
+    const t = reviewingType;
+
+    let title = '';
+    let detailsUI = null;
+    if (t === 'driver_application') {
+      title = 'Review Driver Application';
+      detailsUI = (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', textAlign: 'left' }}>
+          <div><strong style={{ color: 'var(--text-2)' }}>Name:</strong> <span style={{ fontWeight: 600 }}>{u.full_name}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Email:</strong> <span style={{ fontWeight: 600 }}>{u.email}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Vehicle Type:</strong> <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{u.driverApplicationDetails?.vehicleType}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Plate Number:</strong> <span style={{ fontWeight: 600 }}>{u.driverApplicationDetails?.plateNo}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>License Number:</strong> <span style={{ fontWeight: 600 }}>{u.driverApplicationDetails?.licenseNo}</span></div>
+          
+          <div style={{ marginTop: '8px', color: 'var(--text-2)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase' }}>Documents Provided</div>
+          <div style={{ padding: '16px', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '13px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircleIcon size={18} color="var(--primary)" /> Driver's License Photo (Verified)</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}><CheckCircleIcon size={18} color="var(--primary)" /> Selfie with ID (Verified)</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}><CheckCircleIcon size={18} color="var(--primary)" /> Vehicle OR/CR (Verified)</div>
+          </div>
+        </div>
+      );
+    } else if (t === 'deactivation') {
+      title = 'Review Deactivation Request';
+      detailsUI = <div style={{ marginBottom: '24px', textAlign: 'left', lineHeight: 1.6, color: 'var(--text-2)' }}><span style={{ fontWeight: 700, color: 'var(--text)' }}>{u.full_name}</span> ({u.email}) is requesting to deactivate their driver account. They will not be able to accept any orders until reactivated.</div>;
+    } else if (t === 'reactivation') {
+      title = 'Review Reactivation Request';
+      detailsUI = <div style={{ marginBottom: '24px', textAlign: 'left', lineHeight: 1.6, color: 'var(--text-2)' }}><span style={{ fontWeight: 700, color: 'var(--text)' }}>{u.full_name}</span> ({u.email}) is requesting to reactivate their driver account and resume accepting orders.</div>;
+    } else if (t === 'vehicle_add') {
+      const driver = users.find(d => d.user_id === u.driverId || d.id === u.driverId);
+      title = 'Review Vehicle Registration';
+      detailsUI = (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', textAlign: 'left' }}>
+          <div><strong style={{ color: 'var(--text-2)' }}>Driver:</strong> <span style={{ fontWeight: 600 }}>{driver?.full_name || u.driverId}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Plate Number:</strong> <span style={{ fontWeight: 600 }}>{u.plateNo}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Vehicle Type:</strong> <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{u.type}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Year:</strong> <span style={{ fontWeight: 600 }}>{u.year}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Insurance Expiry:</strong> <span style={{ fontWeight: 600 }}>{u.insuranceExpiry}</span></div>
+        </div>
+      );
+    } else if (t === 'vehicle_delete') {
+      const driver = users.find(d => d.user_id === u.driverId || d.id === u.driverId);
+      title = 'Review Vehicle Removal';
+      detailsUI = (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', textAlign: 'left' }}>
+          <div><strong style={{ color: 'var(--text-2)' }}>Driver:</strong> <span style={{ fontWeight: 600 }}>{driver?.full_name || u.driverId}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Plate Number:</strong> <span style={{ fontWeight: 600 }}>{u.plateNo}</span></div>
+          <div><strong style={{ color: 'var(--text-2)' }}>Vehicle Type:</strong> <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{u.type}</span></div>
+          <div style={{ padding: '10px 14px', background: 'var(--red-light)', borderRadius: '8px', fontSize: '13px', color: 'var(--red)' }}>
+            This driver is requesting to permanently remove this vehicle from their fleet.
+          </div>
+        </div>
+      );
+    }
+
+    const isVehicleRequest = t === 'vehicle_add' || t === 'vehicle_delete';
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={() => setReviewingUser(null)}>
+        <div style={{ background: 'var(--surface)', borderRadius: '16px', padding: '32px', maxWidth: '450px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.3)', animation: 'fadeInUp 0.2s ease', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '24px' }}>{title}</h2>
+          {detailsUI}
+
+          {activeRequestTab === 'pending' ? (
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => { isVehicleRequest ? handleVehicleRequest(u, 'reject') : handleRequest(u.id, t, 'reject', u.driverApplicationDetails); setReviewingUser(null); }} className="btn btn-secondary" style={{ flex: 1, color: 'var(--red)', borderColor: 'rgba(239,68,68,0.3)' }}>Reject</button>
+              <button onClick={() => { isVehicleRequest ? handleVehicleRequest(u, 'approve') : handleRequest(u.id, t, 'approve', u.driverApplicationDetails); setReviewingUser(null); }} className="btn btn-primary" style={{ flex: 1 }}>Approve</button>
+            </div>
+          ) : (
+            <button onClick={() => setReviewingUser(null)} className="btn btn-secondary btn-full">Close Details</button>
+          )}
+        </div>
+      </div>
+    );
+  };
   const stats = {
     customers: users.filter(u => u.role === 'customer').length,
     drivers:   users.filter(u => u.role === 'driver').length,
@@ -65,12 +262,12 @@ function AdminDashboard() {
     { label: 'Customers',   value: stats.customers, Icon: UsersIcon,      cls: 'green'  },
     { label: 'Drivers',     value: stats.drivers,   Icon: MotorcycleIcon,  cls: 'blue'   },
     { label: 'Total Orders',value: stats.total,     Icon: PackageIcon,     cls: 'purple' },
-    { label: 'Active Now',  value: stats.active,    Icon: ActivityIcon,    cls: 'amber'  },
-    { label: 'Cancelled',   value: stats.cancelled,                           Icon: XCircleIcon,    cls: 'green'  },
+    { label: 'Cancelled',   value: stats.cancelled, Icon: XCircleIcon,    cls: 'green'  },
     { label: 'Commission',  value: `₱${stats.commission.toLocaleString()}`,   Icon: BanknoteIcon,   cls: 'amber'  },
   ];
 
   return (
+    <>
     <div className="dashboard-container">
       {/* Hero */}
       <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)', borderRadius: 'var(--radius-xl)', padding: '32px', color: 'white', marginBottom: '28px' }}>
@@ -101,7 +298,7 @@ function AdminDashboard() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '0' }}>
-        {[['overview','Overview'],['bookings','All Bookings'],['users','Users']].map(([val, label]) => (
+        {[['overview','Overview'],['bookings','All Bookings'],['users','Users'],['requests','Requests']].map(([val, label]) => (
           <button
             key={val}
             onClick={() => setTab(val)}
@@ -229,7 +426,6 @@ function AdminDashboard() {
                 <th>User</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th>Change Role</th>
               </tr>
             </thead>
             <tbody>
@@ -240,17 +436,94 @@ function AdminDashboard() {
                     <td style={{ fontWeight: 700 }}>{u.full_name || '—'}</td>
                     <td style={{ color: 'var(--text-2)', fontSize: '13px' }}>{u.email}</td>
                     <td><span className={`badge ${roleColors[u.role] || 'badge-gray'}`}>{u.role}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Tab: Requests */}
+      {tab === 'requests' && (
+        <div className="card" style={{ overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px' }}>
+            {['pending', 'approved', 'rejected'].map(status => (
+              <button
+                key={status}
+                onClick={() => setActiveRequestTab(status)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
+                  color: activeRequestTab === status ? 'var(--primary)' : 'var(--text-3)',
+                  transition: 'color 0.2s'
+                }}
+              >
+                {status} ({getRequests(status).length})
+              </button>
+            ))}
+          </div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Request Type</th>
+                <th>Details</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {getRequests(activeRequestTab).length === 0 ? (
+                <tr><td colSpan={4} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-3)' }}>No {activeRequestTab} requests</td></tr>
+              ) : getRequests(activeRequestTab).map(item => {
+                let reqType = '';
+                let details = '';
+                let typeKey = '';
+                let displayName = '';
+                let displaySub = '';
+
+                if (item._itemType === 'vehicle') {
+                  const driver = users.find(u => u.user_id === item.driverId || u.id === item.driverId);
+                  displayName = driver?.full_name || 'Unknown Driver';
+                  displaySub = driver?.email || item.driverId;
+                  typeKey = item._typeKey || (item.status === 'pending_add' ? 'vehicle_add' : 'vehicle_delete');
+                  reqType = typeKey === 'vehicle_add' ? 'Vehicle Registration' : 'Vehicle Removal';
+                  details = `${item.plateNo} — ${item.type} (${item.year})`;
+                } else {
+                  displayName = item.full_name || '—';
+                  displaySub = item.email;
+                  typeKey = item._typeKey || '';
+                  if (typeKey === 'driver_application') {
+                    reqType = 'Driver Application';
+                    details = `${item.driverApplicationDetails?.vehicleType?.toUpperCase()} - ${item.driverApplicationDetails?.plateNo}`;
+                  } else if (typeKey === 'deactivation') {
+                    reqType = 'Account Deactivation';
+                    details = 'Requested to deactivate account.';
+                  } else if (typeKey === 'reactivation') {
+                    reqType = 'Account Reactivation';
+                    details = 'Requested to reactivate account.';
+                  }
+                }
+
+                let badgeCls = 'badge-amber';
+                if (activeRequestTab === 'approved') badgeCls = 'badge-green';
+                if (activeRequestTab === 'rejected') badgeCls = 'badge-red';
+
+                return (
+                  <tr key={`${item.id}-${typeKey}`}>
+                    <td style={{ fontWeight: 700 }}>
+                      <div>{displayName}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 500 }}>{displaySub}</div>
+                    </td>
+                    <td><span className={`badge ${badgeCls}`}>{reqType}</span></td>
+                    <td style={{ maxWidth: '300px', fontSize: '13px', color: 'var(--text-2)' }}>{details}</td>
                     <td>
-                      <select
-                        value={u.role}
-                        disabled={updatingRole === u.id}
-                        onChange={e => changeRole(u.id, e.target.value)}
-                        style={{ padding: '5px 10px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--border)', fontSize: '13px', background: 'var(--surface)', cursor: 'pointer' }}
+                      <button
+                        onClick={() => { setReviewingUser(item); setReviewingType(typeKey); }}
+                        className="btn btn-secondary btn-sm"
+                        style={{ padding: '6px 12px' }}
                       >
-                        <option value="customer">Customer</option>
-                        <option value="driver">Driver</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                        {activeRequestTab === 'pending' ? 'Review Request' : 'View Details'}
+                      </button>
                     </td>
                   </tr>
                 );
@@ -259,7 +532,12 @@ function AdminDashboard() {
           </table>
         </div>
       )}
+
     </div>
+    
+    {/* Render the modal outside of dashboard-container so it isn't constrained by its CSS transform/animations */}
+    <ReviewRequestModal />
+    </>
   );
 }
 

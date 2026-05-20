@@ -59,9 +59,9 @@ function CancelModal({ onConfirm, onClose, cancelling }) {
         <div className="modal-body">
           <div className="form-group mb-16">
             <label className="form-label">Reason for cancellation</label>
-            <select className="form-input" value={reason} onChange={e => setReason(e.target.value)}>
-              <option value="">Select a reason…</option>
-              {CANCEL_REASONS_CUSTOMER.map(r => <option key={r} value={r}>{r}</option>)}
+            <select className="form-input" value={reason} onChange={e => setReason(e.target.value)} style={{ color: 'var(--text)', background: 'var(--surface-2)' }}>
+              <option value="" style={{ color: 'var(--text)', background: 'var(--surface-2)' }}>Select a reason…</option>
+              {CANCEL_REASONS_CUSTOMER.map(r => <option key={r} value={r} style={{ color: 'var(--text)', background: 'var(--surface-2)' }}>{r}</option>)}
             </select>
           </div>
           <div className="form-group mb-24">

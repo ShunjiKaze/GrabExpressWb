@@ -25,6 +25,7 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
   const [displayPhone, setDisplayPhone]   = useState(dbUser?.phone || '');
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showDriverApp, setShowDriverApp] = useState(false);
+  const [statusConfirmModal, setStatusConfirmModal] = useState(null); // 'deactivate' | 'reactivate'
   const fileInputRef = useRef(null);
   const showToast = useToast();
   // Use prop (from App state) first, fall back to auth.currentUser
@@ -246,17 +247,17 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Member Since</label>
               <div style={readField}>{formatDate(dbUser?.created_at)}</div>
             </div>
-            {role === 'driver' && dbUser?.vehicle_type && <>
+            {role === 'driver' && <>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Vehicle Type</label>
                 <div style={{ ...readField, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {VEHICLE_ICON_MAP[dbUser.vehicle_type] && (() => { const Icon = VEHICLE_ICON_MAP[dbUser.vehicle_type]; return <Icon size={15} color="var(--text-2)" />; })()}
-                  {dbUser.vehicle_type?.charAt(0).toUpperCase() + dbUser.vehicle_type?.slice(1)}
+                  {dbUser?.vehicle_type && VEHICLE_ICON_MAP[dbUser.vehicle_type] && (() => { const Icon = VEHICLE_ICON_MAP[dbUser.vehicle_type]; return <Icon size={15} color="var(--text-2)" />; })()}
+                  {dbUser?.vehicle_type ? dbUser.vehicle_type.charAt(0).toUpperCase() + dbUser.vehicle_type.slice(1) : 'None'}
                 </div>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>Plate Number</label>
-                <div style={readField}>{dbUser.vehicle_plate || '—'}</div>
+                <div style={readField}>{dbUser?.vehicle_plate || '—'}</div>
               </div>
             </>}
           </div>
@@ -290,13 +291,13 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
               </div>
               <div>
                 {dbUser.accountStatus === 'deactivated' ? (
-                   <button onClick={() => handleStatusChange('pending_reactivation')} className="btn btn-primary btn-sm">Request Reactivation</button>
+                   <button onClick={() => setStatusConfirmModal('reactivate')} className="btn btn-primary btn-sm">Request Reactivation</button>
                 ) : dbUser.accountStatus === 'pending_reactivation' ? (
                    <span className="badge badge-amber">Reactivation Pending</span>
                 ) : dbUser.accountStatus === 'pending_deactivation' ? (
                    <span className="badge badge-amber">Deactivation Pending</span>
                 ) : (
-                   <button onClick={() => handleStatusChange('pending_deactivation')} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>Deactivate Account</button>
+                   <button onClick={() => setStatusConfirmModal('deactivate')} className="btn btn-secondary btn-sm" style={{ color: 'var(--red)' }}>Deactivate Account</button>
                 )}
               </div>
             </div>
@@ -356,6 +357,52 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
                 style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: 'none', background: '#DC2626', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
               >
                 Yes, Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Account Status Confirm Modal ── */}
+      {statusConfirmModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+          onClick={() => setStatusConfirmModal(null)}
+        >
+          <div
+            style={{ background: 'var(--surface)', borderRadius: '16px', padding: '32px', maxWidth: '400px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.25)', animation: 'fadeInUp 0.2s ease' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ width: 48, height: 48, borderRadius: '12px', background: statusConfirmModal === 'deactivate' ? '#FEF2F2' : '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              {statusConfirmModal === 'deactivate' ? (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                </svg>
+              ) : (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              )}
+            </div>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>
+              {statusConfirmModal === 'deactivate' ? 'Deactivate Account?' : 'Request Reactivation?'}
+            </h2>
+            <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '24px' }}>
+              {statusConfirmModal === 'deactivate'
+                ? 'Your account will be sent for admin review. Once deactivated, you will not be able to accept orders until reactivated.'
+                : 'Your reactivation request will be sent to the admin for review. You will be notified once it is processed.'}
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setStatusConfirmModal(null)} className="btn btn-secondary" style={{ flex: 1 }}>Cancel</button>
+              <button
+                onClick={() => {
+                  handleStatusChange(statusConfirmModal === 'deactivate' ? 'pending_deactivation' : 'pending_reactivation');
+                  setStatusConfirmModal(null);
+                }}
+                className={statusConfirmModal === 'deactivate' ? 'btn btn-danger' : 'btn btn-primary'}
+                style={{ flex: 1 }}
+              >
+                {statusConfirmModal === 'deactivate' ? 'Yes, Deactivate' : 'Yes, Request Reactivation'}
               </button>
             </div>
           </div>

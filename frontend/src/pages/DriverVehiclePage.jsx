@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc,
          writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { MotorcycleIcon, CarIcon, VanIcon, CheckCircleIcon, XIcon,
+import { MotorcycleIcon, CarIcon, VanIcon, CheckCircleIcon,
          TrashIcon, CalendarIcon, ShieldIcon } from '../components/Icons';
 
 function VehicleTypeCard({ type, selected, onSelect }) {
@@ -55,7 +56,7 @@ function DriverVehiclePage({ dbUser }) {
   const [loading, setLoading]         = useState(true);
   const [showForm, setShowForm]       = useState(false);
   const [saving, setSaving]           = useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deleteModalVehicle, setDeleteModalVehicle] = useState(null);
   const [formType, setFormType]       = useState('motorcycle');
   const [formPlate, setFormPlate]     = useState('');
   const [formYear, setFormYear]       = useState('');
@@ -64,8 +65,29 @@ function DriverVehiclePage({ dbUser }) {
 
   useEffect(() => {
     const q = query(collection(db, 'vehicles'), where('driverId', '==', dbUser.user_id));
-    return onSnapshot(q, snap => {
-      setVehicles(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    return onSnapshot(q, async snap => {
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Auto-migrate vehicle info from user doc if no vehicles registered yet
+      if (docs.length === 0 && dbUser.vehicle_type && dbUser.vehicle_plate) {
+        try {
+          await addDoc(collection(db, 'vehicles'), {
+            driverId:        dbUser.user_id,
+            type:            dbUser.vehicle_type.toLowerCase(),
+            plateNo:         dbUser.vehicle_plate.toUpperCase(),
+            year:            null,
+            insuranceExpiry: null,
+            status:          'inactive',
+            adminStatus:     'approved',
+            migratedFromProfile: true,
+            createdAt:       serverTimestamp(),
+          });
+        } catch (err) {
+          console.error('vehicle migration error:', err);
+        }
+        // snapshot will re-fire with the new doc
+        return;
+      }
+      setVehicles(docs.filter(v => v.status !== 'deleted' && v.status !== 'rejected'));
       setLoading(false);
     }, err => {
       console.error('vehicles snapshot error:', err);
@@ -88,7 +110,10 @@ function DriverVehiclePage({ dbUser }) {
       setFormError(`Invalid plate format for ${formType}. Expected format: ${PLATE_RULES[formType].hint}`);
       return;
     }
-    if (!formYear || parseInt(formYear) < 2000) { setFormError('Enter a valid year (2000 or later).'); return; }
+    const currentYear = new Date().getFullYear();
+    if (!formYear || formYear.length !== 4) { setFormError('Enter a valid 4-digit year.'); return; }
+    const yearNum = parseInt(formYear);
+    if (yearNum < 2000 || yearNum > currentYear + 1) { setFormError(`Year must be between 2000 and ${currentYear + 1}.`); return; }
     if (!formExpiry) { setFormError('Insurance expiry date is required.'); return; }
 
     const hasSameType = vehicles.some(v => v.type === formType && v.status !== 'pending_delete');
@@ -114,10 +139,10 @@ function DriverVehiclePage({ dbUser }) {
     setSaving(false);
   };
 
-  const handleDelete = async (vehicleId) => {
-    // User requested: apply a request for deleting
-    await updateDoc(doc(db, 'vehicles', vehicleId), { status: 'pending_delete' });
-    setConfirmDeleteId(null);
+  const handleDelete = async () => {
+    if (!deleteModalVehicle) return;
+    await updateDoc(doc(db, 'vehicles', deleteModalVehicle.id), { status: 'pending_delete' });
+    setDeleteModalVehicle(null);
   };
 
   const VehicleIcon = ({ type, size = 20, color = 'currentColor' }) => {
@@ -126,7 +151,111 @@ function DriverVehiclePage({ dbUser }) {
     return <Icon size={size} color={color} />;
   };
 
+  const modal = deleteModalVehicle ? createPortal(
+    <div
+      onClick={() => setDeleteModalVehicle(null)}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.55)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'var(--surface)',
+          borderRadius: '20px',
+          width: '100%', maxWidth: '420px',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.25)',
+          animation: 'fadeInUp 0.22s ease',
+        }}
+      >
+        {/* Red header banner */}
+        <div style={{
+          background: 'linear-gradient(135deg, #FEF2F2, #FFE4E4)',
+          padding: '32px 28px 24px',
+          textAlign: 'center',
+          borderBottom: '1px solid rgba(239,68,68,0.15)',
+          borderRadius: '20px 20px 0 0',
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: '50%',
+            background: 'rgba(239,68,68,0.12)',
+            border: '2px solid rgba(239,68,68,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 14px',
+          }}>
+            <TrashIcon size={26} color="var(--red)" />
+          </div>
+          <div style={{ fontWeight: 800, fontSize: '18px', color: '#7F1D1D', marginBottom: '6px' }}>
+            Request Vehicle Removal
+          </div>
+          <div style={{ fontSize: '13px', color: '#B91C1C', opacity: 0.75 }}>
+            This will be reviewed by an admin before removal.
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '24px 28px', borderRadius: '0 0 20px 20px' }}>
+          {/* Vehicle pill */}
+          <div style={{
+            background: 'var(--surface-2)',
+            border: '1.5px solid var(--border)',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            display: 'flex', alignItems: 'center', gap: '14px',
+            marginBottom: '20px',
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: '10px',
+              background: 'var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <VehicleIcon type={deleteModalVehicle.type} size={22} color="var(--text-2)" />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontFamily: 'monospace', fontSize: '16px', letterSpacing: '0.08em', color: 'var(--text)' }}>
+                {deleteModalVehicle.plateNo}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-3)', textTransform: 'capitalize', marginTop: '2px' }}>
+                {deleteModalVehicle.type}{deleteModalVehicle.year ? ` · ${deleteModalVehicle.year}` : ''}
+              </div>
+            </div>
+          </div>
+
+          <p style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.7, marginBottom: '24px', textAlign: 'center' }}>
+            Once submitted, this vehicle will be marked as{' '}
+            <strong style={{ color: 'var(--red)' }}>Deletion Pending</strong>{' '}
+            and you will not be able to set it as active until the request is resolved.
+          </p>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setDeleteModalVehicle(null)}
+              className="btn btn-secondary"
+              style={{ flex: 1, borderRadius: '10px' }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              className="btn btn-danger"
+              style={{ flex: 1, borderRadius: '10px' }}
+            >
+              Submit Request
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  ) : null;
+
   return (
+    <>
     <div className="dashboard-container" style={{ maxWidth: '700px' }}>
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #0f2544 0%, #1E3A5F 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -159,8 +288,46 @@ function DriverVehiclePage({ dbUser }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div className="form-group">
-              <label className="form-label">Year</label>
-              <input className="form-input" type="number" placeholder="e.g. 2021" min="2000" max="2030" value={formYear} onChange={e => setFormYear(e.target.value)} />
+              <label className="form-label">
+                Year
+                {formYear.length > 0 && formYear.length < 4 && (
+                  <span style={{ fontSize: '11px', color: 'var(--red)', fontWeight: 500, marginLeft: '6px' }}>
+                    {4 - formYear.length} more digit{4 - formYear.length !== 1 ? 's' : ''} needed
+                  </span>
+                )}
+                {formYear.length === 4 && (() => {
+                  const y = parseInt(formYear);
+                  const max = new Date().getFullYear() + 1;
+                  if (y < 2000 || y > max) return <span style={{ fontSize: '11px', color: 'var(--red)', fontWeight: 500, marginLeft: '6px' }}>Must be 2000–{max}</span>;
+                  return <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 500, marginLeft: '6px' }}>✓ Valid</span>;
+                })()}
+              </label>
+              <input
+                className="form-input"
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g. 2021"
+                maxLength={4}
+                value={formYear}
+                onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setFormYear(val);
+                }}
+                onBlur={() => {
+                  if (formYear.length === 4) {
+                    const y = parseInt(formYear);
+                    const max = new Date().getFullYear() + 1;
+                    if (y < 2000) setFormYear('2000');
+                    if (y > max) setFormYear(String(max));
+                  }
+                }}
+                style={{
+                  borderColor: formYear.length === 4
+                    ? (parseInt(formYear) >= 2000 && parseInt(formYear) <= new Date().getFullYear() + 1 ? 'var(--primary)' : 'var(--red)')
+                    : formYear.length > 0 ? 'var(--red)' : undefined,
+                  letterSpacing: '0.1em',
+                }}
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Insurance Expiry</label>
@@ -242,18 +409,9 @@ function DriverVehiclePage({ dbUser }) {
                       </div>
                     )}
                     {!isPendingDelete && (
-                      confirmDeleteId === v.id ? (
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          <button onClick={() => handleDelete(v.id)} className="btn btn-danger btn-sm">Confirm Request</button>
-                          <button onClick={() => setConfirmDeleteId(null)} className="btn btn-ghost btn-sm">
-                            <XIcon size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <button onClick={() => setConfirmDeleteId(v.id)} className="btn btn-ghost btn-sm" style={{ color: 'var(--text-3)' }}>
-                          <TrashIcon size={15} color="var(--text-3)" />
-                        </button>
-                      )
+                      <button onClick={() => setDeleteModalVehicle(v)} className="btn btn-ghost btn-sm" style={{ color: 'var(--text-3)' }}>
+                        <TrashIcon size={15} color="var(--text-3)" />
+                      </button>
                     )}
                   </div>
                 </div>
@@ -262,7 +420,10 @@ function DriverVehiclePage({ dbUser }) {
           })}
         </div>
       )}
+
     </div>
+    {modal}
+    </>
   );
 }
 

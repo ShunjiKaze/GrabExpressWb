@@ -122,6 +122,7 @@ function App() {
 
             {/* Public */}
             <Route path="/" element={
+              isAdmin ? <Navigate to="/admin/dashboard" replace /> :
               isDriver ? <Navigate to="/driver/deliveries" replace /> : <Home user={firebaseUser} dbUser={dbUser} />
             } />
             <Route path="/about"   element={<AboutPage />} />

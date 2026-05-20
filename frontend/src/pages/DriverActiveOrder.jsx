@@ -50,9 +50,9 @@ function DriverCancelModal({ onConfirm, onClose, cancelling }) {
         <div className="modal-body">
           <div className="form-group mb-16">
             <label className="form-label">Reason for cancellation</label>
-            <select className="form-input" value={reason} onChange={e => setReason(e.target.value)}>
-              <option value="">Select a reason…</option>
-              {CANCEL_REASONS_DRIVER.map(r => <option key={r} value={r}>{r}</option>)}
+            <select className="form-input" value={reason} onChange={e => setReason(e.target.value)} style={{ color: 'var(--text)', background: 'var(--surface-2)' }}>
+              <option value="" style={{ color: 'var(--text)', background: 'var(--surface-2)' }}>Select a reason…</option>
+              {CANCEL_REASONS_DRIVER.map(r => <option key={r} value={r} style={{ color: 'var(--text)', background: 'var(--surface-2)' }}>{r}</option>)}
             </select>
           </div>
           <div className="form-group mb-24">
@@ -318,7 +318,13 @@ function DriverActiveOrder({ dbUser }) {
               </div>
             </div>
 
-            <div style={{ width: 2, height: 20, background: 'var(--border)', margin: '0 17px 0' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '6px 0 6px 17px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                <div style={{ width: 2, height: 10, background: 'var(--border)', borderRadius: 1 }} />
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--text-3)', border: '2px solid var(--border)' }} />
+                <div style={{ width: 2, height: 10, background: 'var(--border)', borderRadius: 1 }} />
+              </div>
+            </div>
 
             <div style={{ display: 'flex', gap: '14px', padding: '16px', background: 'var(--red-light)', borderRadius: 'var(--radius-md)', border: '1.5px solid rgba(239,68,68,0.2)' }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

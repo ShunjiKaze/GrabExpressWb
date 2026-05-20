@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 import Logo from './Logo';
 import { useTheme } from '../context/ThemeContext';
-import { MenuIcon, XIcon } from './Icons';
+import { MenuIcon, XIcon, BellIcon } from './Icons';
 
 function NavAvatar({ photoURL, name, isHome }) {
   const [imgError, setImgError] = useState(false);
@@ -32,6 +33,85 @@ const ROLE_BADGE_DARK = {
   driver:   { bg: 'rgba(59,130,246,0.15)', color: '#60A5FA' },
   customer: { bg: 'rgba(0,177,79,0.15)',   color: '#4ADE80' },
 };
+
+function NotificationDropdown({ dbUser, isHome, dark }) {
+  const [open, setOpen] = useState(false);
+
+  const notifications = dbUser?.notifications || [];
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const sorted = [...notifications].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const userId = dbUser?.user_id;
+
+  const markAllRead = async () => {
+    if (!userId || unreadCount === 0) return;
+    const updated = notifications.map(n => ({ ...n, read: true }));
+    try {
+      await updateDoc(doc(db, 'users', userId), { notifications: updated });
+    } catch(err) { console.error(err); }
+  };
+
+  const clearAll = async () => {
+    if (!userId || notifications.length === 0) return;
+    try {
+      await updateDoc(doc(db, 'users', userId), { notifications: [] });
+    } catch(err) { console.error(err); }
+  };
+
+  const btnColor = isHome ? (dark ? 'rgba(255,255,255,0.7)' : 'rgba(17,24,39,0.65)') : 'var(--text-2)';
+
+  return (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      {open && <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setOpen(false)} />}
+
+      <button
+        onClick={() => { setOpen(v => !v); if (!open) markAllRead(); }}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative', color: btnColor, padding: '4px', display: 'flex', alignItems: 'center', transition: 'var(--transition)' }}
+      >
+        <BellIcon size={22} />
+        {unreadCount > 0 && (
+          <span style={{ position: 'absolute', top: 0, right: 0, background: 'var(--red)', color: 'white', fontSize: '10px', fontWeight: 800, padding: '2px 5px', borderRadius: '10px', border: '2px solid ' + (isHome ? (dark ? '#0A1223' : '#F4F7F4') : 'var(--surface)'), transform: 'translate(20%, -20%)' }}>
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div style={{ position: 'absolute', top: '100%', right: 0, width: '340px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)', marginTop: '16px', zIndex: 9999, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontWeight: 800, fontSize: '14px', color: 'var(--text)' }}>Notifications</span>
+            {notifications.length > 0 && (
+              <button onClick={clearAll} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: 'var(--text-3)', padding: '2px 6px', borderRadius: '6px' }}>
+                Clear All
+              </button>
+            )}
+          </div>
+          <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
+            {sorted.length === 0 ? (
+              <div style={{ padding: '28px', textAlign: 'center', color: 'var(--text-3)', fontSize: '13px' }}>No notifications yet.</div>
+            ) : sorted.map(n => {
+              const isApproved = n.title?.toLowerCase().includes('approved');
+              const isRejected = n.title?.toLowerCase().includes('rejected');
+              const accentColor = isApproved ? 'var(--primary)' : isRejected ? 'var(--red)' : 'var(--text-3)';
+              const dot = isApproved ? '✓' : isRejected ? '✕' : '•';
+              return (
+                <div key={n.id} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', background: n.read ? 'transparent' : 'var(--primary-light)', transition: 'background 0.5s', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: isApproved ? 'rgba(0,177,79,0.15)' : isRejected ? 'rgba(239,68,68,0.12)' : 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '12px', fontWeight: 800, color: accentColor, marginTop: '1px' }}>
+                    {dot}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '13px', color: accentColor, marginBottom: '3px' }}>{n.title}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-2)', lineHeight: 1.45 }}>{n.message}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '6px' }}>{new Date(n.createdAt).toLocaleString()}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Navbar({ user, dbUser }) {
   const location = useLocation();
@@ -170,7 +250,13 @@ function Navbar({ user, dbUser }) {
           <NavLinks />
           {user && dbUser && (
             <>
-              <div className="nav-divider" style={isHome ? { background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(17,24,39,0.1)' } : {}} />
+              {dbUser.role !== 'admin' && (
+                <>
+                  <div className="nav-divider" style={isHome ? { background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(17,24,39,0.1)' } : {}} />
+                  <NotificationDropdown dbUser={dbUser} isHome={isHome} dark={dark} />
+                </>
+              )}
+              <div className="nav-divider" style={isHome ? { background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(17,24,39,0.1)', marginLeft: '4px', marginRight: '4px' } : { marginLeft: '4px', marginRight: '4px' }} />
               <Link to="/profile" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', padding: '5px 8px', borderRadius: 'var(--radius-sm)', transition: 'var(--transition)' }}
                 onMouseEnter={e => e.currentTarget.style.background = linkHoverBg}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
