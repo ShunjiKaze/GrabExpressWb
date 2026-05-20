@@ -40,7 +40,7 @@ function AddressStep() {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
-        pickupRef.current && !pickupRef.current.contains(e.target) &&
+        pickupRef.current   && !pickupRef.current.contains(e.target) &&
         deliveryRef.current && !deliveryRef.current.contains(e.target)
       ) {
         setFocused(null);
@@ -78,8 +78,12 @@ function AddressStep() {
     if (validate()) navigate('/book/new/details');
   };
 
+  // ── Shared hover colors per field (dark-mode safe) ──
+  const hoverBg = { pickup: '#003D1F', delivery: '#3B0A0A' };
+  const hoverText = '#FFFFFF';
+
   const InputWithSuggestions = ({ field, label, placeholder, value, dotColor, containerRef }) => (
-    <div className="form-group" style={{ position: 'relative' }} ref={containerRef}>
+    <div className="form-group" style={{ position: 'relative', marginBottom: 0 }} ref={containerRef}>
       <label className="form-label">{label} <span className="req">*</span></label>
       <input
         className="form-input"
@@ -96,7 +100,7 @@ function AddressStep() {
         autoComplete="off"
         style={{
           borderColor: errors[field] ? 'var(--red)' : focused === field ? dotColor : undefined,
-          boxShadow: focused === field ? `0 0 0 3px ${dotColor}18` : undefined,
+          boxShadow: focused === field ? `0 0 0 3px ${dotColor}25` : undefined,
           transition: 'border-color 0.2s, box-shadow 0.2s',
         }}
       />
@@ -105,11 +109,11 @@ function AddressStep() {
       {/* Suggestions dropdown */}
       {focused === field && getSuggestions(field, value).length > 0 && (
         <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
           background: 'var(--surface)',
           border: `1.5px solid ${dotColor}`,
           borderRadius: 'var(--radius-md)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
           zIndex: 300,
           overflow: 'hidden',
         }}>
@@ -125,20 +129,29 @@ function AddressStep() {
             <div
               key={s}
               onMouseDown={(e) => { e.preventDefault(); pickSuggestion(field, s); }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = hoverBg[field];
+                e.currentTarget.querySelector('span').style.color = hoverText;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.querySelector('span').style.color = 'var(--text)';
+              }}
               style={{
-                padding: '11px 14px', cursor: 'pointer', fontSize: '13px',
-                color: 'var(--text)', fontWeight: 500,
+                padding: '11px 14px', cursor: 'pointer',
                 borderBottom: '1px solid var(--border)',
                 display: 'flex', gap: '10px', alignItems: 'center',
-                transition: 'background 0.1s',
+                transition: 'background 0.12s',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = field === 'pickup' ? 'var(--primary-light)' : '#FFF1F2'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               {field === 'pickup'
                 ? <MapPinIcon size={14} color={dotColor} style={{ flexShrink: 0 }} />
                 : <FlagIcon   size={14} color={dotColor} style={{ flexShrink: 0 }} />}
-              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s}</span>
+              <span style={{
+                flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                fontSize: '13px', fontWeight: 500, color: 'var(--text)',
+                transition: 'color 0.12s',
+              }}>{s}</span>
             </div>
           ))}
         </div>
@@ -159,11 +172,11 @@ function AddressStep() {
           {/* Dot line */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '38px', flexShrink: 0 }}>
             <div style={{ width: 13, height: 13, borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 0 3px var(--primary-light)' }} />
-            <div style={{ width: 2, height: '80px', background: 'repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 5px, transparent 5px, transparent 10px)', margin: '6px 0' }} />
-            <div style={{ width: 13, height: 13, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 0 3px #FFF1F2' }} />
+            <div style={{ width: 2, flex: 1, minHeight: '60px', background: 'repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 5px, transparent 5px, transparent 10px)', margin: '6px 0' }} />
+            <div style={{ width: 13, height: 13, borderRadius: '50%', background: 'var(--red)', boxShadow: '0 0 0 3px #FFF1F233' }} />
           </div>
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <InputWithSuggestions
               field="pickup"
               label="Pickup Address"
@@ -183,7 +196,10 @@ function AddressStep() {
           </div>
         </div>
 
-        <div className="flex gap-12 mt-32">
+        {/* Extra breathing room before buttons */}
+        <div style={{ height: '32px' }} />
+
+        <div className="flex gap-12">
           <button onClick={() => navigate('/book')} className="btn btn-secondary" style={{ flex: 1 }}>← Back</button>
           <button onClick={handleNext} className="btn btn-primary" style={{ flex: 2 }}>Continue to Details →</button>
         </div>

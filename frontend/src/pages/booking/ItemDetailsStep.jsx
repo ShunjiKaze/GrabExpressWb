@@ -112,7 +112,7 @@ function ItemDetailsStep() {
         <p className="text-sm text-muted mb-24">Tell us about your package so we can recommend the right vehicle.</p>
 
         {/* Two-column layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px', alignItems: 'start', marginBottom: '12px' }}>
 
           {/* LEFT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -298,7 +298,7 @@ function ItemDetailsStep() {
           </div>
         </div>
 
-        <div className="flex gap-12 mt-28">
+        <div className="flex gap-12" style={{ marginTop: '28px' }}>
           <button onClick={() => navigate('/book/new/details')} className="btn btn-secondary" style={{ flex: 1 }}>← Back</button>
           <button onClick={handleNext} className="btn btn-primary" style={{ flex: 2 }}>Review Order →</button>
         </div>

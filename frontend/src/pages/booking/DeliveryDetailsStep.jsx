@@ -145,19 +145,35 @@ function DeliveryDetailsStep() {
         <h2 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--navy)', marginBottom: '6px' }}>Delivery Details</h2>
         <p className="text-sm text-muted mb-24">Fill in the sender and recipient information for this delivery.</p>
 
-        {/* Route summary */}
-        <div style={{
-          background: 'var(--primary-light)', border: '1px solid rgba(0,177,79,0.2)',
-          borderRadius: 'var(--radius-md)', padding: '14px 18px', marginBottom: '24px',
-          fontSize: '13px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px',
-        }}>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <span style={{ color: 'var(--primary)', fontWeight: 700, width: '50px', flexShrink: 0 }}>FROM</span>
-            <span style={{ color: 'var(--text)', fontWeight: 600 }}>{bookingData.pickupAddress}</span>
+        {/* Route summary – two separate boxes */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+          <div style={{
+            background: 'var(--primary-light)', border: '1.5px solid rgba(0,177,79,0.25)',
+            borderRadius: 'var(--radius-md)', padding: '12px 16px',
+            display: 'flex', alignItems: 'flex-start', gap: '10px',
+          }}>
+            <span style={{
+              color: 'var(--primary)', fontWeight: 800, fontSize: '11px',
+              background: 'rgba(0,177,79,0.15)', borderRadius: '6px',
+              padding: '2px 8px', flexShrink: 0, marginTop: '2px', letterSpacing: '0.04em',
+            }}>FROM</span>
+            <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: '13px', lineHeight: 1.4 }}>
+              {bookingData.pickupAddress}
+            </span>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <span style={{ color: 'var(--red)', fontWeight: 700, width: '50px', flexShrink: 0 }}>TO</span>
-            <span style={{ color: 'var(--text)', fontWeight: 600 }}>{bookingData.deliveryAddress}</span>
+          <div style={{
+            background: 'var(--red-light)', border: '1.5px solid rgba(220,38,38,0.25)',
+            borderRadius: 'var(--radius-md)', padding: '12px 16px',
+            display: 'flex', alignItems: 'flex-start', gap: '10px',
+          }}>
+            <span style={{
+              color: 'var(--red)', fontWeight: 800, fontSize: '11px',
+              background: 'rgba(220,38,38,0.15)', borderRadius: '6px',
+              padding: '2px 8px', flexShrink: 0, marginTop: '2px', letterSpacing: '0.04em',
+            }}>TO</span>
+            <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: '13px', lineHeight: 1.4 }}>
+              {bookingData.deliveryAddress}
+            </span>
           </div>
         </div>
 

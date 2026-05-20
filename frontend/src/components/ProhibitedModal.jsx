@@ -1,9 +1,17 @@
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { XIcon, AlertTriangleIcon, BanIcon,
   ProhibitedGunIcon, ProhibitedPillIcon, ProhibitedPawIcon, ProhibitedSkullIcon,
   ProhibitedMoneyIcon, ProhibitedBeerIcon, ProhibitedCigaretteIcon, ProhibitedOversizeIcon } from './Icons';
 
 function ProhibitedModal({ onClose }) {
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const items = [
     { Icon: ProhibitedGunIcon,       title: 'Weapons & Firearms',       desc: 'Guns, ammunition, explosives, knives intended as weapons, or any weapon component.' },
     { Icon: ProhibitedPillIcon,      title: 'Illegal Drugs & Substances', desc: 'Prohibited drugs, narcotics, or any substance that is illegal under Philippine law.' },

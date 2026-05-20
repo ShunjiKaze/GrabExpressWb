@@ -4,7 +4,7 @@ import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestor
 import { db } from '../firebase';
 import riderIllustration from '../assets/rider-illustration.jpg';
 import { SearchIcon, MotorcycleIcon, PackageIcon, ZapIcon, CheckCircleIcon, XCircleIcon,
-         MapPinIcon, FlagIcon, StarIcon } from '../components/Icons';
+         MapPinIcon, FlagIcon, StarIcon, ClockIcon } from '../components/Icons';
 
 const STATUS_CONFIG = {
   searching:  { label: 'Searching Driver', badge: 'badge-amber',  Icon: SearchIcon },
@@ -18,7 +18,7 @@ const STATUS_CONFIG = {
 
 function CustomerDashboard({ dbUser }) {
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,17 +27,16 @@ function CustomerDashboard({ dbUser }) {
       where('customerId', '==', dbUser.user_id),
       orderBy('createdAt', 'desc')
     );
-
     const unsub = onSnapshot(q, snap => {
       setBookings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
     }, () => setLoading(false));
-
     return unsub;
   }, [dbUser.user_id]);
 
-  const active = bookings.filter(b => !['delivered', 'completed', 'cancelled'].includes(b.status));
-  const past   = bookings.filter(b =>  ['delivered', 'completed', 'cancelled'].includes(b.status));
+  const active    = bookings.filter(b => !['delivered', 'completed', 'cancelled'].includes(b.status));
+  const past      = bookings.filter(b =>  ['delivered', 'completed', 'cancelled'].includes(b.status));
+  const completed = past.filter(b => ['delivered', 'completed'].includes(b.status)).length;
 
   const formatDate = (ts) => {
     if (!ts) return '—';
@@ -46,11 +45,11 @@ function CustomerDashboard({ dbUser }) {
   };
 
   const BookingCard = ({ b }) => {
-    const cfg = STATUS_CONFIG[b.status] || { label: b.status, badge: 'badge-gray', Icon: PackageIcon };
-    const isActive    = !['delivered', 'completed', 'cancelled'].includes(b.status);
-    const isCancelled = b.status === 'cancelled';
-    const isComplete  = ['delivered', 'completed'].includes(b.status);
-    const needsRating = isComplete && !b.driverRating;
+    const cfg        = STATUS_CONFIG[b.status] || { label: b.status, badge: 'badge-gray', Icon: PackageIcon };
+    const isActive   = !['delivered', 'completed', 'cancelled'].includes(b.status);
+    const isCancelled= b.status === 'cancelled';
+    const isComplete = ['delivered', 'completed'].includes(b.status);
+    const needsRating= isComplete && !b.driverRating;
 
     return (
       <div
@@ -102,6 +101,67 @@ function CustomerDashboard({ dbUser }) {
     );
   };
 
+  /* ── Shown when user has history but no active orders (so the page isn't blank) ── */
+  const IdlePanel = () => (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '8px' }}>
+      {/* Quick-book CTA card */}
+      <div style={{
+        background: 'linear-gradient(135deg, #00B14F 0%, #009140 100%)',
+        borderRadius: 'var(--radius-xl)', padding: '28px 28px 24px', color: 'white',
+        display: 'flex', flexDirection: 'column', minHeight: '180px',
+        boxShadow: '0 8px 24px rgba(0,177,79,0.3)',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
+        <div style={{ position: 'absolute', bottom: '-40px', left: '-20px', width: 140, height: 140, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8, marginBottom: '8px' }}>Ready to ship?</div>
+          <div style={{ fontSize: '22px', fontWeight: 900, lineHeight: 1.2, marginBottom: '6px' }}>Book your next delivery</div>
+          <div style={{ fontSize: '13px', opacity: 0.8, marginBottom: '20px' }}>Riders available now in Cebu City</div>
+          <Link to="/book/new/address" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            background: 'white', color: 'var(--primary)', fontWeight: 800,
+            fontSize: '13px', padding: '10px 20px', borderRadius: '10px',
+            textDecoration: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            transition: 'transform 0.15s',
+          }}>
+            + New Booking
+          </Link>
+        </div>
+      </div>
+
+      {/* Stats summary */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)', padding: '20px',
+          display: 'flex', alignItems: 'center', gap: '16px',
+        }}>
+          <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <CheckCircleIcon size={22} color="var(--primary)" />
+          </div>
+          <div>
+            <div style={{ fontSize: '26px', fontWeight: 900, color: 'var(--navy)', lineHeight: 1 }}>{completed}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 600, marginTop: '3px' }}>Deliveries Completed</div>
+          </div>
+        </div>
+        <div style={{
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)', padding: '20px',
+          display: 'flex', alignItems: 'center', gap: '16px',
+        }}>
+          <div style={{ width: 44, height: 44, borderRadius: '12px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ClockIcon size={22} color="var(--amber)" />
+          </div>
+          <div>
+            <div style={{ fontSize: '26px', fontWeight: 900, color: 'var(--navy)', lineHeight: 1 }}>{bookings.length}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-3)', fontWeight: 600, marginTop: '3px' }}>Total Bookings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="dashboard-container" style={{ maxWidth: '900px' }}>
       {/* Header */}
@@ -128,7 +188,7 @@ function CustomerDashboard({ dbUser }) {
         </div>
       )}
 
-      {/* Empty / loading */}
+      {/* Loading skeleton */}
       {loading ? (
         <div className="card" style={{ padding: '40px' }}>
           {[1,2,3].map(i => (
@@ -143,6 +203,7 @@ function CustomerDashboard({ dbUser }) {
           ))}
         </div>
       ) : bookings.length === 0 ? (
+        /* Never booked before */
         <div className="card">
           <div className="empty-state">
             <div style={{ position: 'relative', marginBottom: '24px', display: 'inline-block' }}>
@@ -158,6 +219,9 @@ function CustomerDashboard({ dbUser }) {
             <Link to="/book/new/address" className="btn btn-primary mt-16">Book Now</Link>
           </div>
         </div>
+      ) : active.length === 0 ? (
+        /* Has history but nothing active right now */
+        <IdlePanel />
       ) : null}
     </div>
   );
