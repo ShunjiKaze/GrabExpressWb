@@ -28,6 +28,18 @@ function VehicleTypeCard({ type, selected, onSelect }) {
   );
 }
 
+const PLATE_RULES = {
+  motorcycle: { pattern: /^\d{3}\s?[A-Z]{3}$/i, hint: '123 ABC' },
+  car:        { pattern: /^[A-Z]{3}\s?\d{4}$/i,  hint: 'ABC 1234' },
+  van:        { pattern: /^[A-Z]{3}\s?\d{4}$/i,  hint: 'ABC 1234' },
+};
+
+function validatePlate(type, plate) {
+  const rule = PLATE_RULES[type];
+  if (!rule) return true;
+  return rule.pattern.test(plate.trim());
+}
+
 function DriverVehiclePage({ dbUser }) {
   const [vehicles, setVehicles]       = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -45,6 +57,9 @@ function DriverVehiclePage({ dbUser }) {
     return onSnapshot(q, snap => {
       setVehicles(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
+    }, err => {
+      console.error('vehicles snapshot error:', err);
+      setLoading(false);
     });
   }, [dbUser.user_id]);
 
@@ -59,6 +74,10 @@ function DriverVehiclePage({ dbUser }) {
   const handleAdd = async () => {
     setFormError('');
     if (!formPlate.trim()) { setFormError('Plate number is required.'); return; }
+    if (!validatePlate(formType, formPlate)) {
+      setFormError(`Invalid plate format for ${formType}. Expected format: ${PLATE_RULES[formType].hint}`);
+      return;
+    }
     if (!formYear || parseInt(formYear) < 2000) { setFormError('Enter a valid year (2000 or later).'); return; }
     if (!formExpiry) { setFormError('Insurance expiry date is required.'); return; }
     setSaving(true);
@@ -92,7 +111,7 @@ function DriverVehiclePage({ dbUser }) {
   return (
     <div className="dashboard-container" style={{ maxWidth: '700px' }}>
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, var(--navy), var(--navy-mid))', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'linear-gradient(135deg, #0f2544 0%, #1E3A5F 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Driver Portal</div>
           <h1 style={{ fontSize: '24px', fontWeight: 900, marginTop: '4px' }}>My Vehicles</h1>
@@ -116,8 +135,8 @@ function DriverVehiclePage({ dbUser }) {
           </div>
 
           <div className="form-group mb-16">
-            <label className="form-label">Plate Number</label>
-            <input className="form-input" placeholder="e.g. ABC 1234" value={formPlate} onChange={e => setFormPlate(e.target.value)} style={{ textTransform: 'uppercase' }} />
+            <label className="form-label">Plate Number <span style={{ fontWeight: 400, color: 'var(--text-3)', fontSize: '12px' }}>({PLATE_RULES[formType].hint})</span></label>
+            <input className="form-input" placeholder={`e.g. ${PLATE_RULES[formType].hint}`} value={formPlate} onChange={e => setFormPlate(e.target.value)} style={{ textTransform: 'uppercase' }} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
