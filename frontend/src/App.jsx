@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/fires
 import { auth, db } from './firebase';
 
 import { BookingProvider } from './context/BookingContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './components/Toast';
 import Navbar from './components/Navbar';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
@@ -106,6 +107,7 @@ function App() {
   const isLoggedIn = !!firebaseUser;
 
   return (
+    <ThemeProvider>
     <ToastProvider>
       <BookingProvider>
         <Router>
@@ -180,6 +182,7 @@ function App() {
         </Router>
       </BookingProvider>
     </ToastProvider>
+    </ThemeProvider>
   );
 }
 

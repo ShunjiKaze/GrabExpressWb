@@ -5,23 +5,17 @@ import { auth } from '../firebase';
 import DriverRegistrationModal from '../components/DriverRegistrationModal';
 import Logo from '../components/Logo';
 import ScrollReveal from '../components/ScrollReveal';
+import { useTheme, palette } from '../context/ThemeContext';
 
-import heroBg          from '../assets/hero-bg.jpg';
-import heroRider       from '../assets/hero-rider.png';
-import driverPhoto     from '../assets/driver-photo.png';
+import heroBg           from '../assets/hero-bg.jpg';
+import heroRider        from '../assets/hero-rider.png';
+import driverPhoto      from '../assets/driver-photo.png';
 import customerDelivery from '../assets/customer-delivery.jpg';
-
-/* shared dark section style */
-const S = {
-  dot: {
-    position: 'absolute', inset: 0, pointerEvents: 'none',
-    backgroundImage: 'radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px)',
-    backgroundSize: '28px 28px',
-  },
-};
 
 function Home({ user, dbUser }) {
   const [showDriverModal, setShowDriverModal] = useState(false);
+  const { dark } = useTheme();
+  const t = palette(dark);
 
   const handleLogin = () => signInWithPopup(auth, new GoogleAuthProvider());
   const handleDriverSuccess = () => { setShowDriverModal(false); window.location.reload(); };
@@ -43,7 +37,7 @@ function Home({ user, dbUser }) {
   ];
 
   return (
-    <div style={{ background: '#0A1223', marginTop: '-68px' }}>
+    <div style={{ background: t.bg1, marginTop: '-68px' }}>
       {showDriverModal && dbUser && (
         <DriverRegistrationModal
           userId={dbUser.user_id}
@@ -64,9 +58,8 @@ function Home({ user, dbUser }) {
         backgroundSize: 'cover',
         backgroundPosition: 'center top',
       }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg, rgba(10,18,35,0.97) 0%, rgba(10,18,35,0.85) 55%, rgba(10,18,35,0.5) 100%)' }} />
-        <div style={S.dot} />
-
+        <div style={{ position: 'absolute', inset: 0, background: t.heroOverlay }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: t.dot, backgroundSize: '28px 28px' }} />
 
         {/* grid */}
         <div className="hero-grid" style={{ position: 'relative', zIndex: 1, maxWidth: '1140px', margin: '0 auto', padding: '110px 32px 80px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', alignItems: 'center', width: '100%' }}>
@@ -74,16 +67,12 @@ function Home({ user, dbUser }) {
           {/* left */}
           <ScrollReveal direction="up" delay={100}>
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: '40px', padding: '6px 14px', color: '#4ADE80', fontSize: '13px', fontWeight: 700, marginBottom: '24px' }}>
-              🚀 GrabExpress Delivery — Cebu
-            </div>
-
-            <h1 style={{ fontSize: 'clamp(34px, 4.5vw, 62px)', fontWeight: 900, color: 'white', lineHeight: 1.08, letterSpacing: '-0.03em', marginBottom: '20px' }}>
+            <h1 style={{ fontSize: 'clamp(34px, 4.5vw, 62px)', fontWeight: 900, color: t.text, lineHeight: 1.08, letterSpacing: '-0.03em', marginBottom: '20px' }}>
               Deliver Anything,<br />
-              <span style={{ color: '#4ADE80' }}>Anywhere in Cebu</span>
+              <span style={{ color: t.accent }}>Anywhere in Cebu</span>
             </h1>
 
-            <p style={{ color: 'rgba(255,255,255,0.58)', fontSize: '17px', lineHeight: 1.75, marginBottom: '36px', maxWidth: '460px' }}>
+            <p style={{ color: t.textMuted, fontSize: '17px', lineHeight: 1.75, marginBottom: '36px', maxWidth: '460px' }}>
               Book a delivery in under 2 minutes. Real drivers, real-time updates, and guaranteed safe delivery — right at your fingertips.
             </p>
 
@@ -92,81 +81,72 @@ function Home({ user, dbUser }) {
               {user && dbUser?.role === 'customer' && <Link to="/book" className="btn btn-primary btn-lg">📦 Book a Delivery Now</Link>}
               {user && dbUser?.role === 'driver'   && <Link to="/driver/deliveries" className="btn btn-primary btn-lg">🛵 Find Available Orders</Link>}
               {user && dbUser?.role === 'admin'    && <Link to="/admin/dashboard" className="btn btn-primary btn-lg">📊 Go to Dashboard</Link>}
-              <a href="#how-it-works" className="btn btn-lg" style={{ background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)' }}>
+              <a href="#how-it-works" className="btn btn-lg" style={{ background: t.howBtn.bg, color: t.howBtn.color, border: t.howBtn.border, backdropFilter: 'blur(6px)' }}>
                 How It Works ↓
               </a>
             </div>
 
             <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap' }}>
               {[['🛵','200+ Drivers'],['📦','10K+ Deliveries'],['⭐','4.8 Rating'],['🏙️','Cebu-wide']].map(([icon, text]) => (
-                <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 600 }}>
+                <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '7px', color: t.textStat, fontSize: '13px', fontWeight: 600 }}>
                   <span style={{ fontSize: '18px' }}>{icon}</span> {text}
                 </div>
               ))}
             </div>
           </div>
-
           </ScrollReveal>
 
           {/* right — rider + floating cards */}
           <ScrollReveal direction="right" delay={250} style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-            {/* glow orb */}
             <div style={{ position: 'absolute', bottom: '-60px', left: '50%', transform: 'translateX(-50%)', width: '440px', height: '440px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,177,79,0.26) 0%, rgba(0,177,79,0.07) 55%, transparent 72%)', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', width: '300px', height: '300px', borderRadius: '50%', border: '1px solid rgba(0,177,79,0.18)', pointerEvents: 'none' }} />
 
-            <img src={heroRider} alt="GrabExpress rider" style={{ width: '100%', maxWidth: '480px', objectFit: 'contain', filter: 'drop-shadow(0 32px 80px rgba(0,177,79,0.4))', mixBlendMode: 'lighten', position: 'relative', zIndex: 2 }} />
+            <img src={heroRider} alt="GrabExpress rider" style={{ width: '100%', maxWidth: '480px', objectFit: 'contain', filter: 'drop-shadow(0 32px 80px rgba(0,177,79,0.4))', mixBlendMode: dark ? 'lighten' : 'multiply', position: 'relative', zIndex: 2 }} />
 
             {/* pickup card */}
-            <div className="float-anim" style={{ position: 'absolute', top: '22%', left: '-16px', zIndex: 10, background: 'rgba(10,16,30,0.82)', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,177,79,0.28)', borderRadius: '16px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '10px', background: 'rgba(0,177,79,0.18)', border: '1px solid rgba(0,177,79,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📦</div>
+            <div className="float-anim" style={{ position: 'absolute', top: '22%', left: '-16px', zIndex: 10, background: t.floatCardBg, backdropFilter: 'blur(16px)', border: `1px solid ${t.floatCardBorder}`, borderRadius: '16px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+              <div style={{ width: 36, height: 36, borderRadius: '10px', background: t.floatIconBg, border: `1px solid ${t.floatCardBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📦</div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: 'white', lineHeight: 1 }}>Package picked up!</div>
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '3px' }}>En route · 3 min away</div>
+                <div style={{ fontWeight: 700, fontSize: '12px', color: t.floatText, lineHeight: 1 }}>Package picked up!</div>
+                <div style={{ fontSize: '10px', color: t.floatMuted, marginTop: '3px' }}>En route · 3 min away</div>
               </div>
             </div>
 
             {/* rating card */}
-            <div className="float-anim-delay" style={{ position: 'absolute', bottom: '28%', right: '-8px', zIndex: 10, background: 'rgba(10,16,30,0.82)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '16px', padding: '12px 16px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, marginBottom: '4px' }}>Driver Rating</div>
+            <div className="float-anim-delay" style={{ position: 'absolute', bottom: '28%', right: '-8px', zIndex: 10, background: t.floatCardBg, backdropFilter: 'blur(16px)', border: `1px solid ${dark ? 'rgba(255,255,255,0.09)' : '#e5e7eb'}`, borderRadius: '16px', padding: '12px 16px', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
+              <div style={{ fontSize: '10px', color: t.floatMuted, fontWeight: 600, marginBottom: '4px' }}>Driver Rating</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '22px', fontWeight: 900, color: 'white', lineHeight: 1 }}>4.9</span>
+                <span style={{ fontSize: '22px', fontWeight: 900, color: t.floatText, lineHeight: 1 }}>4.9</span>
                 <div>
                   <div style={{ display: 'flex', gap: '2px' }}>{[1,2,3,4,5].map(i => <span key={i} style={{ fontSize: '11px', color: '#F59E0B' }}>★</span>)}</div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '1px' }}>2,841 trips</div>
+                  <div style={{ fontSize: '10px', color: t.floatMuted, marginTop: '1px' }}>2,841 trips</div>
                 </div>
               </div>
             </div>
           </ScrollReveal>
         </div>
 
-        {/* section fade */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px', background: 'linear-gradient(to bottom, transparent, #0D1829)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px', background: t.fade1, pointerEvents: 'none' }} />
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────── */}
-      <section id="how-it-works" style={{ padding: '100px 32px', background: '#0D1829', position: 'relative', overflow: 'hidden' }}>
-        <div style={S.dot} />
-        {/* subtle horizontal accent */}
-        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '500px', height: '1px', background: 'linear-gradient(to right, transparent, rgba(0,177,79,0.3), transparent)' }} />
+      <section id="how-it-works" style={{ padding: '100px 32px', background: t.bg2, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: t.dot, backgroundSize: '28px 28px' }} />
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '500px', height: '1px', background: `linear-gradient(to right, transparent, ${t.accentLine}, transparent)` }} />
 
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center', position: 'relative', zIndex: 1 }}>
 
           {/* photo */}
           <ScrollReveal direction="left">
           <div style={{ position: 'relative', paddingBottom: '20px', paddingRight: '20px' }}>
-            {/* green offset frame */}
             <div style={{ position: 'absolute', bottom: 0, right: 0, width: 'calc(100% - 20px)', height: 'calc(100% - 20px)', borderRadius: '20px', background: 'rgba(0,177,79,0.07)', border: '1.5px solid rgba(0,177,79,0.2)' }} />
-
-            {/* dot accent */}
             <div style={{ position: 'absolute', top: '-6px', left: '-6px', width: 72, height: 72, zIndex: 0 }}>
               {Array.from({ length: 16 }).map((_, i) => (
-                <div key={i} style={{ position: 'absolute', width: 3, height: 3, borderRadius: '50%', background: 'rgba(0,177,79,0.35)', left: (i % 4) * 18, top: Math.floor(i / 4) * 18 }} />
+                <div key={i} style={{ position: 'absolute', width: 3, height: 3, borderRadius: '50%', background: t.stepConnector, left: (i % 4) * 18, top: Math.floor(i / 4) * 18 }} />
               ))}
             </div>
-
-            {/* image */}
             <div
-              style={{ position: 'relative', zIndex: 2, borderRadius: '20px', overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.5)', transform: 'rotate(-1.5deg)', transition: 'transform 0.4s ease' }}
+              style={{ position: 'relative', zIndex: 2, borderRadius: '20px', overflow: 'hidden', boxShadow: dark ? '0 40px 80px rgba(0,0,0,0.5)' : '0 24px 60px rgba(0,0,0,0.14)', transform: 'rotate(-1.5deg)', transition: 'transform 0.4s ease' }}
               onMouseEnter={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1.01)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'rotate(-1.5deg)'}
             >
@@ -175,18 +155,18 @@ function Home({ user, dbUser }) {
             </div>
 
             {/* delivered badge */}
-            <div style={{ position: 'absolute', bottom: '8px', left: '16px', zIndex: 5, background: 'rgba(10,16,30,0.88)', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,177,79,0.28)', borderRadius: '14px', padding: '12px 16px', display: 'flex', gap: '10px', alignItems: 'center', boxShadow: '0 12px 32px rgba(0,0,0,0.4)' }}>
-              <div style={{ width: 34, height: 34, borderRadius: '10px', background: 'rgba(0,177,79,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>✅</div>
+            <div style={{ position: 'absolute', bottom: '8px', left: '16px', zIndex: 5, background: t.floatCardBg, backdropFilter: 'blur(16px)', border: `1px solid ${t.floatCardBorder}`, borderRadius: '14px', padding: '12px 16px', display: 'flex', gap: '10px', alignItems: 'center', boxShadow: '0 12px 32px rgba(0,0,0,0.15)' }}>
+              <div style={{ width: 34, height: 34, borderRadius: '10px', background: t.floatIconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>✅</div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: 'white', lineHeight: 1 }}>Package Delivered!</div>
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '3px' }}>Ayala Center, Cebu · Just now</div>
+                <div style={{ fontWeight: 700, fontSize: '12px', color: t.floatText, lineHeight: 1 }}>Package Delivered!</div>
+                <div style={{ fontSize: '10px', color: t.floatMuted, marginTop: '3px' }}>Ayala Center, Cebu · Just now</div>
               </div>
             </div>
 
             {/* ETA badge */}
-            <div style={{ position: 'absolute', top: '16px', right: '8px', zIndex: 5, background: 'rgba(10,16,30,0.88)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: '14px', padding: '10px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.38)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>ETA</div>
-              <div style={{ fontSize: '20px', fontWeight: 900, color: '#4ADE80', lineHeight: 1 }}>12 min</div>
+            <div style={{ position: 'absolute', top: '16px', right: '8px', zIndex: 5, background: t.floatCardBg, backdropFilter: 'blur(12px)', border: `1px solid ${t.floatCardBorder}`, borderRadius: '14px', padding: '10px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+              <div style={{ fontSize: '10px', color: t.floatMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>ETA</div>
+              <div style={{ fontSize: '20px', fontWeight: 900, color: t.accent, lineHeight: 1 }}>12 min</div>
             </div>
           </div>
           </ScrollReveal>
@@ -194,9 +174,8 @@ function Home({ user, dbUser }) {
           {/* steps */}
           <ScrollReveal direction="right">
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0,177,79,0.12)', border: '1px solid rgba(0,177,79,0.25)', borderRadius: '40px', padding: '5px 14px', color: '#4ADE80', fontSize: '12px', fontWeight: 700, marginBottom: '18px' }}>🗺️ The Process</div>
-            <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: 'white', letterSpacing: '-0.02em', marginBottom: '10px' }}>How GrabExpress Works</h2>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', lineHeight: 1.65, marginBottom: '44px' }}>
+            <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: t.text, letterSpacing: '-0.02em', marginBottom: '10px' }}>How GrabExpress Works</h2>
+            <p style={{ color: t.textMuted, fontSize: '15px', lineHeight: 1.65, marginBottom: '44px' }}>
               From booking to doorstep in 4 simple steps.
             </p>
 
@@ -204,16 +183,16 @@ function Home({ user, dbUser }) {
               {steps.map((step, i) => (
                 <div key={i} style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', paddingBottom: i < steps.length - 1 ? '28px' : 0, position: 'relative' }}>
                   {i < steps.length - 1 && (
-                    <div style={{ position: 'absolute', left: '25px', top: '50px', width: '2px', height: 'calc(100% - 22px)', background: 'linear-gradient(to bottom, rgba(0,177,79,0.4), rgba(0,177,79,0.04))', zIndex: 0 }} />
+                    <div style={{ position: 'absolute', left: '25px', top: '50px', width: '2px', height: 'calc(100% - 22px)', background: `linear-gradient(to bottom, ${t.stepConnector}, rgba(0,177,79,0.04))`, zIndex: 0 }} />
                   )}
-                  <div style={{ width: 50, height: 50, borderRadius: '14px', flexShrink: 0, background: i === 0 ? 'var(--primary)' : 'rgba(0,177,79,0.1)', border: i !== 0 ? '1.5px solid rgba(0,177,79,0.22)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', boxShadow: i === 0 ? '0 6px 20px rgba(0,177,79,0.4)' : 'none', position: 'relative', zIndex: 1 }}>
+                  <div style={{ width: 50, height: 50, borderRadius: '14px', flexShrink: 0, background: i === 0 ? t.stepIconFirst.bg : t.stepIconRest, border: i !== 0 ? t.stepIconBorder : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', boxShadow: i === 0 ? t.stepIconFirst.shadow : 'none', position: 'relative', zIndex: 1 }}>
                     {step.icon}
                   </div>
                   <div style={{ paddingTop: '8px' }}>
-                    <div style={{ fontWeight: 800, fontSize: '15px', color: 'white', marginBottom: '5px' }}>
-                      <span style={{ color: '#4ADE80', marginRight: '6px' }}>0{i + 1}.</span>{step.title}
+                    <div style={{ fontWeight: 800, fontSize: '15px', color: t.text, marginBottom: '5px' }}>
+                      <span style={{ color: t.accent, marginRight: '6px' }}>0{i + 1}.</span>{step.title}
                     </div>
-                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.65 }}>{step.desc}</div>
+                    <div style={{ fontSize: '13px', color: t.textMuted, lineHeight: 1.65 }}>{step.desc}</div>
                   </div>
                 </div>
               ))}
@@ -222,20 +201,19 @@ function Home({ user, dbUser }) {
           </ScrollReveal>
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to bottom, transparent, #0A1223)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: t.fade2, pointerEvents: 'none' }} />
       </section>
 
       {/* ── FEATURES ─────────────────────────────────────────── */}
-      <section style={{ padding: '100px 32px', background: '#0A1223', position: 'relative', overflow: 'hidden' }}>
-        <div style={S.dot} />
-        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '500px', height: '1px', background: 'linear-gradient(to right, transparent, rgba(0,177,79,0.25), transparent)' }} />
+      <section style={{ padding: '100px 32px', background: t.bg1, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: t.dot, backgroundSize: '28px 28px' }} />
+        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '500px', height: '1px', background: `linear-gradient(to right, transparent, ${t.accentLine}, transparent)` }} />
 
         <div style={{ maxWidth: '1100px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <ScrollReveal direction="up">
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(0,177,79,0.12)', border: '1px solid rgba(0,177,79,0.25)', borderRadius: '40px', padding: '5px 14px', color: '#4ADE80', fontSize: '12px', fontWeight: 700, marginBottom: '18px' }}>✨ Why Choose Us</div>
-            <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: 'white', letterSpacing: '-0.02em' }}>Everything You Need</h2>
-            <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '10px', fontSize: '15px' }}>Built for speed, safety, and simplicity.</p>
+            <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: t.text, letterSpacing: '-0.02em' }}>Everything You Need</h2>
+            <p style={{ color: t.textFaint, marginTop: '10px', fontSize: '15px' }}>Built for speed, safety, and simplicity.</p>
           </div>
           </ScrollReveal>
 
@@ -243,48 +221,46 @@ function Home({ user, dbUser }) {
             {features.map((f, i) => (
               <ScrollReveal key={i} direction="up" delay={i * 60}>
               <div
-                style={{ padding: '28px 24px', borderRadius: '20px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', transition: 'transform 0.25s, background 0.25s, border-color 0.25s', position: 'relative', overflow: 'hidden', cursor: 'default' }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.background = 'rgba(0,177,79,0.08)'; e.currentTarget.style.borderColor = 'rgba(0,177,79,0.3)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+                style={{ padding: '28px 24px', borderRadius: '20px', background: t.cardBg, border: `1px solid ${t.cardBorder}`, transition: 'transform 0.25s, background 0.25s, border-color 0.25s', position: 'relative', overflow: 'hidden', cursor: 'default', boxShadow: dark ? 'none' : '0 2px 8px rgba(0,0,0,0.05)' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.background = t.cardHoverBg; e.currentTarget.style.borderColor = t.cardHoverBorder.split(' ').pop(); }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.background = t.cardBg; e.currentTarget.style.borderColor = t.cardBorder; }}
               >
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(to right, var(--primary), rgba(0,177,79,0.2), transparent)' }} />
-                <div style={{ width: 52, height: 52, borderRadius: '14px', background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '18px' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(to right, #00b14f, rgba(0,177,79,0.2), transparent)` }} />
+                <div style={{ width: 52, height: 52, borderRadius: '14px', background: t.featureIconBg, border: `1px solid ${t.featureIconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', marginBottom: '18px' }}>
                   {f.icon}
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>{f.title}</h3>
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.65 }}>{f.desc}</p>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: t.text, marginBottom: '8px' }}>{f.title}</h3>
+                <p style={{ fontSize: '14px', color: t.textMuted, lineHeight: 1.65 }}>{f.desc}</p>
               </div>
               </ScrollReveal>
             ))}
           </div>
         </div>
 
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to bottom, transparent, #070D1A)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: t.fade3, pointerEvents: 'none' }} />
       </section>
 
       {/* ── BECOME A DRIVER ──────────────────────────────────── */}
-      <section style={{ padding: '100px 32px', background: '#070D1A', position: 'relative', overflow: 'hidden' }}>
-        <div style={S.dot} />
+      <section style={{ padding: '100px 32px', background: t.bg3, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: t.dot, backgroundSize: '28px 28px' }} />
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '700px', height: '700px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,177,79,0.06) 0%, transparent 65%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '500px', height: '1px', background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)' }} />
 
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center', position: 'relative', zIndex: 1 }}>
 
           {/* left */}
           <ScrollReveal direction="left">
           <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '40px', padding: '5px 14px', color: 'rgba(255,255,255,0.65)', fontSize: '12px', fontWeight: 700, marginBottom: '20px' }}>🛵 For Riders</div>
-            <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: 'white', marginBottom: '14px', letterSpacing: '-0.02em' }}>
+            <h2 style={{ fontSize: 'clamp(28px, 3vw, 38px)', fontWeight: 900, color: t.text, marginBottom: '14px', letterSpacing: '-0.02em' }}>
               Earn Money Delivering with GrabExpress
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', lineHeight: 1.75, marginBottom: '30px' }}>
+            <p style={{ color: t.textMuted, fontSize: '15px', lineHeight: 1.75, marginBottom: '30px' }}>
               Be your own boss. Accept orders anytime, anywhere in Cebu. The more you deliver, the more you earn — no monthly fees.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', marginBottom: '32px' }}>
               {['Earn ₱60–₱250 per delivery', 'Flexible hours — work when you want', 'Motorcycle, car, or van accepted', 'Real-time order notifications'].map(item => (
-                <div key={item} style={{ display: 'flex', gap: '10px', alignItems: 'center', color: 'rgba(255,255,255,0.7)', fontSize: '14px' }}>
-                  <span style={{ color: '#4ADE80', fontWeight: 900, flexShrink: 0 }}>✓</span> {item}
+                <div key={item} style={{ display: 'flex', gap: '10px', alignItems: 'center', color: t.textMuted, fontSize: '14px' }}>
+                  <span style={{ color: t.accent, fontWeight: 900, flexShrink: 0 }}>✓</span> {item}
                 </div>
               ))}
             </div>
@@ -294,44 +270,41 @@ function Home({ user, dbUser }) {
               <button onClick={() => setShowDriverModal(true)} className="btn btn-primary btn-lg">🛵 Become a Driver Now</button>
             )}
             {user && dbUser?.role === 'driver' && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.35)', borderRadius: '14px', padding: '13px 22px', color: '#4ADE80', fontWeight: 700, fontSize: '14px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: t.alreadyDriverBg, border: `1px solid ${t.alreadyDriverBorder}`, borderRadius: '14px', padding: '13px 22px', color: t.alreadyDriverText, fontWeight: 700, fontSize: '14px' }}>
                 ✅ You are already registered as a driver!
               </div>
             )}
-
           </div>
           </ScrollReveal>
 
           {/* right — driver photo */}
           <ScrollReveal direction="right" delay={150}>
           <div style={{ position: 'relative' }}>
-            {/* glow */}
             <div style={{ position: 'absolute', inset: '-24px', borderRadius: '24px', background: 'radial-gradient(ellipse at 60% 50%, rgba(0,177,79,0.18), transparent 65%)', pointerEvents: 'none' }} />
 
-            <div style={{ borderRadius: '22px', overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,177,79,0.18)', position: 'relative' }}>
+            <div style={{ borderRadius: '22px', overflow: 'hidden', boxShadow: dark ? '0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,177,79,0.18)' : '0 24px 60px rgba(0,0,0,0.15)', position: 'relative' }}>
               <img src={driverPhoto} alt="GrabExpress drivers" style={{ width: '100%', display: 'block', objectFit: 'cover' }} />
-              {/* edge fades to blend into section */}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(7,13,26,0.3) 0%, transparent 25%, transparent 75%, rgba(7,13,26,0.25) 100%)' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%', background: 'linear-gradient(to top, rgba(7,13,26,0.6), transparent)' }} />
+              <div style={{ position: 'absolute', inset: 0, background: dark ? 'linear-gradient(to right, rgba(7,13,26,0.3) 0%, transparent 25%, transparent 75%, rgba(7,13,26,0.25) 100%)' : 'none' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%', background: dark ? 'linear-gradient(to top, rgba(7,13,26,0.6), transparent)' : 'linear-gradient(to top, rgba(0,0,0,0.25), transparent)' }} />
             </div>
 
-            {/* earnings badge — bottom-right, below image */}
-            <div style={{ position: 'absolute', bottom: '-14px', right: '20px', background: 'linear-gradient(135deg, #052e16, #14532d)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: '14px', padding: '12px 18px', boxShadow: '0 8px 28px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ fontSize: '22px', fontWeight: 900, color: '#4ADE80', lineHeight: 1 }}>₱250</div>
+            {/* earnings badge */}
+            <div style={{ position: 'absolute', bottom: '-14px', right: '20px', background: t.driverBadgeBg, border: `1px solid ${t.driverBadgeBorder}`, borderRadius: '14px', padding: '12px 18px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: t.driverBadgeText, lineHeight: 1 }}>₱250</div>
               <div>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Up to</div>
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' }}>per delivery</div>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: t.driverBadgeLabel, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Up to</div>
+                <div style={{ fontSize: '10px', color: t.driverBadgeSub, marginTop: '1px' }}>per delivery</div>
               </div>
             </div>
 
-            {/* drivers badge — bottom-left, below image */}
-            <div style={{ position: 'absolute', bottom: '-14px', left: '20px', background: 'rgba(10,16,30,0.9)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '14px', padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)', display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {/* drivers badge */}
+            <div style={{ position: 'absolute', bottom: '-14px', left: '20px', background: t.driversBadgeBg, backdropFilter: 'blur(16px)', border: `1px solid ${t.driversBadgeBorder}`, borderRadius: '14px', padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', display: 'flex', gap: '10px', alignItems: 'center' }}>
               <div style={{ display: 'flex' }}>
                 {['#4ADE80','#60A5FA','#F59E0B'].map((c, i) => (
-                  <div key={i} style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: '2px solid rgba(10,16,30,0.9)', marginLeft: i > 0 ? '-8px' : 0, zIndex: 3 - i }} />
+                  <div key={i} style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: `2px solid ${t.driversBadgeBg.includes('255') ? 'white' : '#eaefe9'}`, marginLeft: i > 0 ? '-8px' : 0, zIndex: 3 - i }} />
                 ))}
               </div>
-              <div style={{ fontWeight: 700, fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>200+ Drivers</div>
+              <div style={{ fontWeight: 700, fontSize: '12px', color: t.driversBadgeText }}>200+ Drivers</div>
             </div>
           </div>
           </ScrollReveal>
@@ -339,24 +312,20 @@ function Home({ user, dbUser }) {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────── */}
-      <footer style={{ background: '#040810', borderTop: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>
+      <footer style={{ background: t.footerBg, borderTop: `1px solid ${t.footerBorder}`, color: t.textFaint, fontSize: '13px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '64px 32px 40px', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '40px' }} className="footer-grid">
 
           {/* Brand column */}
           <div>
-            <Logo size="sm" textColor="rgba(255,255,255,0.85)" />
-            <p style={{ marginTop: '14px', lineHeight: 1.75, color: 'rgba(255,255,255,0.38)', fontSize: '13px', maxWidth: '240px' }}>
+            <Logo size="sm" textColor={dark ? 'rgba(255,255,255,0.85)' : '#111827'} />
+            <p style={{ marginTop: '14px', lineHeight: 1.75, color: t.textFaint, fontSize: '13px', maxWidth: '240px' }}>
               Fast, reliable parcel delivery across Cebu City and Metro Cebu. Book in under 2 minutes.
             </p>
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-              {[
-                { label: 'FB', href: '#' },
-                { label: 'IG', href: '#' },
-                { label: 'TW', href: '#' },
-              ].map(s => (
-                <a key={s.label} href={s.href} style={{ width: 34, height: 34, borderRadius: '8px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '11px', fontWeight: 800, textDecoration: 'none', transition: 'background 0.2s, color 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,177,79,0.15)'; e.currentTarget.style.color = '#4ADE80'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+              {[{ label: 'FB', href: '#' }, { label: 'IG', href: '#' }, { label: 'TW', href: '#' }].map(s => (
+                <a key={s.label} href={s.href} style={{ width: 34, height: 34, borderRadius: '8px', background: t.cardBg, border: `1px solid ${t.cardBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textFaint, fontSize: '11px', fontWeight: 800, textDecoration: 'none', transition: 'background 0.2s, color 0.2s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,177,79,0.15)'; e.currentTarget.style.color = t.accent; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = t.cardBg; e.currentTarget.style.color = t.textFaint; }}
                 >{s.label}</a>
               ))}
             </div>
@@ -364,7 +333,7 @@ function Home({ user, dbUser }) {
 
           {/* Quick Links */}
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Quick Links</div>
+            <div style={{ fontSize: '11px', fontWeight: 800, color: t.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Quick Links</div>
             {[
               { label: 'Home', to: '/', show: true },
               { label: 'Sign In', to: '/login', show: !user },
@@ -374,38 +343,38 @@ function Home({ user, dbUser }) {
               { label: 'Find Orders', to: '/driver/deliveries', show: dbUser?.role === 'driver' },
               { label: 'Dashboard', to: '/admin/dashboard', show: dbUser?.role === 'admin' },
             ].filter(l => l.show).map(l => (
-              <Link key={l.label} to={l.to} style={{ display: 'block', color: 'rgba(255,255,255,0.45)', marginBottom: '10px', textDecoration: 'none', fontSize: '13px', transition: 'color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#4ADE80'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}
+              <Link key={l.label} to={l.to} style={{ display: 'block', color: t.textMuted, marginBottom: '10px', textDecoration: 'none', fontSize: '13px', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = t.accent}
+                onMouseLeave={e => e.currentTarget.style.color = t.textMuted}
               >{l.label}</Link>
             ))}
           </div>
 
           {/* Company */}
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Company</div>
+            <div style={{ fontSize: '11px', fontWeight: 800, color: t.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Company</div>
             {[
               { label: 'About Us', to: '/about' },
               { label: 'FAQ / Help', to: '/faq' },
               { label: 'Contact Us', to: '/contact' },
             ].map(l => (
-              <Link key={l.label} to={l.to} style={{ display: 'block', color: 'rgba(255,255,255,0.45)', marginBottom: '10px', textDecoration: 'none', fontSize: '13px', transition: 'color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#4ADE80'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.45)'}
+              <Link key={l.label} to={l.to} style={{ display: 'block', color: t.textMuted, marginBottom: '10px', textDecoration: 'none', fontSize: '13px', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = t.accent}
+                onMouseLeave={e => e.currentTarget.style.color = t.textMuted}
               >{l.label}</Link>
             ))}
           </div>
 
           {/* Contact Info */}
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Contact</div>
+            <div style={{ fontSize: '11px', fontWeight: 800, color: t.textFaint, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '18px' }}>Contact</div>
             {[
               { icon: '📍', text: 'Cebu City, Philippines' },
               { icon: '📧', text: 'support@grabexpress.ph' },
               { icon: '📞', text: '+63 32 000 0000' },
               { icon: '🕐', text: 'Mon–Sun, 7AM–10PM' },
             ].map(c => (
-              <div key={c.icon} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '10px', color: 'rgba(255,255,255,0.42)', fontSize: '13px' }}>
+              <div key={c.icon} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '10px', color: t.textMuted, fontSize: '13px' }}>
                 <span style={{ flexShrink: 0 }}>{c.icon}</span>
                 <span>{c.text}</span>
               </div>
@@ -414,13 +383,13 @@ function Home({ user, dbUser }) {
         </div>
 
         {/* bottom bar */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '20px 32px', maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-          <p style={{ margin: 0, color: 'rgba(255,255,255,0.22)', fontSize: '12px' }}>© 2026 GrabExpress Cebu. All rights reserved.</p>
+        <div style={{ borderTop: `1px solid ${t.footerBorder}`, padding: '20px 32px', maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <p style={{ margin: 0, color: t.footerText, fontSize: '12px' }}>© 2026 GrabExpress Cebu. All rights reserved.</p>
           <div style={{ display: 'flex', gap: '20px' }}>
             {[{ label: 'Privacy Policy', to: '/faq' }, { label: 'Terms of Service', to: '/faq' }].map(l => (
-              <Link key={l.label} to={l.to} style={{ color: 'rgba(255,255,255,0.25)', fontSize: '12px', textDecoration: 'none', transition: 'color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
+              <Link key={l.label} to={l.to} style={{ color: t.footerText, fontSize: '12px', textDecoration: 'none', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = t.textMuted}
+                onMouseLeave={e => e.currentTarget.style.color = t.footerText}
               >{l.label}</Link>
             ))}
           </div>
