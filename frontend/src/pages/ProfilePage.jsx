@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, auth, storage } from '../firebase';
 import { useToast } from '../components/Toast';
 import { CameraIcon, EditIcon, CheckIcon, MotorcycleIcon, CarIcon, VanIcon, StarIcon } from '../components/Icons';
+import DriverRegistrationModal from '../components/DriverRegistrationModal';
 
 const VEHICLE_ICON_MAP = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
 const ROLE_CONFIG = {
@@ -23,6 +24,7 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
   const [displayName,  setDisplayName]    = useState(dbUser?.full_name || '');
   const [displayPhone, setDisplayPhone]   = useState(dbUser?.phone || '');
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showDriverApp, setShowDriverApp] = useState(false);
   const fileInputRef = useRef(null);
   const showToast = useToast();
   // Use prop (from App state) first, fall back to auth.currentUser
@@ -124,6 +126,8 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
       showToast('Failed to submit request.', 'error');
     }
   };
+
+
 
   const formatDate = (ts) => {
     if (!ts) return '—';
@@ -298,6 +302,30 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
             </div>
           </div>
         )}
+
+        {/* Driver Application for Customers */}
+        {role === 'customer' && (
+          <div style={{ padding: '0 32px 32px' }}>
+            <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '20px', marginTop: '20px' }}>Driver Program</p>
+            <div style={{ padding: '20px', background: 'var(--surface-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--navy)' }}>Become a Driver</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '4px' }}>
+                  {dbUser.driverApplicationStatus === 'pending'
+                    ? 'Your driver application is currently under review by an admin.'
+                    : 'Earn money by delivering packages. Apply now to join our fleet.'}
+                </div>
+              </div>
+              <div>
+                {dbUser.driverApplicationStatus === 'pending' ? (
+                   <span className="badge badge-amber">Application Pending</span>
+                ) : (
+                   <button onClick={() => setShowDriverApp(true)} className="btn btn-primary btn-sm">Apply Now</button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Sign Out Confirmation Modal ── */}
@@ -332,6 +360,16 @@ function ProfilePage({ dbUser, firebaseUser: fbUserProp }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Driver Application Modal ── */}
+      {showDriverApp && (
+        <DriverRegistrationModal
+          userId={dbUser.user_id}
+          existingPhone={dbUser.phone || ''}
+          onSuccess={() => setShowDriverApp(false)}
+          onClose={() => setShowDriverApp(false)}
+        />
       )}
 
     </div>

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -273,9 +273,15 @@ function Home({ user, dbUser }) {
               ))}
             </div>
 
-            {!user && <button onClick={handleLogin} className="btn btn-primary btn-lg">Sign In to Register as Driver</button>}
+            {!user && <Link to="/login" className="btn btn-primary btn-lg">Sign Up Now!</Link>}
             {user && dbUser?.role === 'customer' && (
-              <button onClick={() => setShowDriverModal(true)} className="btn btn-primary btn-lg">Become a Driver Now</button>
+              dbUser?.driverApplicationStatus === 'pending' ? (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: t.alreadyDriverBg, border: `1px solid ${t.alreadyDriverBorder}`, borderRadius: '14px', padding: '13px 22px', color: t.alreadyDriverText, fontWeight: 700, fontSize: '14px' }}>
+                  <CheckCircleIcon size={16} color={t.alreadyDriverText} /> Driver application is pending
+                </div>
+              ) : (
+                <button onClick={() => setShowDriverModal(true)} className="btn btn-primary btn-lg">Become a Driver Now</button>
+              )
             )}
             {user && dbUser?.role === 'driver' && (
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: t.alreadyDriverBg, border: `1px solid ${t.alreadyDriverBorder}`, borderRadius: '14px', padding: '13px 22px', color: t.alreadyDriverText, fontWeight: 700, fontSize: '14px' }}>
