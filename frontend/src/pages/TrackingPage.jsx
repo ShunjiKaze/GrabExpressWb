@@ -154,7 +154,7 @@ function TrackingPage({ dbUser }) {
           ? 'linear-gradient(135deg, #450a0a, #7f1d1d)'
           : isComplete
             ? 'linear-gradient(135deg, #052e16, #166534)'
-            : 'linear-gradient(135deg, var(--navy), var(--navy-mid))',
+            : 'linear-gradient(135deg, #0F172A, #1E293B)',
         borderRadius: 'var(--radius-xl)', padding: '32px', color: 'white', marginBottom: '20px',
       }}>
         {/* Order ID + amount */}

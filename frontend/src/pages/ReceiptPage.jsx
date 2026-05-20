@@ -129,7 +129,7 @@ function ReceiptPage({ dbUser }) {
 
       {/* ── HEADER ── */}
       <div style={{
-        background: 'linear-gradient(135deg, var(--navy) 0%, #0F2040 60%, #003D1F 100%)',
+        background: 'linear-gradient(135deg, #0F172A 0%, #0F2040 60%, #003D1F 100%)',
         borderRadius: 'var(--radius-lg)',
         padding: '28px 28px 24px',
         marginBottom: '14px',

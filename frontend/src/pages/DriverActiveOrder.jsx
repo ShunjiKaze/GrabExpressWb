@@ -281,7 +281,7 @@ function DriverActiveOrder({ dbUser }) {
     <div className="dashboard-container" style={{ maxWidth: '720px' }}>
 
       {/* Mission header */}
-      <div style={{ background: 'linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px' }}>
+      <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '20px' }}>
         <div className="flex items-center justify-between mb-16">
           <div>
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Current Mission</div>

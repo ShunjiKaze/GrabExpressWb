@@ -69,7 +69,7 @@ function DriverDeliveries({ dbUser }) {
   return (
     <div className="dashboard-container" style={{ maxWidth: '900px' }}>
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, var(--navy) 0%, #1E3A5F 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '24px' }}>
+      <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '24px' }}>
         <div className="flex items-center justify-between">
           <div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Driver Mode</div>
