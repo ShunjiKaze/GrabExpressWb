@@ -3,15 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useBooking } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
 import { isValidPhone, isValidName, digitsOnly, sanitizeName } from '../../utils/validate';
-import { ZapIcon, CalendarIcon, PackageIcon, MotorcycleIcon, CarIcon, VanIcon, UserIcon, PhoneIcon } from '../../components/Icons';
+import { ZapIcon, CalendarIcon, PackageIcon, UserIcon, PhoneIcon } from '../../components/Icons';
 
 const STEPS = ['Address', 'Details', 'Item', 'Review'];
-
-const VEHICLES = [
-  { id: 'motorcycle', Icon: MotorcycleIcon, title: 'Motorcycle', desc: 'Up to 5 kg, small items',   price: '₱60' },
-  { id: 'car',        Icon: CarIcon,        title: 'Car',        desc: 'Up to 15 kg, medium items', price: '₱120' },
-  { id: 'van',        Icon: VanIcon,        title: 'Van',        desc: 'Up to 20 kg, large items',  price: '₱250' },
-];
 
 const DELIVERY_TYPES = [
   { id: 'instant',  Icon: ZapIcon,      title: 'Instant',     desc: 'Within the hour',  disabled: false },
@@ -180,30 +174,6 @@ function DeliveryDetailsStep() {
                 <div className="option-title">{t.title}</div>
                 <div className="option-desc">{t.desc}</div>
                 {t.disabled && <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '4px' }}>Coming soon</div>}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Vehicle */}
-        <div className="form-group mb-24">
-          <label className="form-label">
-            Vehicle Type
-            <span style={{ fontWeight: 400, color: 'var(--text-3)', fontSize: '12px' }}> — auto-updated after item size selection</span>
-          </label>
-          <div className="option-grid option-grid-3">
-            {VEHICLES.map(v => (
-              <div
-                key={v.id}
-                className={`option-card${bookingData.vehicleType === v.id ? ' selected' : ''}`}
-                onClick={() => updateBooking({ vehicleType: v.id })}
-              >
-                <div className="option-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <v.Icon size={28} color={bookingData.vehicleType === v.id ? 'var(--primary)' : 'var(--text-3)'} />
-                </div>
-                <div className="option-title">{v.title}</div>
-                <div className="option-desc">{v.desc}</div>
-                <div className="option-price">{v.price} base</div>
               </div>
             ))}
           </div>

@@ -4,10 +4,10 @@ export const isValidPhone = (v) => /^09\d{9}$/.test(v.trim());
 // Name: letters, spaces, hyphens, apostrophes. Min 2 chars.
 export const isValidName = (v) => v.trim().length >= 2 && /^[a-zA-ZÀ-ÿ\s'\-]+$/.test(v.trim());
 
-// Weight: positive number up to 20
+// Weight: positive number up to 50
 export const isValidWeight = (v) => {
   const n = parseFloat(v);
-  return !isNaN(n) && n > 0 && n <= 20;
+  return !isNaN(n) && n > 0 && n <= 50;
 };
 
 // Non-empty string

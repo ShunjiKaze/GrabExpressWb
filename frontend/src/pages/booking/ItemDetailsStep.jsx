@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useBooking, vehicleForSize } from '../../context/BookingContext';
 import StepBar from '../../components/StepBar';
 import ProhibitedModal from '../../components/ProhibitedModal';
-import { isValidWeight } from '../../utils/validate';
 import { BanIcon, CameraIcon, CheckCircleIcon, ShieldIcon, ShieldCheckIcon, CrownIcon,
          MotorcycleIcon, CarIcon, VanIcon, PackageIcon,
          DocumentIcon, FoodIcon, ShirtIcon, LaptopIcon, FrameIcon, HeartPulseIcon } from '../../components/Icons';
@@ -11,10 +10,10 @@ import { BanIcon, CameraIcon, CheckCircleIcon, ShieldIcon, ShieldCheckIcon, Crow
 const STEPS = ['Address', 'Details', 'Item', 'Review'];
 
 const SIZES = [
-  { id: 'S',  Icon: DocumentIcon, title: 'Small',   desc: 'Fits in an envelope', weight: '< 1 kg',    vehicle: 'motorcycle' },
-  { id: 'M',  Icon: PackageIcon,  title: 'Medium',  desc: 'Shoebox sized',       weight: '1 – 5 kg',  vehicle: 'car' },
-  { id: 'L',  Icon: PackageIcon,  title: 'Large',   desc: 'Carry-on luggage',    weight: '5 – 15 kg', vehicle: 'van' },
-  { id: 'XL', Icon: VanIcon,      title: 'XL',      desc: 'Oversized / bulky',   weight: '15 – 20 kg', vehicle: 'van' },
+  { id: 'S',  Icon: DocumentIcon, title: 'Small',  desc: 'Small parcel',      weight: '1 – 5 kg',   minKg: 1,  maxKg: 5,  vehicle: 'motorcycle' },
+  { id: 'M',  Icon: PackageIcon,  title: 'Medium', desc: 'Shoebox to bag',    weight: '6 – 15 kg',  minKg: 6,  maxKg: 15, vehicle: 'car' },
+  { id: 'L',  Icon: PackageIcon,  title: 'Large',  desc: 'Luggage / box',     weight: '16 – 30 kg', minKg: 16, maxKg: 30, vehicle: 'van' },
+  { id: 'XL', Icon: VanIcon,      title: 'XL',     desc: 'Oversized / bulky', weight: '31 – 50 kg', minKg: 31, maxKg: 50, vehicle: 'van' },
 ];
 
 const ITEM_TYPES = [
@@ -58,10 +57,18 @@ function ItemDetailsStep() {
 
   const validate = () => {
     const e = {};
+    const sizeInfo = SIZES.find(s => s.id === bookingData.itemSize);
     if (!bookingData.itemWeight) {
       e.itemWeight = 'Please enter the item weight.';
-    } else if (!isValidWeight(bookingData.itemWeight)) {
-      e.itemWeight = 'Weight must be a positive number up to 20 kg.';
+    } else {
+      const n = parseFloat(bookingData.itemWeight);
+      if (isNaN(n) || n <= 0) {
+        e.itemWeight = 'Weight must be a positive number.';
+      } else if (sizeInfo && n < sizeInfo.minKg) {
+        e.itemWeight = `Too light for ${sizeInfo.title} (${sizeInfo.weight}). Choose a smaller size.`;
+      } else if (sizeInfo && n > sizeInfo.maxKg) {
+        e.itemWeight = `Too heavy for ${sizeInfo.title} (${sizeInfo.weight}). Choose a larger size.`;
+      }
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -116,8 +123,7 @@ function ItemDetailsStep() {
         <div className="alert alert-info mb-20">
           <VehicleRecommendIcon size={16} />
           <span>
-            Size <strong>{bookingData.itemSize}</strong> → recommended vehicle: <strong>{VEHICLE_LABEL[bookingData.vehicleType]}</strong>.
-            You can override this in the previous step.
+            Size <strong>{bookingData.itemSize}</strong> → a <strong>{VEHICLE_LABEL[bookingData.vehicleType]}</strong> will be assigned for this delivery.
           </span>
         </div>
 
@@ -140,7 +146,7 @@ function ItemDetailsStep() {
           </div>
           {errors.itemWeight
             ? <span style={{ fontSize: '12px', color: 'var(--red)', marginTop: '3px', display: 'block' }}>{errors.itemWeight}</span>
-            : <span className="text-xs text-muted">Maximum 20 kg per booking. Decimals allowed (e.g. 1.5)</span>
+            : <span className="text-xs text-muted">{SIZES.find(s => s.id === bookingData.itemSize)?.weight} for {SIZES.find(s => s.id === bookingData.itemSize)?.title}. Decimals allowed (e.g. 1.5)</span>
           }
         </div>
 

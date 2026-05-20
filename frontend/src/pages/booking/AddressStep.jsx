@@ -124,11 +124,11 @@ function AddressStep() {
           {/* Dot line */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '36px', flexShrink: 0 }}>
             <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--primary)' }} />
-            <div style={{ width: 2, height: '72px', background: 'repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 5px, transparent 5px, transparent 10px)', margin: '4px 0' }} />
+            <div style={{ width: 2, height: '96px', background: 'repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 5px, transparent 5px, transparent 10px)', margin: '4px 0' }} />
             <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--red)' }} />
           </div>
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <InputWithSuggestions
               field="pickup"
               label="Pickup Address"
