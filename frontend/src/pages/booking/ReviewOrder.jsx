@@ -87,6 +87,23 @@ function ReviewOrder({ dbUser }) {
         customerRating: null,
       });
 
+      try {
+        await addDoc(collection(db, 'payments'), {
+          bookingId:    docRef.id,
+          customerId:   dbUser.user_id,
+          driverId:     null,
+          amount:       total,
+          paymentMethod: bookingData.paymentMethod,
+          status:       'pending',
+          platformComm: Math.round(total * 0.20),
+          driverEarn:   Math.round(total * 0.80),
+          createdAt:    serverTimestamp(),
+          paidAt:       null,
+        });
+      } catch (payErr) {
+        console.error('Payment record failed:', payErr);
+      }
+
       resetBooking();
       navigate(`/book/tracking/${docRef.id}`);
     } catch (err) {

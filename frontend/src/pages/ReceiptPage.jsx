@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { VEHICLE_BASE, SIZE_ADD, TIER_ADD } from '../context/BookingContext';
 import {
@@ -55,10 +55,11 @@ function Row({ label, value, icon }) {
 function ReceiptPage({ dbUser }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [booking, setBooking] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
-  const [copied, setCopied]   = useState(false);
+  const [booking, setBooking]     = useState(null);
+  const [paymentDoc, setPaymentDoc] = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
+  const [copied, setCopied]       = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -66,6 +67,8 @@ function ReceiptPage({ dbUser }) {
         const snap = await getDoc(doc(db, 'bookings', id));
         if (!snap.exists()) { setError('not_found'); return; }
         setBooking({ id: snap.id, ...snap.data() });
+        const paySnap = await getDocs(query(collection(db, 'payments'), where('bookingId', '==', id)));
+        setPaymentDoc(paySnap.empty ? null : paySnap.docs[0].data());
       } catch {
         setError('failed');
       } finally {
@@ -181,9 +184,18 @@ function ReceiptPage({ dbUser }) {
           ? <CheckCircleIcon size={18} color="var(--primary)" />
           : <XCircleIcon size={18} color="var(--red)" />
         }
-        <span style={{ fontWeight: 700, fontSize: '14px', color: isDelivered ? 'var(--primary)' : isCancelled ? 'var(--red)' : '#B45309' }}>
-          {isDelivered ? 'Delivery Successful' : isCancelled ? 'Order Cancelled' : booking.status.charAt(0).toUpperCase() + booking.status.slice(1).replace('_', ' ')}
-        </span>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: '14px', color: isDelivered ? 'var(--primary)' : isCancelled ? 'var(--red)' : '#B45309' }}>
+            {isDelivered ? 'Delivery Successful' : isCancelled ? 'Order Cancelled' : booking.status.charAt(0).toUpperCase() + booking.status.slice(1).replace('_', ' ')}
+          </div>
+          {isCancelled && booking.cancelReason && (
+            <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #FECACA', fontSize: '13px', color: 'var(--text-2)' }}>
+              <div>Reason: {booking.cancelReason}</div>
+              {booking.cancelledBy && <div style={{ marginTop: '2px', color: 'var(--text-3)' }}>Cancelled by: {booking.cancelledBy}</div>}
+              {booking.cancelNote && <div style={{ marginTop: '2px', fontStyle: 'italic', color: 'var(--text-3)' }}>"{booking.cancelNote}"</div>}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── ROUTE ── */}
@@ -243,13 +255,27 @@ function ReceiptPage({ dbUser }) {
       </Section>
 
       {/* ── PAYMENT METHOD ── */}
-      <Section title="Payment Method">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <Section title="Payment">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: paymentDoc ? '14px' : 0 }}>
           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <payment.Icon size={18} color="var(--primary)" />
           </div>
-          <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{payment.title}</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text)' }}>{payment.title}</div>
+            {paymentDoc && (
+              <span className={`badge ${paymentDoc.status === 'paid' ? 'badge-green' : 'badge-amber'}`} style={{ marginTop: '4px', display: 'inline-block' }}>
+                {paymentDoc.status === 'paid' ? 'Paid' : 'Pending'}
+              </span>
+            )}
+          </div>
         </div>
+        {paymentDoc && (
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+            {(isDriver || isAdmin) && <Row label="Your Earnings (80%)" value={`₱${paymentDoc.driverEarn}`} />}
+            {isAdmin && <Row label="Platform Commission (20%)" value={`₱${paymentDoc.platformComm}`} />}
+            {paymentDoc.paidAt && <Row label="Paid At" value={formatDate(paymentDoc.paidAt)} icon={<ClockIcon size={13} color="var(--text-3)" />} />}
+          </div>
+        )}
       </Section>
 
       {/* ── PRICE BREAKDOWN ── */}
@@ -291,6 +317,26 @@ function ReceiptPage({ dbUser }) {
                 {Array.from({ length: 5 }, (_, i) => (
                   <StarIcon key={i} size={14} color="#F59E0B" filled={i < booking.driverRating} />
                 ))}
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+
+      {/* ── DELIVERY PROOF ── */}
+      {(booking.pickupProofURL || booking.deliveryProofURL) && (
+        <Section title="Delivery Proof">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {booking.pickupProofURL && (
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '6px' }}>Pickup</div>
+                <img src={booking.pickupProofURL} alt="Pickup proof" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
+              </div>
+            )}
+            {booking.deliveryProofURL && (
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '6px' }}>Delivery</div>
+                <img src={booking.deliveryProofURL} alt="Delivery proof" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
               </div>
             )}
           </div>

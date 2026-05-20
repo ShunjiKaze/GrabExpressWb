@@ -105,6 +105,7 @@ function Navbar({ user, dbUser }) {
           <Link to="/driver/deliveries" className={cls('/driver/deliveries')} onClick={() => setMenuOpen(false)}>Find Orders</Link>
           <Link to="/driver/active"     className={cls('/driver/active')}     onClick={() => setMenuOpen(false)}>Active Order</Link>
           <Link to="/history"           className={cls('/history')}           onClick={() => setMenuOpen(false)}>History</Link>
+          <Link to="/driver/vehicles"   className={cls('/driver/vehicles')}   onClick={() => setMenuOpen(false)}>My Vehicles</Link>
         </>
       )}
 

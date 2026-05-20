@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { db, storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { MotorcycleIcon, CarIcon, VanIcon, MapPinIcon, FlagIcon, PackageIcon,
-         CheckCircleIcon, CameraIcon, UserIcon, PhoneIcon, BuildingIcon, MessageIcon, XIcon } from '../components/Icons';
+         CheckCircleIcon, CameraIcon, UserIcon, PhoneIcon, BuildingIcon, MessageIcon, XIcon, XCircleIcon } from '../components/Icons';
 
 function VehicleIcon({ type, size = 20, color = 'currentColor' }) {
   const icons = { motorcycle: MotorcycleIcon, car: CarIcon, van: VanIcon };
@@ -31,8 +32,73 @@ function StatusBadge({ status }) {
   );
 }
 
-function ProofCaptureModal({ onCapture, onClose, label }) {
-  const [captured, setCaptured] = useState(false);
+const CANCEL_REASONS_DRIVER = ['Unable to locate sender', 'Vehicle breakdown', 'Safety concern', 'Package too large', 'Other'];
+
+function DriverCancelModal({ onConfirm, onClose, cancelling }) {
+  const [reason, setReason] = useState('');
+  const [note, setNote]     = useState('');
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <XCircleIcon size={18} color="var(--red)" /> Cancel Order
+          </div>
+          <button className="modal-close" onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <XIcon size={18} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <div className="form-group mb-16">
+            <label className="form-label">Reason for cancellation</label>
+            <select className="form-input" value={reason} onChange={e => setReason(e.target.value)}>
+              <option value="">Select a reason…</option>
+              {CANCEL_REASONS_DRIVER.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="form-group mb-24">
+            <label className="form-label">Additional details <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(optional)</span></label>
+            <textarea className="form-input form-textarea" rows={3} placeholder="Any additional context…" value={note} onChange={e => setNote(e.target.value)} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={onClose} className="btn btn-secondary" style={{ flex: 1 }}>Keep Order</button>
+            <button onClick={() => onConfirm(reason, note)} className="btn btn-danger" style={{ flex: 1 }} disabled={!reason || cancelling}>
+              {cancelling ? 'Cancelling…' : 'Cancel Order'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProofCaptureModal({ onCapture, onClose, label, bookingId, proofKey }) {
+  const [file, setFile]         = useState(null);
+  const [preview, setPreview]   = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef                 = useRef(null);
+
+  const handleFileChange = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+  };
+
+  const handleConfirm = async () => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `delivery-proofs/${bookingId}/${proofKey}.jpg`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      onCapture(url);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -45,33 +111,34 @@ function ProofCaptureModal({ onCapture, onClose, label }) {
           </button>
         </div>
         <div className="modal-body" style={{ textAlign: 'center' }}>
+          <input type="file" accept="image/*" capture="environment" ref={fileRef} style={{ display: 'none' }} onChange={handleFileChange} />
           <div
-            onClick={() => setCaptured(true)}
+            onClick={() => fileRef.current?.click()}
             style={{
-              border: `3px dashed ${captured ? 'var(--primary)' : 'var(--border)'}`,
-              background: captured ? 'var(--primary-light)' : 'var(--surface-2)',
-              borderRadius: 'var(--radius-lg)', padding: '40px 24px', cursor: 'pointer', marginBottom: '20px', transition: 'var(--transition)',
+              border: `3px dashed ${preview ? 'var(--primary)' : 'var(--border)'}`,
+              background: preview ? 'var(--primary-light)' : 'var(--surface-2)',
+              borderRadius: 'var(--radius-lg)', padding: preview ? '8px' : '40px 24px',
+              cursor: 'pointer', marginBottom: '20px', transition: 'var(--transition)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-              {captured
-                ? <CheckCircleIcon size={52} color="var(--primary)" />
-                : <CameraIcon size={52} color="var(--text-3)" />
-              }
-            </div>
-            <div style={{ fontWeight: 700, fontSize: '15px', color: captured ? 'var(--primary)' : 'var(--text-2)' }}>
-              {captured ? 'Photo Captured!' : 'Tap to Take Photo'}
-            </div>
-            <div className="text-sm text-muted mt-8">
-              {captured ? 'Proof recorded successfully' : 'Take a clear photo of the package'}
-            </div>
+            {preview ? (
+              <img src={preview} alt="" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                  <CameraIcon size={52} color="var(--text-3)" />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-2)' }}>Tap to Take Photo</div>
+                <div className="text-sm text-muted mt-8">Take a clear photo of the package</div>
+              </>
+            )}
           </div>
           <button
-            onClick={() => captured && onCapture()}
-            className={`btn btn-full btn-lg ${captured ? 'btn-primary' : 'btn-secondary'}`}
-            disabled={!captured}
+            onClick={handleConfirm}
+            className={`btn btn-full btn-lg ${preview ? 'btn-primary' : 'btn-secondary'}`}
+            disabled={!preview || uploading}
           >
-            {captured ? 'Confirm & Continue' : 'Take Photo First'}
+            {uploading ? 'Uploading…' : preview ? 'Confirm & Continue' : 'Take Photo First'}
           </button>
         </div>
       </div>
@@ -81,11 +148,13 @@ function ProofCaptureModal({ onCapture, onClose, label }) {
 
 function DriverActiveOrder({ dbUser }) {
   const navigate = useNavigate();
-  const [order, setOrder]           = useState(null);
-  const [loading, setLoading]       = useState(true);
-  const [updating, setUpdating]     = useState(false);
-  const [showProof, setShowProof]   = useState(false);
+  const [order, setOrder]                 = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [updating, setUpdating]           = useState(false);
+  const [showProof, setShowProof]         = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [driverCancelling, setDriverCancelling] = useState(false);
 
   useEffect(() => {
     const q = query(
@@ -112,7 +181,7 @@ function DriverActiveOrder({ dbUser }) {
     await doUpdate(nextStatus);
   };
 
-  const doUpdate = async (nextStatus) => {
+  const doUpdate = async (nextStatus, proofURL = null) => {
     setUpdating(true);
     setShowProof(false);
     try {
@@ -121,15 +190,46 @@ function DriverActiveOrder({ dbUser }) {
         in_transit: { transitAt: serverTimestamp() },
         delivered:  { deliveredAt: serverTimestamp() },
       };
+      const proofFields = {};
+      if (nextStatus === 'in_transit' && proofURL) proofFields.pickupProofURL   = proofURL;
+      if (nextStatus === 'delivered'  && proofURL) proofFields.deliveryProofURL = proofURL;
       await updateDoc(doc(db, 'bookings', order.id), {
         status: nextStatus,
         ...(timestamps[nextStatus] || {}),
+        ...proofFields,
       });
       if (nextStatus === 'delivered') {
+        try {
+          const paySnap = await getDocs(query(collection(db, 'payments'), where('bookingId', '==', order.id)));
+          if (!paySnap.empty) {
+            await updateDoc(doc(db, 'payments', paySnap.docs[0].id), {
+              driverId: dbUser.user_id,
+              status:   'paid',
+              paidAt:   serverTimestamp(),
+            });
+          }
+        } catch (payErr) { console.error('Payment update failed:', payErr); }
         navigate(`/rate/${order.id}`);
       }
     } catch (err) { console.error(err); }
     setUpdating(false);
+  };
+
+  const confirmDriverCancel = async (reason, note) => {
+    setDriverCancelling(true);
+    try {
+      await updateDoc(doc(db, 'bookings', order.id), {
+        status:       'cancelled',
+        cancelledAt:  serverTimestamp(),
+        cancelReason: reason,
+        cancelNote:   note.trim() || null,
+        cancelledBy:  'driver',
+      });
+      navigate('/driver/deliveries');
+    } catch (err) {
+      console.error(err);
+      setDriverCancelling(false);
+    }
   };
 
   if (loading) {
@@ -163,8 +263,17 @@ function DriverActiveOrder({ dbUser }) {
       {showProof && (
         <ProofCaptureModal
           label={pendingStatus === 'in_transit' ? 'Proof of Pickup' : 'Proof of Delivery'}
-          onCapture={() => doUpdate(pendingStatus)}
+          bookingId={order.id}
+          proofKey={pendingStatus === 'in_transit' ? 'pickup' : 'delivery'}
+          onCapture={(url) => doUpdate(pendingStatus, url)}
           onClose={() => { setShowProof(false); setPendingStatus(null); }}
+        />
+      )}
+      {showCancelModal && (
+        <DriverCancelModal
+          onConfirm={confirmDriverCancel}
+          onClose={() => setShowCancelModal(false)}
+          cancelling={driverCancelling}
         />
       )}
 
@@ -252,6 +361,16 @@ function DriverActiveOrder({ dbUser }) {
               }
             </button>
           )}
+          {order.status === 'accepted' && (
+            <button
+              onClick={() => setShowCancelModal(true)}
+              className="btn btn-ghost btn-full"
+              style={{ color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              disabled={driverCancelling}
+            >
+              <XCircleIcon size={15} color="var(--red)" /> Cancel Order
+            </button>
+          )}
         </div>
 
         {/* Side panel */}
@@ -277,8 +396,11 @@ function DriverActiveOrder({ dbUser }) {
           {/* Earnings */}
           <div style={{ background: 'linear-gradient(135deg, #052e16, #15803d)', borderRadius: 'var(--radius-md)', padding: '20px', color: 'white', textAlign: 'center' }}>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Your Earnings</div>
-            <div style={{ fontSize: '36px', fontWeight: 900, color: '#4ADE80' }}>₱{order.totalAmount}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Upon successful delivery</div>
+            <div style={{ fontSize: '36px', fontWeight: 900, color: '#4ADE80' }}>₱{Math.round(order.totalAmount * 0.80)}</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Your 80% upon delivery</div>
+            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+              <span>Platform (20%)</span><span>₱{Math.round(order.totalAmount * 0.20)}</span>
+            </div>
           </div>
         </div>
       </div>

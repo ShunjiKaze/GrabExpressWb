@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { MotorcycleIcon, CarIcon, VanIcon, PackageIcon, CreditCardIcon, ShieldIcon } from '../components/Icons';
 
@@ -12,8 +12,6 @@ function VehicleIcon({ type, size = 20, color = 'var(--primary)' }) {
 
 const SIZE_LABEL    = { S: 'Small', M: 'Medium', L: 'Large', XL: 'XL' };
 
-const MOCK_DRIVER_NAMES = ['Juan Dela Cruz', 'Maria Santos', 'Pedro Reyes', 'Ana Garcia', 'Miguel Torres'];
-const MOCK_PLATES = ['ABC 1234', 'XYZ 5678', 'DEF 9012', 'GHI 3456'];
 
 function DriverDeliveries({ dbUser }) {
   const navigate    = useNavigate();
@@ -37,14 +35,18 @@ function DriverDeliveries({ dbUser }) {
   const handleAccept = async (delivery) => {
     setAccepting(delivery.id);
     try {
-      const driverName  = dbUser.full_name || MOCK_DRIVER_NAMES[0];
-      const driverPlate = dbUser.vehicle_plate || MOCK_PLATES[Math.floor(Math.random() * MOCK_PLATES.length)];
+      const vSnap = await getDocs(query(
+        collection(db, 'vehicles'),
+        where('driverId', '==', dbUser.user_id),
+        where('status',   '==', 'active')
+      ));
+      const activeVehicle = vSnap.empty ? null : vSnap.docs[0].data();
       await updateDoc(doc(db, 'bookings', delivery.id), {
         driverId:      dbUser.user_id,
-        driverName,
-        driverPhone:   dbUser.phone || '09XXXXXXXXX',
-        driverVehicle: delivery.vehicleType,
-        driverPlate,
+        driverName:    dbUser.full_name || 'Driver',
+        driverPhone:   dbUser.phone || '—',
+        driverVehicle: activeVehicle?.type    || delivery.vehicleType,
+        driverPlate:   activeVehicle?.plateNo || dbUser.vehicle_plate || '—',
         status:        'accepted',
         acceptedAt:    serverTimestamp(),
       });

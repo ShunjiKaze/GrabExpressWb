@@ -40,13 +40,54 @@ function ETABadge({ status }) {
   );
 }
 
+const CANCEL_REASONS_CUSTOMER = ['Changed my mind', 'Wrong address entered', 'Driver taking too long', 'Emergency', 'Other'];
+
+function CancelModal({ onConfirm, onClose, cancelling }) {
+  const [reason, setReason] = useState('');
+  const [note, setNote]     = useState('');
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <XCircleIcon size={18} color="var(--red)" /> Cancel Booking
+          </div>
+          <button className="modal-close" onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <XCircleIcon size={18} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <div className="form-group mb-16">
+            <label className="form-label">Reason for cancellation</label>
+            <select className="form-input" value={reason} onChange={e => setReason(e.target.value)}>
+              <option value="">Select a reason…</option>
+              {CANCEL_REASONS_CUSTOMER.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="form-group mb-24">
+            <label className="form-label">Additional details <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(optional)</span></label>
+            <textarea className="form-input form-textarea" rows={3} placeholder="Any additional context…" value={note} onChange={e => setNote(e.target.value)} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={onClose} className="btn btn-secondary" style={{ flex: 1 }}>Keep Booking</button>
+            <button onClick={() => onConfirm(reason, note)} className="btn btn-danger" style={{ flex: 1 }} disabled={!reason || cancelling}>
+              {cancelling ? 'Cancelling…' : 'Cancel Booking'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TrackingPage({ dbUser }) {
   const { id }   = useParams();
   const navigate = useNavigate();
-  const [booking, setBooking]     = useState(null);
-  const [loading, setLoading]     = useState(true);
-  const [copied, setCopied]       = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const [booking, setBooking]         = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [copied, setCopied]           = useState(false);
+  const [cancelling, setCancelling]   = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'bookings', id), snap => {
@@ -57,13 +98,15 @@ function TrackingPage({ dbUser }) {
     return unsub;
   }, [id, navigate]);
 
-  const handleCancel = async () => {
-    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+  const confirmCancel = async (reason, note) => {
     setCancelling(true);
     try {
       await updateDoc(doc(db, 'bookings', id), {
-        status: 'cancelled',
-        cancelledAt: serverTimestamp(),
+        status:       'cancelled',
+        cancelledAt:  serverTimestamp(),
+        cancelReason: reason,
+        cancelNote:   note.trim() || null,
+        cancelledBy:  'customer',
       });
       navigate('/book');
     } catch { setCancelling(false); }
@@ -94,6 +137,13 @@ function TrackingPage({ dbUser }) {
 
   return (
     <div className="dashboard-container" style={{ maxWidth: '860px' }}>
+      {showCancelModal && (
+        <CancelModal
+          onConfirm={confirmCancel}
+          onClose={() => setShowCancelModal(false)}
+          cancelling={cancelling}
+        />
+      )}
 
       {/* ── Main status card ───────────────────────────── */}
       <div style={{
@@ -236,6 +286,12 @@ function TrackingPage({ dbUser }) {
                         {step.desc}
                       </div>
                     )}
+                    {step.key === 'picked_up' && done && booking.pickupProofURL && (
+                      <img src={booking.pickupProofURL} alt="Pickup proof" style={{ width: '72px', height: '54px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', marginTop: '8px', border: '1px solid var(--border)', display: 'block' }} />
+                    )}
+                    {step.key === 'in_transit' && done && booking.deliveryProofURL && (
+                      <img src={booking.deliveryProofURL} alt="Delivery proof" style={{ width: '72px', height: '54px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', marginTop: '8px', border: '1px solid var(--border)', display: 'block' }} />
+                    )}
                   </div>
                 </div>
               );
@@ -250,6 +306,16 @@ function TrackingPage({ dbUser }) {
                     <XCircleIcon size={14} color="var(--red)" /> Order Cancelled
                   </div>
                   <div style={{ fontSize: '13px', color: 'var(--text-3)', marginTop: '2px' }}>This booking was cancelled.</div>
+                  {booking.cancelReason && (
+                    <div style={{ fontSize: '13px', color: 'var(--text-3)', marginTop: '3px' }}>
+                      Reason: {booking.cancelReason}{booking.cancelledBy === 'driver' && ' · Driver cancelled'}
+                    </div>
+                  )}
+                  {booking.cancelNote && (
+                    <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px', fontStyle: 'italic' }}>
+                      "{booking.cancelNote}"
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -347,8 +413,8 @@ function TrackingPage({ dbUser }) {
               </button>
             )}
             {canCancel && (
-              <button onClick={handleCancel} className="btn btn-danger btn-full" disabled={cancelling} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                {cancelling ? 'Cancelling…' : <><XCircleIcon size={16} color="white" /> Cancel Booking</>}
+              <button onClick={() => setShowCancelModal(true)} className="btn btn-danger btn-full" disabled={cancelling} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <XCircleIcon size={16} color="white" /> Cancel Booking
               </button>
             )}
             <button onClick={() => navigate('/book')} className="btn btn-ghost btn-full">← Dashboard</button>

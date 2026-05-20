@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { UsersIcon, MotorcycleIcon, PackageIcon, ActivityIcon, XCircleIcon,
-         SearchIcon, ZapIcon, CheckCircleIcon } from '../components/Icons';
+         SearchIcon, ZapIcon, CheckCircleIcon, BanknoteIcon } from '../components/Icons';
 
 const STATUS_CONFIG = {
   searching:  { label: 'Searching',  badge: 'badge-amber',  Icon: SearchIcon },
@@ -17,6 +17,7 @@ const STATUS_CONFIG = {
 function AdminDashboard() {
   const [bookings, setBookings] = useState([]);
   const [users, setUsers]       = useState([]);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [tab, setTab]           = useState('overview');
   const [updatingRole, setUpdatingRole] = useState(null);
@@ -30,7 +31,11 @@ function AdminDashboard() {
       query(collection(db, 'users'), limit(100)),
       snap => setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     );
-    return () => { bUnsub(); uUnsub(); };
+    const pUnsub = onSnapshot(
+      query(collection(db, 'payments'), limit(200)),
+      snap => setPayments(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    );
+    return () => { bUnsub(); uUnsub(); pUnsub(); };
   }, []);
 
   const changeRole = async (userId, role) => {
@@ -45,8 +50,9 @@ function AdminDashboard() {
     drivers:   users.filter(u => u.role === 'driver').length,
     total:     bookings.length,
     active:    bookings.filter(b => !['delivered','completed','cancelled'].includes(b.status)).length,
-    revenue:   bookings.filter(b => ['delivered','completed'].includes(b.status)).reduce((s, b) => s + (b.totalAmount || 0), 0),
-    cancelled: bookings.filter(b => b.status === 'cancelled').length,
+    revenue:    bookings.filter(b => ['delivered','completed'].includes(b.status)).reduce((s, b) => s + (b.totalAmount || 0), 0),
+    cancelled:  bookings.filter(b => b.status === 'cancelled').length,
+    commission: payments.filter(p => p.status === 'paid').reduce((s, p) => s + (p.platformComm || 0), 0),
   };
 
   const formatDate = ts => {
@@ -60,7 +66,8 @@ function AdminDashboard() {
     { label: 'Drivers',     value: stats.drivers,   Icon: MotorcycleIcon,  cls: 'blue'   },
     { label: 'Total Orders',value: stats.total,     Icon: PackageIcon,     cls: 'purple' },
     { label: 'Active Now',  value: stats.active,    Icon: ActivityIcon,    cls: 'amber'  },
-    { label: 'Cancelled',   value: stats.cancelled, Icon: XCircleIcon,     cls: 'green'  },
+    { label: 'Cancelled',   value: stats.cancelled,                           Icon: XCircleIcon,    cls: 'green'  },
+    { label: 'Commission',  value: `₱${stats.commission.toLocaleString()}`,   Icon: BanknoteIcon,   cls: 'amber'  },
   ];
 
   return (

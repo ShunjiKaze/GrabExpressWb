@@ -233,6 +233,14 @@ function OrderHistory({ dbUser }) {
                         {o.driverName && <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '4px' }}>Driver: {o.driverName}</div>}
                       </div>
                     </div>
+                    {o.status === 'cancelled' && o.cancelReason && (
+                      <div style={{ marginTop: '14px', padding: '10px 14px', background: '#FEF2F2', borderRadius: 'var(--radius-sm)', border: '1px solid #FECACA' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--red)', textTransform: 'uppercase', marginBottom: '6px' }}>Cancellation</div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-2)' }}>{o.cancelReason}</div>
+                        {o.cancelledBy && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>By: {o.cancelledBy}</div>}
+                        {o.cancelNote && <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px', fontStyle: 'italic' }}>"{o.cancelNote}"</div>}
+                      </div>
+                    )}
                     {isActive && (
                       <button onClick={() => navigate(`/book/tracking/${o.id}`)} className="btn btn-primary btn-sm mt-16">
                         Track this Order →
