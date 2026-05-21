@@ -248,14 +248,10 @@ function Navbar({ user, dbUser }) {
         {/* Desktop nav */}
         <div className="nav-links" style={{ display: 'flex' }}>
           <NavLinks />
-          {user && dbUser && (
+          {user && dbUser && dbUser.role !== 'admin' && (
             <>
-              {dbUser.role !== 'admin' && (
-                <>
-                  <div className="nav-divider" style={isHome ? { background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(17,24,39,0.1)' } : {}} />
-                  <NotificationDropdown dbUser={dbUser} isHome={isHome} dark={dark} />
-                </>
-              )}
+              <div className="nav-divider" style={isHome ? { background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(17,24,39,0.1)' } : {}} />
+              <NotificationDropdown dbUser={dbUser} isHome={isHome} dark={dark} />
               <div className="nav-divider" style={isHome ? { background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(17,24,39,0.1)', marginLeft: '4px', marginRight: '4px' } : { marginLeft: '4px', marginRight: '4px' }} />
               <Link to="/profile" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', padding: '5px 8px', borderRadius: 'var(--radius-sm)', transition: 'var(--transition)' }}
                 onMouseEnter={e => e.currentTarget.style.background = linkHoverBg}

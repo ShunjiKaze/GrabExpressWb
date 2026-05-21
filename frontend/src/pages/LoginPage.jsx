@@ -145,7 +145,7 @@ export function PageShell({ children, wide = false }) {
       <div style={{ position: 'fixed', top: '20%', left: '10%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,177,79,0.08), transparent 65%)', pointerEvents: 'none' }} />
       <div style={{ position: 'fixed', bottom: '15%', right: '8%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.07), transparent 65%)', pointerEvents: 'none' }} />
       <div style={{
-        position: 'relative', width: '100%', maxWidth: wide ? '520px' : '440px',
+        position: 'relative', width: '100%', maxWidth: wide === 'lg' ? '680px' : wide ? '520px' : '440px',
         background: dark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
         border: dark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,177,79,0.15)',

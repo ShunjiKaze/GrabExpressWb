@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
+import { signOut } from 'firebase/auth';
 import { UsersIcon, MotorcycleIcon, PackageIcon, ActivityIcon, XCircleIcon,
-         SearchIcon, ZapIcon, CheckCircleIcon, BanknoteIcon } from '../components/Icons';
+         SearchIcon, ZapIcon, CheckCircleIcon, BanknoteIcon, LogOutIcon, FileTextIcon } from '../components/Icons';
 
 const STATUS_CONFIG = {
   searching:  { label: 'Searching',  badge: 'badge-amber',  Icon: SearchIcon },
@@ -24,6 +25,12 @@ function AdminDashboard() {
   const [activeRequestTab, setActiveRequestTab] = useState('pending'); // 'pending', 'approved', 'rejected'
   const [reviewingUser, setReviewingUser] = useState(null);
   const [reviewingType, setReviewingType] = useState('');
+
+  // Filters
+  const [filterBookings, setFilterBookings] = useState('all');
+  const [filterCustomerSearch, setFilterCustomerSearch] = useState('');
+  const [filterDriverStatus, setFilterDriverStatus] = useState('all');
+  const [filterRequestType, setFilterRequestType] = useState('all');
 
   useEffect(() => {
     const bUnsub = onSnapshot(
@@ -268,49 +275,92 @@ function AdminDashboard() {
 
   return (
     <>
-    <div className="dashboard-container">
-      {/* Hero */}
-      <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)', borderRadius: 'var(--radius-xl)', padding: '32px', color: 'white', marginBottom: '28px' }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Admin Panel</div>
-            <h1 style={{ fontSize: '28px', fontWeight: 900, marginTop: '6px' }}>GrabExpress Dashboard</h1>
+    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '28px', maxWidth: '1400px', margin: '0 auto', padding: '32px 24px', alignItems: 'start' }}>
+      
+      {/* Sidebar */}
+      <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-xl)', padding: '24px', display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', position: 'sticky', top: '100px', height: 'calc(100vh - 140px)' }}>
+        <h2 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '24px' }}>Admin Menu</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+          {[
+            ['overview', 'Overview', ActivityIcon],
+            ['bookings', 'All Bookings', PackageIcon],
+            ['customers', 'Customers', UsersIcon],
+            ['drivers', 'Drivers', MotorcycleIcon],
+            ['requests', 'Requests', FileTextIcon]
+          ].map(([val, label, Icon]) => (
+            <button
+              key={val}
+              onClick={() => setTab(val)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '14px', padding: '12px 16px', background: tab === val ? 'var(--primary-light)' : 'transparent',
+                border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '14px', fontWeight: 600,
+                color: tab === val ? 'var(--primary)' : 'var(--text-2)', textAlign: 'left', transition: 'var(--transition)'
+              }}
+            >
+              <Icon size={18} />
+              {label}
+            </button>
+          ))}
+        </div>
+        
+        {/* Admin Info & Logout */}
+        <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '16px', flexShrink: 0 }}>
+              {(auth.currentUser?.displayName || 'A')[0].toUpperCase()}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {auth.currentUser?.displayName || 'Grab Admin'}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {auth.currentUser?.email || 'admin@grabexpress.com'}
+              </div>
+            </div>
           </div>
-          <div style={{ background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: 'var(--radius-md)', padding: '16px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: '32px', fontWeight: 900, color: '#4ADE80' }}>₱{stats.revenue.toLocaleString()}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Total Revenue</div>
-          </div>
+          <button
+            onClick={() => signOut(auth)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%', padding: '12px 16px', background: 'var(--red-light)',
+              color: 'var(--red)', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--red-light)'}
+          >
+            <LogOutIcon size={18} />
+            Sign Out
+          </button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="stats-grid mb-28">
-        {STAT_CARDS.map(s => (
-          <div key={s.label} className={`stat-card ${s.cls}`}>
-            <div className="stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <s.Icon size={28} />
+      {/* Main Content Area */}
+      <div className="dashboard-container" style={{ margin: 0, padding: 0, maxWidth: 'none' }}>
+        {/* Hero */}
+        <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)', borderRadius: 'var(--radius-xl)', padding: '32px', color: 'white', marginBottom: '28px' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Admin Panel</div>
+              <h1 style={{ fontSize: '28px', fontWeight: 900, marginTop: '6px' }}>GrabExpress Dashboard</h1>
             </div>
-            <div className="stat-label">{s.label}</div>
-            <div className="stat-value">{s.value}</div>
+            <div style={{ background: 'rgba(0,177,79,0.15)', border: '1px solid rgba(0,177,79,0.3)', borderRadius: 'var(--radius-md)', padding: '16px 24px', textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', fontWeight: 900, color: '#4ADE80' }}>₱{stats.revenue.toLocaleString()}</div>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Total Revenue</div>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '0' }}>
-        {[['overview','Overview'],['bookings','All Bookings'],['users','Users'],['requests','Requests']].map(([val, label]) => (
-          <button
-            key={val}
-            onClick={() => setTab(val)}
-            style={{
-              padding: '10px 20px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 700,
-              color: tab === val ? 'var(--primary)' : 'var(--text-3)',
-              borderBottom: tab === val ? '2px solid var(--primary)' : '2px solid transparent',
-              marginBottom: '-1px', transition: 'var(--transition)',
-            }}
-          >{label}</button>
-        ))}
-      </div>
+        {/* Stats */}
+        <div className="stats-grid" style={{ marginBottom: '28px' }}>
+          {STAT_CARDS.map(s => (
+            <div key={s.label} className={`stat-card ${s.cls}`}>
+              <div className="stat-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <s.Icon size={28} />
+              </div>
+              <div className="stat-label">{s.label}</div>
+              <div className="stat-value">{s.value}</div>
+            </div>
+          ))}
+        </div>
 
       {/* Tab: Overview */}
       {tab === 'overview' && (
@@ -381,24 +431,45 @@ function AdminDashboard() {
       )}
 
       {/* Tab: All Bookings */}
-      {tab === 'bookings' && (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Pickup</th>
-                <th>Delivery</th>
-                <th>Vehicle</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-3)', padding: '32px' }}>Loading…</td></tr>
-              ) : bookings.map(b => {
+      {tab === 'bookings' && (() => {
+        const filteredBookings = bookings.filter(b => {
+          if (filterBookings === 'all') return true;
+          if (filterBookings === 'searching') return b.status === 'searching';
+          if (filterBookings === 'accepted') return b.status === 'accepted';
+          if (filterBookings === 'in_transit') return ['picked_up', 'in_transit'].includes(b.status);
+          if (filterBookings === 'completed') return ['delivered', 'completed'].includes(b.status);
+          if (filterBookings === 'cancelled') return b.status === 'cancelled';
+          return true;
+        });
+        return (
+          <div className="card" style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' }}>Filter:</span>
+              <select value={filterBookings} onChange={e => setFilterBookings(e.target.value)} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', fontWeight: 600, color: 'var(--text)', outline: 'none' }}>
+                <option value="all">All Bookings</option>
+                <option value="searching">Searching</option>
+                <option value="accepted">Accepted</option>
+                <option value="in_transit">In Transit / Picked Up</option>
+                <option value="completed">Completed / Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Pickup</th>
+                  <th>Delivery</th>
+                  <th>Vehicle</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-3)', padding: '32px' }}>Loading…</td></tr>
+                ) : filteredBookings.map(b => {
                 const cfg = STATUS_CONFIG[b.status] || { badge: 'badge-gray', label: b.status };
                 return (
                   <tr key={b.id}>
@@ -415,52 +486,135 @@ function AdminDashboard() {
             </tbody>
           </table>
         </div>
-      )}
+        );
+      })()}
 
-      {/* Tab: Users */}
-      {tab === 'users' && (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Role</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(u => {
-                const roleColors = { admin: 'badge-red', driver: 'badge-blue', customer: 'badge-green' };
-                return (
+      {/* Tab: Customers */}
+      {tab === 'customers' && (() => {
+        const customers = users.filter(u => u.role === 'customer');
+        const filteredCustomers = customers.filter(c => 
+          (c.full_name || '').toLowerCase().includes(filterCustomerSearch.toLowerCase()) || 
+          (c.email || '').toLowerCase().includes(filterCustomerSearch.toLowerCase())
+        );
+        return (
+          <div className="card" style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' }}>Search:</span>
+              <input type="text" placeholder="Search by name or email..." value={filterCustomerSearch} onChange={e => setFilterCustomerSearch(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', color: 'var(--text)', outline: 'none', width: '250px' }} />
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCustomers.length === 0 ? (
+                  <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-3)', padding: '32px' }}>No customers found</td></tr>
+                ) : filteredCustomers.map(u => (
                   <tr key={u.id}>
                     <td style={{ fontWeight: 700 }}>{u.full_name || '—'}</td>
                     <td style={{ color: 'var(--text-2)', fontSize: '13px' }}>{u.email}</td>
-                    <td><span className={`badge ${roleColors[u.role] || 'badge-gray'}`}>{u.role}</span></td>
+                    <td><span className="badge badge-green">Active</span></td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
+
+      {/* Tab: Drivers */}
+      {tab === 'drivers' && (() => {
+        const drivers = users.filter(u => u.role === 'driver');
+        const filteredDrivers = drivers.filter(d => {
+          if (filterDriverStatus === 'all') return true;
+          const status = d.accountStatus || 'active'; // Default active if not set
+          return status === filterDriverStatus;
+        });
+        return (
+          <div className="card" style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' }}>Filter:</span>
+              <select value={filterDriverStatus} onChange={e => setFilterDriverStatus(e.target.value)} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', fontWeight: 600, color: 'var(--text)', outline: 'none' }}>
+                <option value="all">All Drivers</option>
+                <option value="active">Active</option>
+                <option value="deactivated">Deactivated</option>
+                <option value="pending_deactivation">Pending Deactivation</option>
+                <option value="pending_reactivation">Pending Reactivation</option>
+              </select>
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredDrivers.length === 0 ? (
+                  <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-3)', padding: '32px' }}>No drivers found</td></tr>
+                ) : filteredDrivers.map(u => {
+                  const status = u.accountStatus || 'active';
+                  const badgeCls = status === 'deactivated' ? 'badge-red' : status.startsWith('pending') ? 'badge-amber' : 'badge-blue';
+                  const displayStatus = status === 'deactivated' ? 'Deactivated' : status.startsWith('pending') ? 'Pending' : 'Active';
+                  return (
+                    <tr key={u.id}>
+                      <td style={{ fontWeight: 700 }}>{u.full_name || '—'}</td>
+                      <td style={{ color: 'var(--text-2)', fontSize: '13px' }}>{u.email}</td>
+                      <td><span className={`badge ${badgeCls}`}>{displayStatus}</span></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
 
       {/* Tab: Requests */}
-      {tab === 'requests' && (
+      {tab === 'requests' && (() => {
+        const rawReqs = getRequests(activeRequestTab);
+        const filteredReqs = rawReqs.filter(r => {
+          if (filterRequestType === 'all') return true;
+          let type = '';
+          if (r._itemType === 'vehicle') type = r._typeKey || (r.status === 'pending_add' ? 'vehicle_add' : 'vehicle_delete');
+          else type = r._typeKey || '';
+          return type === filterRequestType;
+        });
+
+        return (
         <div className="card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px' }}>
-            {['pending', 'approved', 'rejected'].map(status => (
-              <button
-                key={status}
-                onClick={() => setActiveRequestTab(status)}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
-                  color: activeRequestTab === status ? 'var(--primary)' : 'var(--text-3)',
-                  transition: 'color 0.2s'
-                }}
-              >
-                {status} ({getRequests(status).length})
-              </button>
-            ))}
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              {['pending', 'approved', 'rejected'].map(status => (
+                <button
+                  key={status}
+                  onClick={() => setActiveRequestTab(status)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
+                    color: activeRequestTab === status ? 'var(--primary)' : 'var(--text-3)',
+                    transition: 'color 0.2s'
+                  }}
+                >
+                  {status} ({getRequests(status).length})
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' }}>Type:</span>
+              <select value={filterRequestType} onChange={e => setFilterRequestType(e.target.value)} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', fontWeight: 600, color: 'var(--text)', outline: 'none' }}>
+                <option value="all">All Types</option>
+                <option value="driver_application">Driver Application</option>
+                <option value="deactivation">Account Deactivation</option>
+                <option value="reactivation">Account Reactivation</option>
+                <option value="vehicle_add">Vehicle Registration</option>
+                <option value="vehicle_delete">Vehicle Removal</option>
+              </select>
+            </div>
           </div>
           <table className="data-table">
             <thead>
@@ -472,9 +626,9 @@ function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {getRequests(activeRequestTab).length === 0 ? (
-                <tr><td colSpan={4} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-3)' }}>No {activeRequestTab} requests</td></tr>
-              ) : getRequests(activeRequestTab).map(item => {
+              {filteredReqs.length === 0 ? (
+                <tr><td colSpan={4} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-3)' }}>No {activeRequestTab} requests for selected type</td></tr>
+              ) : filteredReqs.map(item => {
                 let reqType = '';
                 let details = '';
                 let typeKey = '';
@@ -531,8 +685,10 @@ function AdminDashboard() {
             </tbody>
           </table>
         </div>
-      )}
+        );
+      })()}
 
+      </div>
     </div>
     
     {/* Render the modal outside of dashboard-container so it isn't constrained by its CSS transform/animations */}

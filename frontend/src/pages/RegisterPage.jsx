@@ -115,7 +115,7 @@ function RegisterPage() {
   );
 
   return (
-    <PageShell wide>
+    <PageShell wide="lg">
       <div style={{ textAlign: 'center', marginBottom: '28px' }}>
         <Logo size="md" textColor={dark ? 'white' : '#0F172A'} />
         <p style={{ color: dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)', fontSize: '13px', marginTop: '8px' }}>
@@ -127,45 +127,52 @@ function RegisterPage() {
 
       <form onSubmit={handleSubmit} noValidate>
 
-        {/* First Name + Middle Initial */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: '12px' }}>
-          <Field label="First Name" value={first} onChange={e => setFirst(sanitizeName(e.target.value))} placeholder="Juan" error={errors.first} />
-          <div style={{ marginBottom: '16px', textAlign: 'left' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: dark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              M.I. <span style={{ color: dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontWeight: 400, textTransform: 'none', fontSize: '11px' }}>(opt.)</span>
-            </label>
-            <input
-              value={middle} onChange={e => setMiddle(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 1).toUpperCase())}
-              placeholder="M" maxLength={1} className="auth-input"
-              style={{ width: '100%', padding: '11px 14px', textAlign: 'center', background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', border: dark ? '1.5px solid rgba(255,255,255,0.13)' : '1.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', fontSize: '16px', fontWeight: 700, color: dark ? 'white' : '#0F172A' }}
-            />
+        {/* Name Fields Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {/* First Name + Middle Initial */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: '12px' }}>
+            <Field label="First Name" value={first} onChange={e => setFirst(sanitizeName(e.target.value))} placeholder="Juan" error={errors.first} />
+            <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: dark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                M.I. <span style={{ color: dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', fontWeight: 400, textTransform: 'none', fontSize: '11px' }}>(opt.)</span>
+              </label>
+              <input
+                value={middle} onChange={e => setMiddle(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 1).toUpperCase())}
+                placeholder="M" maxLength={1} className="auth-input"
+                style={{ width: '100%', padding: '11px 14px', textAlign: 'center', background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)', border: dark ? '1.5px solid rgba(255,255,255,0.13)' : '1.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', fontSize: '16px', fontWeight: 700, color: dark ? 'white' : '#0F172A' }}
+              />
+            </div>
+          </div>
+          {/* Last Name + Suffix */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '12px' }}>
+            <Field label="Last Name" value={last} onChange={e => setLast(sanitizeName(e.target.value))} placeholder="dela Cruz" error={errors.last} />
+            <SelectField label="Suffix" value={suffix} onChange={e => setSuffix(e.target.value)} options={SUFFIXES} />
           </div>
         </div>
 
-        {/* Last Name + Suffix */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px', gap: '12px' }}>
-          <Field label="Last Name" value={last} onChange={e => setLast(sanitizeName(e.target.value))} placeholder="dela Cruz" error={errors.last} />
-          <SelectField label="Suffix" value={suffix} onChange={e => setSuffix(e.target.value)} options={SUFFIXES} />
+        {/* Contact Fields Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <Field label="Email Address" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com" error={errors.email} />
+          <Field
+            label="Phone Number" value={phone}
+            onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+            placeholder="09XXXXXXXXX" maxLength={11} inputMode="numeric" error={errors.phone}
+          />
         </div>
 
-        <Field label="Email Address" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com" error={errors.email} />
-
-        <Field
-          label="Phone Number" value={phone}
-          onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-          placeholder="09XXXXXXXXX" maxLength={11} inputMode="numeric" error={errors.phone}
-        />
-
-        <Field
-          label="Password" type={showPw ? 'text' : 'password'} value={pw}
-          onChange={e => setPw(e.target.value)} placeholder="At least 8 characters" error={errors.pw}
-          rightEl={eyeBtn(showPw, setShowPw)}
-        />
-        <Field
-          label="Confirm Password" type={showCpw ? 'text' : 'password'} value={cpw}
-          onChange={e => setCpw(e.target.value)} placeholder="Re-enter your password" error={errors.cpw}
-          rightEl={eyeBtn(showCpw, setShowCpw)}
-        />
+        {/* Password Fields Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <Field
+            label="Password" type={showPw ? 'text' : 'password'} value={pw}
+            onChange={e => setPw(e.target.value)} placeholder="At least 8 characters" error={errors.pw}
+            rightEl={eyeBtn(showPw, setShowPw)}
+          />
+          <Field
+            label="Confirm Password" type={showCpw ? 'text' : 'password'} value={cpw}
+            onChange={e => setCpw(e.target.value)} placeholder="Re-enter your password" error={errors.cpw}
+            rightEl={eyeBtn(showCpw, setShowCpw)}
+          />
+        </div>
 
         <SubmitBtn loading={loading} label="Create Account" loadingLabel="Creating account…" />
       </form>
