@@ -82,7 +82,7 @@ function AddressStep() {
   const hoverBg = { pickup: '#003D1F', delivery: '#3B0A0A' };
   const hoverText = '#FFFFFF';
 
-  const InputWithSuggestions = ({ field, label, placeholder, value, dotColor, containerRef }) => (
+  const renderInputWithSuggestions = ({ field, label, placeholder, value, dotColor, containerRef }) => (
     <div className="form-group" style={{ position: 'relative', marginBottom: 0 }} ref={containerRef}>
       <label className="form-label">{label} <span className="req">*</span></label>
       <input
@@ -177,22 +177,22 @@ function AddressStep() {
           </div>
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <InputWithSuggestions
-              field="pickup"
-              label="Pickup Address"
-              placeholder="Where should we pick up?"
-              value={pickup}
-              dotColor="var(--primary)"
-              containerRef={pickupRef}
-            />
-            <InputWithSuggestions
-              field="delivery"
-              label="Delivery Address"
-              placeholder="Where are we delivering to?"
-              value={delivery}
-              dotColor="var(--red)"
-              containerRef={deliveryRef}
-            />
+            {renderInputWithSuggestions({
+              field: "pickup",
+              label: "Pickup Address",
+              placeholder: "Where should we pick up?",
+              value: pickup,
+              dotColor: "var(--primary)",
+              containerRef: pickupRef
+            })}
+            {renderInputWithSuggestions({
+              field: "delivery",
+              label: "Delivery Address",
+              placeholder: "Where are we delivering to?",
+              value: delivery,
+              dotColor: "var(--red)",
+              containerRef: deliveryRef
+            })}
           </div>
         </div>
 
