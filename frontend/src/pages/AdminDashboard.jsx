@@ -106,11 +106,16 @@ function AdminDashboard() {
 
       if (type === 'driver_application') {
         if (action === 'approve') {
+          // Assign a random fixed location within Metro Cebu bounds
+          const randLat = 10.2500 + Math.random() * (10.4000 - 10.2500); // ~10.25 to 10.40 lat
+          const randLng = 123.8200 + Math.random() * (124.0200 - 123.8200); // ~123.82 to 124.02 lng
           updates.role = 'driver';
           updates.driverApplicationStatus = 'approved';
           updates.vehicle_type = details.vehicleType;
           updates.vehicle_plate = details.plateNo;
           updates.accountStatus = 'active';
+          updates.assignedLat = parseFloat(randLat.toFixed(6));
+          updates.assignedLng = parseFloat(randLng.toFixed(6));
           newNotification.title = 'Application Approved';
           newNotification.message = 'Congratulations! Your driver application has been approved. You can now accept deliveries.';
         } else {

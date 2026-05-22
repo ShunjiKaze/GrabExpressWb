@@ -5,7 +5,11 @@ const BookingContext = createContext(null);
 const INITIAL = {
   // Step 1 – Addresses
   pickupAddress: '',
+  pickupLat: null,
+  pickupLng: null,
   deliveryAddress: '',
+  deliveryLat: null,
+  deliveryLng: null,
 
   // Step 2 – Delivery Details
   senderName: '',

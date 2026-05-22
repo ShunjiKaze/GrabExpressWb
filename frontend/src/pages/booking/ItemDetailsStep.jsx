@@ -65,7 +65,11 @@ function ItemDetailsStep() {
       if (isNaN(n) || n <= 0) {
         e.itemWeight = 'Weight must be a positive number.';
       } else if (sizeInfo && n < sizeInfo.minKg) {
-        e.itemWeight = `Too light for ${sizeInfo.title} (${sizeInfo.weight}). Choose a smaller size.`;
+        if (sizeInfo.id === 'S') {
+          e.itemWeight = `Minimum weight allowed is ${sizeInfo.minKg} kg.`;
+        } else {
+          e.itemWeight = `Too light for ${sizeInfo.title} (${sizeInfo.weight}). Choose a smaller size.`;
+        }
       } else if (sizeInfo && n > sizeInfo.maxKg) {
         // For XL (max size), give a clear message that 50 kg is the absolute max
         if (sizeInfo.id === 'XL') {
