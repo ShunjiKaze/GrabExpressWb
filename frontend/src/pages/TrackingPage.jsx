@@ -179,7 +179,7 @@ function TrackingPage({ dbUser }) {
             {!isCancelled && <div style={{ marginTop: '10px' }}><ETABadge status={booking.status} /></div>}
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: '30px', fontWeight: 900, color: '#4ADE80' }}>₱{booking.totalAmount}</div>
+            <div style={{ fontSize: '30px', fontWeight: 900, color: '#4ADE80' }}>₱{Number(booking.totalAmount).toFixed(2)}</div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginTop: '2px', textTransform: 'capitalize' }}>
               {(booking.paymentMethod || '').replace(/_/g, ' ')}
             </div>

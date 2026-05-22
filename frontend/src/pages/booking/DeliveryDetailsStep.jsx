@@ -193,7 +193,7 @@ function DeliveryDetailsStep() {
                 <div className="option-title">{t.title}</div>
                 <div className="option-desc">{t.desc}</div>
                 <div className="option-price" style={{ color: t.disabled ? 'var(--text-3)' : 'var(--primary)' }}>
-                  {DELIVERY_ADD[t.id] === 0 ? 'Included' : `+₱${DELIVERY_ADD[t.id]}`}
+                  {DELIVERY_ADD[t.id] === 0 ? 'Included' : `+₱${Number(DELIVERY_ADD[t.id]).toFixed(2)}`}
                 </div>
                 {t.disabled && <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '2px' }}>Coming soon</div>}
               </div>

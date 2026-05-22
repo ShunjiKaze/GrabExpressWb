@@ -196,10 +196,10 @@ function ReviewOrder({ dbUser }) {
           <div style={{ background: '#0F172A', borderRadius: 'var(--radius-md)', padding: '20px', color: 'white', height: 'fit-content' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', marginBottom: '14px' }}>Price Breakdown</div>
             {[
-              [`Base Fare (${bookingData.vehicleType})`, `₱${base}`],
-              [`Size (${bookingData.itemSize})`, sizeAdd > 0 ? `+₱${sizeAdd}` : '₱0'],
-              [`Delivery (${bookingData.deliveryType === 'instant' ? 'Instant' : bookingData.deliveryType})`, deliveryAdd > 0 ? `+₱${deliveryAdd}` : 'Included'],
-              [`Guarantee (${bookingData.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '₱0'],
+              [`Base Fare (${bookingData.vehicleType})`, `₱${Number(base).toFixed(2)}`],
+              [`Size (${bookingData.itemSize})`, sizeAdd > 0 ? `+₱${Number(sizeAdd).toFixed(2)}` : '₱0.00'],
+              [`Delivery (${bookingData.deliveryType === 'instant' ? 'Instant' : bookingData.deliveryType})`, deliveryAdd > 0 ? `+₱${Number(deliveryAdd).toFixed(2)}` : 'Included'],
+              [`Guarantee (${bookingData.guaranteeTier})`, tierAdd > 0 ? `+₱${Number(tierAdd).toFixed(2)}` : '₱0.00'],
             ].map(([l, v]) => (
               <div key={l} className="flex justify-between" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.65)', marginBottom: '8px' }}>
                 <span>{l}</span><span style={{ fontWeight: 600, color: 'white' }}>{v}</span>
@@ -208,7 +208,7 @@ function ReviewOrder({ dbUser }) {
             <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', margin: '12px 0' }} />
             <div className="flex justify-between">
               <span style={{ fontWeight: 700, fontSize: '16px' }}>Total</span>
-              <span style={{ fontWeight: 900, fontSize: '24px', color: '#4ADE80' }}>₱{total}</span>
+              <span style={{ fontWeight: 900, fontSize: '24px', color: '#4ADE80' }}>₱{Number(total).toFixed(2)}</span>
             </div>
           </div>
         </div>

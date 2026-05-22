@@ -201,7 +201,7 @@ function OrderHistory({ dbUser }) {
                       <FlagIcon size={13} color="var(--red)" style={{ flexShrink: 0 }} /> {o.deliveryAddress}
                     </div>
                     <div className="flex gap-12 mt-8">
-                      <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--primary)' }}>₱{o.totalAmount}</span>
+                      <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--primary)' }}>₱{Number(o.totalAmount).toFixed(2)}</span>
                       <span className="badge badge-gray" style={{ textTransform: 'capitalize' }}>{o.vehicleType}</span>
                       {o.itemType && <span className="badge badge-gray">{o.itemType}</span>}
                     </div>

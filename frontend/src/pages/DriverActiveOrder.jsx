@@ -276,7 +276,7 @@ function DriverActiveOrder({ dbUser }) {
             <h1 style={{ fontSize: '22px', fontWeight: 900, marginTop: '4px' }}>Order #{order.id.slice(-8).toUpperCase()}</h1>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '28px', fontWeight: 900, color: '#4ADE80' }}>₱{order.totalAmount}</div>
+            <div style={{ fontSize: '28px', fontWeight: 900, color: '#4ADE80' }}>₱{Number(order.totalAmount).toFixed(2)}</div>
             <StatusBadge status={order.status} />
           </div>
         </div>
@@ -393,10 +393,10 @@ function DriverActiveOrder({ dbUser }) {
           {/* Earnings */}
           <div style={{ background: 'linear-gradient(135deg, #052e16, #15803d)', borderRadius: 'var(--radius-md)', padding: '20px', color: 'white', textAlign: 'center' }}>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>Your Earnings</div>
-            <div style={{ fontSize: '36px', fontWeight: 900, color: '#4ADE80' }}>₱{Math.round(order.totalAmount * 0.80)}</div>
+            <div style={{ fontSize: '36px', fontWeight: 900, color: '#4ADE80' }}>₱{Number(Math.round(order.totalAmount * 0.80)).toFixed(2)}</div>
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Your 80% upon delivery</div>
             <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
-              <span>Platform (20%)</span><span>₱{Math.round(order.totalAmount * 0.20)}</span>
+              <span>Platform (20%)</span><span>₱{Number(Math.round(order.totalAmount * 0.20)).toFixed(2)}</span>
             </div>
           </div>
         </div>

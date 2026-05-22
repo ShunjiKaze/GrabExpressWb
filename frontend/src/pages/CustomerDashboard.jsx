@@ -75,7 +75,7 @@ function CustomerDashboard({ dbUser }) {
             <FlagIcon size={13} color="var(--red)" style={{ flexShrink: 0 }} /> {b.deliveryAddress}
           </div>
           <div className="flex items-center gap-12 mt-8">
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary)' }}>₱{b.totalAmount}</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary)' }}>₱{Number(b.totalAmount).toFixed(2)}</span>
             <span className="badge badge-gray">{b.vehicleType}</span>
             {b.itemType && <span className="badge badge-gray">{b.itemType}</span>}
             {needsRating && (

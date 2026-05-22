@@ -28,8 +28,8 @@ const ITEM_TYPES = [
 
 const TIERS = [
   { id: 'Basic',    Icon: ShieldIcon,      title: 'Basic',    coverage: 'No extra coverage',  add: 0,   color: 'var(--text-3)' },
-  { id: 'Standard', Icon: ShieldCheckIcon, title: 'Standard', coverage: 'Up to ₱3,000',       add: 50,  color: 'var(--blue)' },
-  { id: 'Premium',  Icon: CrownIcon,       title: 'Premium',  coverage: 'Up to ₱10,000',      add: 100, color: 'var(--amber)' },
+  { id: 'Standard', Icon: ShieldCheckIcon, title: 'Standard', coverage: 'Up to ₱3,000.00',       add: 50,  color: 'var(--blue)' },
+  { id: 'Premium',  Icon: CrownIcon,       title: 'Premium',  coverage: 'Up to ₱10,000.00',      add: 100, color: 'var(--amber)' },
 ];
 
 const VEHICLE_LABEL = { motorcycle: 'Motorcycle', car: 'Car', van: 'Van' };
@@ -287,7 +287,7 @@ function ItemDetailsStep() {
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div className="tier-price">{tier.add === 0 ? 'Free' : `+₱${tier.add}`}</div>
+                        <div className="tier-price">{tier.add === 0 ? 'Free' : `+₱${Number(tier.add).toFixed(2)}`}</div>
                         {bookingData.guaranteeTier === tier.id && <CheckCircleIcon size={16} color="var(--primary)" />}
                       </div>
                     </div>

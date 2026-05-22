@@ -195,7 +195,7 @@ function DriverDeliveries({ dbUser }) {
 
               {/* Action */}
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: '26px', fontWeight: 900, color: 'var(--primary)', marginBottom: '10px' }}>₱{d.totalAmount}</div>
+                <div style={{ fontSize: '26px', fontWeight: 900, color: 'var(--primary)', marginBottom: '10px' }}>₱{Number(d.totalAmount).toFixed(2)}</div>
                 <button
                   onClick={() => handleAccept(d)}
                   disabled={accepting === d.id}

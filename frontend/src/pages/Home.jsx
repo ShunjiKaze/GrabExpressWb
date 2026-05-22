@@ -266,7 +266,7 @@ function Home({ user, dbUser }) {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', marginBottom: '32px' }}>
-              {['Earn ₱60–₱250 per delivery', 'Flexible hours — work when you want', 'Motorcycle, car, or van accepted', 'Real-time order notifications'].map(item => (
+              {['Earn ₱60.00–₱250.00 per delivery', 'Flexible hours — work when you want', 'Motorcycle, car, or van accepted', 'Real-time order notifications'].map(item => (
                 <div key={item} style={{ display: 'flex', gap: '10px', alignItems: 'center', color: t.textMuted, fontSize: '14px' }}>
                   <CheckIcon size={14} color={t.accent} style={{ flexShrink: 0 }} /> {item}
                 </div>
@@ -304,7 +304,7 @@ function Home({ user, dbUser }) {
 
             {/* earnings badge */}
             <div style={{ position: 'absolute', bottom: '-14px', right: '20px', background: t.driverBadgeBg, border: `1px solid ${t.driverBadgeBorder}`, borderRadius: '14px', padding: '12px 18px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ fontSize: '22px', fontWeight: 900, color: t.driverBadgeText, lineHeight: 1 }}>₱250</div>
+              <div style={{ fontSize: '22px', fontWeight: 900, color: t.driverBadgeText, lineHeight: 1 }}>₱250.00</div>
               <div>
                 <div style={{ fontSize: '10px', fontWeight: 700, color: t.driverBadgeLabel, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Up to</div>
                 <div style={{ fontSize: '10px', color: t.driverBadgeSub, marginTop: '1px' }}>per delivery</div>

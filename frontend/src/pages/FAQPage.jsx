@@ -18,7 +18,7 @@ const FAQS = [
     items: [
       { q: 'How is the delivery fee calculated?', a: 'Fees are based on distance, vehicle type (motorcycle, car, or van), and your selected guarantee tier. You will see the exact price before confirming any booking — no hidden charges.' },
       { q: 'What payment methods are accepted?', a: 'We currently support Cash on Delivery (COD) and GCash. More payment options are being added.' },
-      { q: 'What is the Guarantee Tier?', a: "Our guarantee tiers let you choose coverage for your item's value — from Basic (up to ₱500) to Premium (up to ₱10,000). Higher tiers include additional insurance coverage in case of loss or damage." },
+      { q: 'What is the Guarantee Tier?', a: "Our guarantee tiers let you choose coverage for your item's value — from Basic (up to ₱500.00) to Premium (up to ₱10,000.00). Higher tiers include additional insurance coverage in case of loss or damage." },
       { q: 'Are there any cancellation fees?', a: 'You can cancel a booking for free before a driver accepts it. Once a driver is on the way, a small cancellation fee may apply.' },
     ],
   },

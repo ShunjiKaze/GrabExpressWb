@@ -310,9 +310,9 @@ function ReceiptPage({ dbUser }) {
           <div style={{ background: '#0F172A', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: '14px', color: 'white' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '14px' }}>Price Breakdown</div>
             {[
-              [`Base Fare (${booking.vehicleType})`, `₱${base}`],
-              [`Size (${booking.itemSize})`,          sizeAdd > 0 ? `+₱${sizeAdd}` : '₱0'],
-              [`Guarantee (${booking.guaranteeTier})`, tierAdd > 0 ? `+₱${tierAdd}` : '₱0'],
+              [`Base Fare (${booking.vehicleType})`, `₱${Number(base).toFixed(2)}`],
+              [`Size (${booking.itemSize})`,          sizeAdd > 0 ? `+₱${Number(sizeAdd).toFixed(2)}` : '₱0.00'],
+              [`Guarantee (${booking.guaranteeTier})`, tierAdd > 0 ? `+₱${Number(tierAdd).toFixed(2)}` : '₱0.00'],
             ].map(([l, v]) => (
               <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'rgba(255,255,255,0.65)', marginBottom: '8px' }}>
                 <span>{l}</span>
@@ -322,7 +322,7 @@ function ReceiptPage({ dbUser }) {
             <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', margin: '12px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 700, fontSize: '16px' }}>Total</span>
-              <span style={{ fontWeight: 900, fontSize: '24px', color: '#4ADE80' }}>₱{booking.totalAmount}</span>
+              <span style={{ fontWeight: 900, fontSize: '24px', color: '#4ADE80' }}>₱{Number(booking.totalAmount).toFixed(2)}</span>
             </div>
           </div>
 
@@ -345,8 +345,8 @@ function ReceiptPage({ dbUser }) {
             </div>
             {paymentDoc && (
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
-                {(isDriver || isAdmin) && <Row label="Your Earnings" value={`₱${paymentDoc.driverEarn}`} />}
-                {isAdmin && <Row label="Platform Commission (20%)" value={`₱${paymentDoc.platformComm}`} />}
+                {(isDriver || isAdmin) && <Row label="Your Earnings" value={`₱${Number(paymentDoc.driverEarn).toFixed(2)}`} />}
+                {isAdmin && <Row label="Platform Commission (20%)" value={`₱${Number(paymentDoc.platformComm).toFixed(2)}`} />}
                 {paymentDoc.paidAt && <Row label="Paid At" value={formatDate(paymentDoc.paidAt)} icon={<ClockIcon size={13} color="var(--text-3)" />} />}
               </div>
             )}

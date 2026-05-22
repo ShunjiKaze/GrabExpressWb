@@ -381,7 +381,7 @@ function AdminDashboard() {
                       <div style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '2px' }}>→ {b.deliveryAddress?.substring(0, 40)}</div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '12px' }}>
-                      <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '14px' }}>₱{b.totalAmount}</div>
+                      <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '14px' }}>₱{Number(b.totalAmount).toFixed(2)}</div>
                       <span className={`badge ${cfg.badge}`}>{cfg.label}</span>
                     </div>
                   </div>
@@ -477,7 +477,7 @@ function AdminDashboard() {
                     <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.pickupAddress}</td>
                     <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.deliveryAddress}</td>
                     <td style={{ textTransform: 'capitalize' }}>{b.vehicleType}</td>
-                    <td style={{ fontWeight: 800, color: 'var(--primary)' }}>₱{b.totalAmount}</td>
+                    <td style={{ fontWeight: 800, color: 'var(--primary)' }}>₱{Number(b.totalAmount).toFixed(2)}</td>
                     <td><span className={`badge ${cfg.badge}`}>{cfg.label}</span></td>
                     <td style={{ color: 'var(--text-3)', fontSize: '12px' }}>{formatDate(b.createdAt)}</td>
                   </tr>
