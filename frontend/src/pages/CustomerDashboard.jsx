@@ -22,17 +22,25 @@ function CustomerDashboard({ dbUser }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!dbUser || !dbUser.user_id) return;
+    
+    setLoading(true);
     const q = query(
       collection(db, 'bookings'),
       where('customerId', '==', dbUser.user_id),
       orderBy('createdAt', 'desc')
     );
+    
     const unsub = onSnapshot(q, snap => {
       setBookings(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
-    }, () => setLoading(false));
-    return unsub;
-  }, [dbUser.user_id]);
+    }, (err) => {
+      console.error("Error fetching bookings:", err);
+      setLoading(false);
+    });
+    
+    return () => unsub();
+  }, [dbUser]);
 
   const active    = bookings.filter(b => !['delivered', 'completed', 'cancelled'].includes(b.status));
   const past      = bookings.filter(b =>  ['delivered', 'completed', 'cancelled'].includes(b.status));
@@ -202,25 +210,8 @@ function CustomerDashboard({ dbUser }) {
             </div>
           ))}
         </div>
-      ) : bookings.length === 0 ? (
-        /* Never booked before */
-        <div className="card">
-          <div className="empty-state">
-            <div style={{ position: 'relative', marginBottom: '24px', display: 'inline-block' }}>
-              <div style={{ width: 180, height: 180, borderRadius: '50%', background: 'linear-gradient(135deg, #fce4ec, #f8bbd0)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: '0 0 0 8px rgba(252,228,236,0.5), 0 16px 48px rgba(236,72,153,0.15)' }}>
-                <img src={riderIllustration} alt="Delivery rider" style={{ width: '90%', height: '90%', objectFit: 'contain' }} />
-              </div>
-              <div style={{ position: 'absolute', bottom: 4, right: 4, width: 36, height: 36, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,177,79,0.4), 0 0 0 3px white' }}>
-                <MotorcycleIcon size={18} color="white" />
-              </div>
-            </div>
-            <div className="empty-state-title">No deliveries yet</div>
-            <div className="empty-state-desc">Book your first delivery and we'll match you with a nearby rider in minutes!</div>
-            <Link to="/book/new/address" className="btn btn-primary mt-16">Book Now</Link>
-          </div>
-        </div>
       ) : active.length === 0 ? (
-        /* Has history but nothing active right now */
+        /* Show idle panel when there are no active deliveries, even if it's their first time */
         <IdlePanel />
       ) : null}
     </div>

@@ -32,11 +32,27 @@ function useDebounce(fn, delay) {
   );
 }
 
-// Nominatim autocomplete hook
-function useNominatim(query) {
-  const [results, setResults]   = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const abortRef                = useRef(null);
+// Build a clean one-line address string from a Photon feature's properties
+function formatPhotonAddress(p) {
+  const street = [p.housenumber, p.street].filter(Boolean).join(' ');
+  const parts  = [
+    p.name,
+    street || null,
+    p.district || p.suburb || null,
+    p.city || p.town || p.village || null,
+    p.state || null,
+    p.country || null,
+  ].filter(Boolean);
+  // deduplicate (e.g. name === city)
+  const seen = new Set();
+  return parts.filter(v => { if (seen.has(v)) return false; seen.add(v); return true; }).join(', ');
+}
+
+// Photon autocomplete hook (Komoot Photon — free, OSM-based, browser-friendly, no API key)
+function usePhoton(query) {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const abortRef              = useRef(null);
 
   const search = useCallback(async (q) => {
     if (!q || q.trim().length < 3) { setResults([]); return; }
@@ -44,27 +60,25 @@ function useNominatim(query) {
     abortRef.current = new AbortController();
     setLoading(true);
     try {
-      // Bounding box for Cebu province (island + surrounding municipalities)
-      // viewbox format: left (west), top (north), right (east), bottom (south)
-      const CEBU_VIEWBOX = '123.30,11.35,124.10,9.80';
-      const url =
-        `https://nominatim.openstreetmap.org/search?` +
-        new URLSearchParams({
-          q,
-          format:         'json',
-          addressdetails: 1,
-          limit:          6,
-          viewbox:        CEBU_VIEWBOX,
-          bounded:        1,            // strictly limit to Cebu only
-        });
-      const res  = await fetch(url, {
-        signal:  abortRef.current.signal,
-        headers: { 'Accept-Language': 'en', 'User-Agent': 'GrabExpressApp/1.0' },
+      // Cebu bounding box: SW lon, SW lat, NE lon, NE lat
+      const url = `https://photon.komoot.io/api/?` + new URLSearchParams({
+        q,
+        limit: 6,
+        bbox:  '123.30,9.80,124.10,11.35',
+        lang:  'en',
       });
+      const res  = await fetch(url, { signal: abortRef.current.signal });
       const data = await res.json();
-      setResults(data);
+      // Normalise to the same shape AddressStep already expects
+      const normalised = (data.features || []).map(f => ({
+        place_id:     f.properties.osm_id,
+        display_name: formatPhotonAddress(f.properties),
+        lat:          String(f.geometry.coordinates[1]),
+        lon:          String(f.geometry.coordinates[0]),
+      }));
+      setResults(normalised);
     } catch (err) {
-      if (err.name !== 'AbortError') console.error('Nominatim error:', err);
+      if (err.name !== 'AbortError') console.error('Photon search error:', err);
     } finally {
       setLoading(false);
     }
@@ -92,8 +106,8 @@ function AddressStep() {
   const [pickupQuery,   setPickupQuery]   = useState(bookingData.pickupAddress   || '');
   const [deliveryQuery, setDeliveryQuery] = useState(bookingData.deliveryAddress || '');
 
-  const { results: pickupResults,   loading: pickupLoading   } = useNominatim(focused === 'pickup'   ? pickupQuery   : '');
-  const { results: deliveryResults, loading: deliveryLoading } = useNominatim(focused === 'delivery' ? deliveryQuery : '');
+  const { results: pickupResults,   loading: pickupLoading   } = usePhoton(focused === 'pickup'   ? pickupQuery   : '');
+  const { results: deliveryResults, loading: deliveryLoading } = usePhoton(focused === 'delivery' ? deliveryQuery : '');
 
   // Close dropdown on outside click
   useEffect(() => {

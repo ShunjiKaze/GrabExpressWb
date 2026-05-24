@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { SearchIcon, MotorcycleIcon, CarIcon, VanIcon, PackageIcon, ZapIcon,
          CheckCircleIcon, XCircleIcon, PhoneIcon, StarIcon, LinkIcon, ClockIcon, SparklesIcon, FileTextIcon } from '../components/Icons';
 
@@ -188,27 +187,54 @@ function TrackingPage({ dbUser }) {
 
         {/* Searching animation */}
         {booking.status === 'searching' && (
-          <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
-            <div style={{
-              background: 'rgba(255,255,255,0.97)',
-              borderRadius: '24px',
-              width: '300px',
-              height: '300px',
-              margin: '0 auto',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}>
-              <DotLottieReact
-                src="https://lottie.host/a4f0b6f6-f57a-4950-aaee-23caf05964ff/C32He7vMVy.lottie"
-                loop
-                autoplay
-                style={{ width: '300px', height: '300px' }}
-              />
+          <div style={{ textAlign: 'center', padding: '24px 0 8px' }}>
+            <style>{`
+              @keyframes tp-radar { 0%{transform:scale(0.4);opacity:0.9} 100%{transform:scale(2.8);opacity:0} }
+              @keyframes tp-spin  { to{transform:rotate(360deg)} }
+              @keyframes tp-bob   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+              @keyframes tp-fadedots { 0%,80%,100%{opacity:0.25} 40%{opacity:1} }
+              .tp-d1{animation:tp-fadedots 1.4s infinite 0s}
+              .tp-d2{animation:tp-fadedots 1.4s infinite 0.22s}
+              .tp-d3{animation:tp-fadedots 1.4s infinite 0.44s}
+            `}</style>
+            <div style={{ position: 'relative', width: '140px', height: '140px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Radar rings */}
+              {[0, 0.6, 1.2].map(delay => (
+                <span key={delay} style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  border: '2px solid rgba(0,177,79,0.7)',
+                  animation: `tp-radar 2.4s ease-out ${delay}s infinite`,
+                }} />
+              ))}
+              {/* Center badge */}
+              <div style={{
+                width: '72px', height: '72px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, #00b14f 0%, #00823a 100%)',
+                boxShadow: '0 0 0 6px rgba(0,177,79,0.18), 0 8px 28px rgba(0,177,79,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'tp-bob 2s ease-in-out infinite' }}>
+                  <circle cx="5.5" cy="17.5" r="2.5"/>
+                  <circle cx="18.5" cy="17.5" r="2.5"/>
+                  <path d="M8 17.5h7"/>
+                  <path d="M15 17.5V9l-3-3H8l-2 5.5"/>
+                  <path d="M15 9h3l1.5 4"/>
+                  <path d="M10 6V4"/>
+                </svg>
+              </div>
+              {/* Spinning dashed ring */}
+              <svg width="140" height="140" style={{ position: 'absolute', inset: 0, animation: 'tp-spin 8s linear infinite' }} viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="62" fill="none" stroke="rgba(0,177,79,0.3)" strokeWidth="1.5" strokeDasharray="8 6" />
+              </svg>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginTop: '16px' }}>
-              Connecting you with the nearest available rider…
+            <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '15px', fontWeight: 700, marginTop: '20px', marginBottom: '4px' }}>
+              Finding your rider
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+              Scanning nearby drivers
+              <span className="tp-d1" style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+              <span className="tp-d2" style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+              <span className="tp-d3" style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
             </p>
           </div>
         )}

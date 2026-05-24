@@ -8,7 +8,6 @@ import { BookingProvider } from './context/BookingContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './components/Toast';
 import Navbar from './components/Navbar';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 import Home              from './pages/Home';
 import AdminDashboard    from './pages/AdminDashboard';
@@ -91,14 +90,58 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', background: 'var(--bg)' }}>
-        <DotLottieReact
-          src="https://lottie.host/a4f0b6f6-f57a-4950-aaee-23caf05964ff/C32He7vMVy.lottie"
-          loop
-          autoplay
-          style={{ width: '340px', height: '340px' }}
-        />
-        <p style={{ color: 'var(--text-3)', fontSize: '14px', fontWeight: 600, marginTop: '-24px' }}>Loading GrabExpress…</p>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '32px', background: 'var(--bg)' }}>
+        <style>{`
+          @keyframes ge-pulse { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.12);opacity:1} }
+          @keyframes ge-ring  { 0%{transform:scale(0.5);opacity:0.8} 100%{transform:scale(2.2);opacity:0} }
+          @keyframes ge-bounce{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+          @keyframes ge-dots  { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+          .ge-dot1{animation:ge-dots 1.4s infinite 0s}
+          .ge-dot2{animation:ge-dots 1.4s infinite 0.2s}
+          .ge-dot3{animation:ge-dots 1.4s infinite 0.4s}
+        `}</style>
+
+        {/* Icon + pulse rings */}
+        <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {[0, 0.5, 1].map(delay => (
+            <span key={delay} style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              border: '2px solid #00b14f',
+              animation: `ge-ring 2s ease-out ${delay}s infinite`,
+            }} />
+          ))}
+          {/* Brand circle */}
+          <div style={{
+            width: '80px', height: '80px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #00b14f 0%, #00823a 100%)',
+            boxShadow: '0 8px 32px rgba(0,177,79,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            animation: 'ge-pulse 2s ease-in-out infinite',
+          }}>
+            {/* Scooter SVG */}
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'ge-bounce 2s ease-in-out infinite' }}>
+              <circle cx="5.5" cy="17.5" r="2.5"/>
+              <circle cx="18.5" cy="17.5" r="2.5"/>
+              <path d="M8 17.5h7"/>
+              <path d="M15 17.5V9l-3-3H8l-2 5.5"/>
+              <path d="M15 9h3l1.5 4"/>
+              <path d="M10 6V4"/>
+            </svg>
+          </div>
+        </div>
+
+        {/* Wordmark */}
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: 0, fontSize: '20px', fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text-1)' }}>
+            Grab<span style={{ color: '#00b14f' }}>Express</span>
+          </p>
+          <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-3)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '3px', justifyContent: 'center' }}>
+            Loading
+            <span className="ge-dot1" style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--text-3)' }} />
+            <span className="ge-dot2" style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--text-3)' }} />
+            <span className="ge-dot3" style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--text-3)' }} />
+          </p>
+        </div>
       </div>
     );
   }
