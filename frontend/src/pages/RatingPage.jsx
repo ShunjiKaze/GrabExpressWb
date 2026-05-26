@@ -4,7 +4,11 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { StarIcon, SparklesIcon, CheckIcon, FileTextIcon } from '../components/Icons';
 
-const QUICK_TAGS = ['Great attitude!', 'Very punctual', 'Safe driving', 'Communicated well', 'Handle with care', 'Professional'];
+// Tags shown when a CUSTOMER rates their DRIVER
+const DRIVER_TAGS = ['Fast delivery', 'Very punctual', 'Safe driving', 'Communicated well', 'Handle with care', 'Professional'];
+
+// Tags shown when a DRIVER rates their CUSTOMER
+const CUSTOMER_TAGS = ['Ready on pickup', 'Very polite', 'Clear instructions', 'Easy to locate', 'Responsive', 'Respectful'];
 
 function StarRating({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
@@ -109,7 +113,7 @@ function RatingPage({ dbUser }) {
           <div style={{ marginBottom: '24px' }}>
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '10px', textAlign: 'center' }}>What went well?</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-              {QUICK_TAGS.map(tag => (
+              {(dbUser?.role === 'driver' ? CUSTOMER_TAGS : DRIVER_TAGS).map(tag => (
                 <div
                   key={tag}
                   onClick={() => toggleTag(tag)}

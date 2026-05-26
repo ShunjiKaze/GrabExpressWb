@@ -114,7 +114,7 @@ function DriverDeliveries({ dbUser }) {
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Driver Mode</div>
             <h1 style={{ fontSize: '24px', fontWeight: 900, marginTop: '4px' }}>Available Orders</h1>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginTop: '4px' }}>
-              {loading ? 'Loading…' : !activeVehicle ? 'No active vehicle set.' : hasActiveOrder ? 'You have an ongoing delivery.' : `${filtered.length} order${filtered.length !== 1 ? 's' : ''} within ${PROXIMITY_KM}km of your location`}
+              {loading ? 'Loading…' : !activeVehicle ? 'No active vehicle set.' : hasActiveOrder ? 'You have an ongoing delivery.' : `${filtered.length} order${filtered.length !== 1 ? 's' : ''} available in your service area`}
             </p>
             {driverLat && (
               <div style={{ marginTop: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(74,222,128,0.15)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, color: '#4ADE80' }}>

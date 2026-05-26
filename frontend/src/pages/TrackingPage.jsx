@@ -251,14 +251,23 @@ function TrackingPage({ dbUser }) {
                 <div style={{ fontWeight: 800, fontSize: '17px' }}>{booking.driverName}</div>
                 <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', marginTop: '2px', textTransform: 'capitalize' }}>
                   {booking.driverVehicle || booking.vehicleType}
+                  {booking.driverPlate ? ` · ${booking.driverPlate}` : ''}
                 </div>
+                {booking.driverPhone && booking.driverPhone !== '—' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px' }}>
+                    <PhoneIcon size={12} color="rgba(255,255,255,0.5)" />
+                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                      {booking.driverPhone}
+                    </span>
+                  </div>
+                )}
               </div>
               {booking.driverPlate && (
                 <div style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 'var(--radius-sm)', padding: '6px 14px', fontWeight: 800, fontSize: '15px', letterSpacing: '0.08em' }}>
                   {booking.driverPlate}
                 </div>
               )}
-              {booking.driverPhone && (
+              {booking.driverPhone && booking.driverPhone !== '—' && (
                 <a href={`tel:${booking.driverPhone}`} style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }} title="Call driver">
                   <PhoneIcon size={18} color="white" />
                 </a>

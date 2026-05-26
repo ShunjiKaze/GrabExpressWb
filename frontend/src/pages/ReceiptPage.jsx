@@ -291,6 +291,12 @@ function ReceiptPage({ dbUser }) {
                     {booking.driverVehicle?.charAt(0).toUpperCase()}{booking.driverVehicle?.slice(1)}
                     {booking.driverPlate ? ` · ${booking.driverPlate}` : ''}
                   </div>
+                  {booking.driverPhone && booking.driverPhone !== '—' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
+                      <PhoneIcon size={11} color="var(--text-3)" />
+                      <span style={{ fontSize: '12px', color: 'var(--text-2)', fontWeight: 600 }}>{booking.driverPhone}</span>
+                    </div>
+                  )}
                 </div>
                 {booking.driverRating && (
                   <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
