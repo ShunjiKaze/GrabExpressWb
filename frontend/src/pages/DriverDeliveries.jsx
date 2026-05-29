@@ -111,12 +111,11 @@ function DriverDeliveries({ dbUser }) {
       <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%)', borderRadius: 'var(--radius-xl)', padding: '28px 32px', color: 'white', marginBottom: '24px' }}>
         <div className="flex items-center justify-between">
           <div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Driver Mode</div>
             <h1 style={{ fontSize: '24px', fontWeight: 900, marginTop: '4px' }}>Available Orders</h1>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginTop: '4px' }}>
               {loading ? 'Loading…' : !activeVehicle ? 'No active vehicle set.' : hasActiveOrder ? 'You have an ongoing delivery.' : `${filtered.length} order${filtered.length !== 1 ? 's' : ''} available in your service area`}
             </p>
-            {driverLat && (
+            {!!driverLat && (
               <div style={{ marginTop: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(74,222,128,0.15)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '12px', fontWeight: 700, color: '#4ADE80' }}>
                 <MapPinIcon size={12} color="#4ADE80" /> Proximity: {PROXIMITY_KM}km radius active
               </div>
@@ -148,8 +147,8 @@ function DriverDeliveries({ dbUser }) {
       ) : dbUser.accountStatus === 'deactivated' || dbUser.accountStatus === 'pending_reactivation' ? (
         <div className="card">
           <div className="empty-state">
-            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldIcon size={48} color="var(--red)" />
+            <div className="empty-state-icon" style={{ background: 'var(--red-light)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <ShieldIcon size={36} color="var(--red)" />
             </div>
             <div className="empty-state-title">Account Deactivated</div>
             <div className="empty-state-desc">Your account is currently deactivated. You are in viewing mode and cannot accept new orders. Please request reactivation from your profile.</div>
@@ -159,8 +158,8 @@ function DriverDeliveries({ dbUser }) {
       ) : !activeVehicle ? (
         <div className="card">
           <div className="empty-state">
-            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MotorcycleIcon size={48} color="var(--text-3)" />
+            <div className="empty-state-icon" style={{ background: '#FFFBEB', border: '1px solid rgba(245,158,11,0.2)' }}>
+              <MotorcycleIcon size={36} color="#F59E0B" />
             </div>
             <div className="empty-state-title">No Active Vehicle</div>
             <div className="empty-state-desc">You need to set a vehicle as "Active" in My Vehicles before you can find orders.</div>
@@ -170,8 +169,8 @@ function DriverDeliveries({ dbUser }) {
       ) : hasActiveOrder ? (
         <div className="card">
           <div className="empty-state">
-            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-light)', color: 'var(--primary)' }}>
-              <CheckCircleIcon size={48} />
+            <div className="empty-state-icon" style={{ background: 'var(--primary-light)', border: '1px solid rgba(0,177,79,0.2)' }}>
+              <CheckCircleIcon size={36} color="var(--primary)" />
             </div>
             <div className="empty-state-title">You have an ongoing delivery!</div>
             <div className="empty-state-desc">You must complete your current active order before accepting a new one.</div>
@@ -181,8 +180,8 @@ function DriverDeliveries({ dbUser }) {
       ) : filtered.length === 0 ? (
         <div className="card">
           <div className="empty-state">
-            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <VehicleIcon type={activeVehicle.type} size={48} color="var(--text-3)" />
+            <div className="empty-state-icon" style={{ background: '#EFF6FF', border: '1px solid rgba(59,130,246,0.2)' }}>
+              <VehicleIcon type={activeVehicle.type} size={36} color="var(--blue)" />
             </div>
             <div className="empty-state-title">No {activeVehicle.type} orders available</div>
             <div className="empty-state-desc">Orders appear here in real-time as customers book. Stay online and check back shortly!</div>

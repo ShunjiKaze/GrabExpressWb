@@ -298,10 +298,10 @@ function ReceiptPage({ dbUser }) {
                     </div>
                   )}
                 </div>
-                {booking.driverRating && (
+                {(dbUser?.role === 'driver' ? booking.customerRating : booking.driverRatingForCustomer) && (
                   <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
                     {Array.from({ length: 5 }, (_, i) => (
-                      <StarIcon key={i} size={14} color="#F59E0B" filled={i < booking.driverRating} />
+                      <StarIcon key={i} size={14} color="#F59E0B" filled={i < (dbUser?.role === 'driver' ? booking.customerRating : booking.driverRatingForCustomer)} />
                     ))}
                   </div>
                 )}

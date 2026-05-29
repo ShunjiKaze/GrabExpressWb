@@ -70,7 +70,7 @@ function PhotoCaptureModal({ onCapture, onClose, label, desc }) {
 
 
 function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) {
-  const [appForm, setAppForm] = useState({ licenseNo: '', vehicleType: 'motorcycle', plateNo: '', licenseUploaded: false, selfieUploaded: false, orcrUploaded: false });
+  const [appForm, setAppForm] = useState({ licenseNo: '', vehicleType: 'motorcycle', plateNo: '', year: '', insuranceExpiry: '', licenseUploaded: false, selfieUploaded: false, orcrUploaded: false });
   const [saving, setSaving] = useState(false);
   const [activePhotoModal, setActivePhotoModal] = useState(null); // 'license' | 'selfie' | 'orcr'
   const showToast = useToast();
@@ -87,17 +87,22 @@ function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) 
   };
 
   const submitDriverApplication = async () => {
-    if (!appForm.licenseNo || !appForm.plateNo) { showToast('Please fill in all text fields.', 'error'); return; }
+    if (!appForm.licenseNo || !appForm.plateNo || !appForm.year || !appForm.insuranceExpiry) { showToast('Please fill in all fields.', 'error'); return; }
+    const yearNum = parseInt(appForm.year);
+    const currentYear = new Date().getFullYear();
+    if (isNaN(yearNum) || yearNum < 2000 || yearNum > currentYear + 1) { showToast(`Vehicle year must be between 2000 and ${currentYear + 1}.`, 'error'); return; }
     if (!appForm.licenseUploaded || !appForm.selfieUploaded || !appForm.orcrUploaded) { showToast('Please upload all required photos.', 'error'); return; }
-    
+
     setSaving(true);
     try {
       await updateDoc(doc(db, 'users', userId), {
         driverApplicationStatus: 'pending',
         driverApplicationDetails: {
-          licenseNo: appForm.licenseNo,
-          vehicleType: appForm.vehicleType,
-          plateNo: appForm.plateNo,
+          licenseNo:       appForm.licenseNo,
+          vehicleType:     appForm.vehicleType,
+          plateNo:         appForm.plateNo,
+          year:            yearNum,
+          insuranceExpiry: appForm.insuranceExpiry,
         }
       });
       showToast('Driver application submitted successfully!', 'success');
@@ -137,6 +142,17 @@ function DriverRegistrationModal({ userId, existingPhone, onSuccess, onClose }) 
           <div className="form-group mb-16">
             <label className="form-label">Vehicle Plate Number</label>
             <input className="form-input" placeholder="e.g. 123 ABC" value={appForm.plateNo} onChange={e => setAppForm({...appForm, plateNo: formatPlateInput(appForm.vehicleType, e.target.value)})} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div className="form-group">
+              <label className="form-label">Vehicle Year</label>
+              <input className="form-input" type="number" placeholder={`e.g. ${new Date().getFullYear()}`} value={appForm.year} min="2000" max={new Date().getFullYear() + 1} onChange={e => setAppForm({...appForm, year: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Insurance Expiry</label>
+              <input className="form-input" type="date" value={appForm.insuranceExpiry} min={new Date().toISOString().split('T')[0]} onChange={e => setAppForm({...appForm, insuranceExpiry: e.target.value})} />
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>

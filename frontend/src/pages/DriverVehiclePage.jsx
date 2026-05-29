@@ -62,11 +62,30 @@ function DriverVehiclePage({ dbUser }) {
   const [formYear, setFormYear]       = useState('');
   const [formExpiry, setFormExpiry]   = useState('');
   const [formError, setFormError]     = useState('');
+  const [hasActiveOrder, setHasActiveOrder] = useState(false);
+
+  // Check for active orders
+  useEffect(() => {
+    const q = query(
+      collection(db, 'bookings'),
+      where('driverId', '==', dbUser.user_id),
+      where('status', 'in', ['accepted', 'picked_up', 'in_transit'])
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setHasActiveOrder(!snap.empty);
+    }, (err) => {
+      console.error('Active order check error:', err);
+    });
+    return () => unsub();
+  }, [dbUser.user_id]);
 
   useEffect(() => {
     const q = query(collection(db, 'vehicles'), where('driverId', '==', dbUser.user_id));
     return onSnapshot(q, async snap => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const docs = snap.docs.map(d => {
+        const data = d.data();
+        return { id: d.id, ...data, plateNo: data.plateNo || data.plate || '' };
+      });
       // Auto-migrate vehicle info from user doc if no vehicles registered yet
       if (docs.length === 0 && dbUser.vehicle_type && dbUser.vehicle_plate) {
         try {
@@ -96,11 +115,18 @@ function DriverVehiclePage({ dbUser }) {
   }, [dbUser.user_id]);
 
   const handleSetActive = async (vehicleId, plateNo, vehicleType) => {
+    if (hasActiveOrder) {
+      alert("You cannot change your active vehicle while you have an ongoing delivery.");
+      return;
+    }
     const batch = writeBatch(db);
     vehicles.forEach(v => batch.update(doc(db, 'vehicles', v.id), { status: 'inactive' }));
     batch.update(doc(db, 'vehicles', vehicleId), { status: 'active' });
     await batch.commit();
-    await updateDoc(doc(db, 'users', dbUser.user_id), { vehicle_plate: plateNo, vehicle_type: vehicleType });
+    await updateDoc(doc(db, 'users', dbUser.user_id), {
+      vehicle_plate: plateNo, vehicle_type: vehicleType,
+      vehiclePlate:  plateNo, vehicleType:  vehicleType, // Android compatibility
+    });
   };
 
   const handleAdd = async () => {
@@ -113,7 +139,7 @@ function DriverVehiclePage({ dbUser }) {
     const currentYear = new Date().getFullYear();
     if (!formYear || formYear.length !== 4) { setFormError('Enter a valid 4-digit year.'); return; }
     const yearNum = parseInt(formYear);
-    if (yearNum < 2000 || yearNum > currentYear + 1) { setFormError(`Year must be between 2000 and ${currentYear + 1}.`); return; }
+    if (yearNum < 1990 || yearNum > currentYear + 1) { setFormError(`Year must be between 1990 and ${currentYear + 1}.`); return; }
     if (!formExpiry) { setFormError('Insurance expiry date is required.'); return; }
 
     const hasSameType = vehicles.some(v => v.type === formType && v.status !== 'pending_delete');
@@ -128,9 +154,11 @@ function DriverVehiclePage({ dbUser }) {
         driverId:        dbUser.user_id,
         type:            formType,
         plateNo:         formPlate.trim().toUpperCase(),
+        plate:           formPlate.trim().toUpperCase(), // Android compatibility
         year:            parseInt(formYear),
         insuranceExpiry: formExpiry,
-        status:          'pending_add', // User requested: apply a request for new vehicle
+        status:          'pending_add',
+        isActive:        false,
         createdAt:       serverTimestamp(),
       });
       setShowForm(false);
@@ -298,7 +326,7 @@ function DriverVehiclePage({ dbUser }) {
                 {formYear.length === 4 && (() => {
                   const y = parseInt(formYear);
                   const max = new Date().getFullYear() + 1;
-                  if (y < 2000 || y > max) return <span style={{ fontSize: '11px', color: 'var(--red)', fontWeight: 500, marginLeft: '6px' }}>Must be 2000–{max}</span>;
+                  if (y < 1990 || y > max) return <span style={{ fontSize: '11px', color: 'var(--red)', fontWeight: 500, marginLeft: '6px' }}>Must be 1990–{max}</span>;
                   return <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 500, marginLeft: '6px' }}>✓ Valid</span>;
                 })()}
               </label>
@@ -317,7 +345,7 @@ function DriverVehiclePage({ dbUser }) {
                   if (formYear.length === 4) {
                     const y = parseInt(formYear);
                     const max = new Date().getFullYear() + 1;
-                    if (y < 2000) setFormYear('2000');
+                    if (y < 1990) setFormYear('1990');
                     if (y > max) setFormYear(String(max));
                   }
                 }}
@@ -362,8 +390,8 @@ function DriverVehiclePage({ dbUser }) {
       ) : vehicles.length === 0 ? (
         <div className="card">
           <div className="empty-state">
-            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MotorcycleIcon size={48} color="var(--text-3)" />
+            <div className="empty-state-icon" style={{ background: 'var(--primary-light)', border: '1px solid rgba(0,177,79,0.2)' }}>
+              <MotorcycleIcon size={36} color="var(--primary)" />
             </div>
             <div className="empty-state-title">No Vehicles Registered</div>
             <div className="empty-state-desc">Add your first vehicle to get started with deliveries.</div>
@@ -371,6 +399,11 @@ function DriverVehiclePage({ dbUser }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {hasActiveOrder && (
+            <div style={{ background: '#FEF2F2', border: '1px solid #F87171', color: '#991B1B', padding: '12px 16px', borderRadius: 'var(--radius-md)', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span style={{ fontSize: '16px' }}>⚠️</span> You have an active delivery. You cannot change your active vehicle until it is completed.
+            </div>
+          )}
           {vehicles.map(v => {
             const isActive = v.status === 'active';
             const isPendingAdd = v.status === 'pending_add';
@@ -399,7 +432,12 @@ function DriverVehiclePage({ dbUser }) {
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                     {!isActive && !isPendingAdd && !isPendingDelete && (
-                      <button onClick={() => handleSetActive(v.id, v.plateNo, v.type)} className="btn btn-primary btn-sm">
+                      <button 
+                        onClick={() => handleSetActive(v.id, v.plateNo, v.type)} 
+                        className="btn btn-primary btn-sm"
+                        disabled={hasActiveOrder}
+                        title={hasActiveOrder ? "Cannot switch vehicle while on an active delivery" : ""}
+                      >
                         Set Active
                       </button>
                     )}

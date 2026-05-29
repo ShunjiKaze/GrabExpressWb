@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const BookingContext = createContext(null);
 
@@ -56,14 +56,26 @@ export function vehicleForSize(size) {
   return 'van';
 }
 
+const SESSION_KEY = 'grabexpress_booking';
+
 export function BookingProvider({ children }) {
-  const [bookingData, setBookingData] = useState(INITIAL);
+  const [bookingData, setBookingData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      return saved ? { ...INITIAL, ...JSON.parse(saved) } : INITIAL;
+    } catch { return INITIAL; }
+  });
 
   const updateBooking = useCallback((fields) => {
-    setBookingData(prev => ({ ...prev, ...fields }));
+    setBookingData(prev => {
+      const next = { ...prev, ...fields };
+      try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
   }, []);
 
   const resetBooking = useCallback(() => {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch {}
     setBookingData(INITIAL);
   }, []);
 

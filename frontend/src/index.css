@@ -331,9 +331,18 @@ body {
 
 /* ─── Empty State ────────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 60px 24px; }
-.empty-state-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
-.empty-state-title { font-size: 18px; font-weight: 700; color: var(--text-2); margin-bottom: 8px; }
-.empty-state-desc { font-size: 14px; color: var(--text-3); max-width: 320px; margin: 0 auto; }
+.empty-state-icon {
+  font-size: 56px;
+  margin: 0 auto 20px;
+  width: 88px; height: 88px;
+  border-radius: 24px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 1;
+}
+.empty-state-title { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.empty-state-desc { font-size: 14px; color: var(--text-3); max-width: 320px; margin: 0 auto 20px; line-height: 1.6; }
 
 /* ─── Stats Grid ─────────────────────────────────────────────── */
 .stats-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }

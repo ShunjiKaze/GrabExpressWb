@@ -4,6 +4,18 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
+// Normalize Firestore user doc: Android uses camelCase, web uses snake_case.
+// Always produce both so the rest of the app can read snake_case safely.
+function normalizeUser(uid, data) {
+  return {
+    ...data,
+    user_id:       uid,
+    full_name:     data.full_name     || data.fullName     || '',
+    vehicle_type:  data.vehicle_type  || data.vehicleType  || '',
+    vehicle_plate: data.vehicle_plate || data.vehiclePlate || '',
+  };
+}
+
 import { BookingProvider } from './context/BookingContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './components/Toast';
@@ -63,10 +75,10 @@ function App() {
               created_at: serverTimestamp(),
             };
             await setDoc(ref, newData);
-            setDbUser({ user_id: currentUser.uid, ...newData });
+            setDbUser(normalizeUser(currentUser.uid, newData));
           } else {
             // Set dbUser immediately so ProtectedRoute has the role before loading ends
-            setDbUser({ user_id: currentUser.uid, ...snap.data() });
+            setDbUser(normalizeUser(currentUser.uid, snap.data()));
             if (currentUser.photoURL && !snap.data().photoURL) {
               await setDoc(ref, { photoURL: currentUser.photoURL }, { merge: true });
             }
@@ -74,7 +86,7 @@ function App() {
 
           // Live listener — keeps dbUser in sync for subsequent changes (e.g. photo upload)
           unsubDoc = onSnapshot(ref, (s) => {
-            if (s.exists()) setDbUser({ user_id: currentUser.uid, ...s.data() });
+            if (s.exists()) setDbUser(normalizeUser(currentUser.uid, s.data()));
           });
         } catch (err) {
           console.error('Auth sync error:', err);

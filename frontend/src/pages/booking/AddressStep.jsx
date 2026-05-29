@@ -50,15 +50,17 @@ function formatPhotonAddress(p) {
 
 // Photon autocomplete hook (Komoot Photon — free, OSM-based, browser-friendly, no API key)
 function usePhoton(query) {
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const abortRef              = useRef(null);
+  const [results, setResults]   = useState([]);
+  const [loading, setLoading]   = useState(false);
+  const [searchFailed, setSearchFailed] = useState(false);
+  const abortRef                = useRef(null);
 
   const search = useCallback(async (q) => {
-    if (!q || q.trim().length < 3) { setResults([]); return; }
+    if (!q || q.trim().length < 3) { setResults([]); setSearchFailed(false); return; }
     if (abortRef.current) abortRef.current.abort();
     abortRef.current = new AbortController();
     setLoading(true);
+    setSearchFailed(false);
     try {
       // Cebu bounding box: SW lon, SW lat, NE lon, NE lat
       const url = `https://photon.komoot.io/api/?` + new URLSearchParams({
@@ -68,6 +70,7 @@ function usePhoton(query) {
         lang:  'en',
       });
       const res  = await fetch(url, { signal: abortRef.current.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       // Normalise to the same shape AddressStep already expects
       const normalised = (data.features || []).map(f => ({
@@ -78,7 +81,10 @@ function usePhoton(query) {
       }));
       setResults(normalised);
     } catch (err) {
-      if (err.name !== 'AbortError') console.error('Photon search error:', err);
+      if (err.name !== 'AbortError') {
+        console.error('Photon search error:', err);
+        setSearchFailed(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -90,7 +96,7 @@ function usePhoton(query) {
     debouncedSearch(query);
   }, [query, debouncedSearch]);
 
-  return { results, loading };
+  return { results, loading, searchFailed };
 }
 
 function AddressStep() {
@@ -106,8 +112,8 @@ function AddressStep() {
   const [pickupQuery,   setPickupQuery]   = useState(bookingData.pickupAddress   || '');
   const [deliveryQuery, setDeliveryQuery] = useState(bookingData.deliveryAddress || '');
 
-  const { results: pickupResults,   loading: pickupLoading   } = usePhoton(focused === 'pickup'   ? pickupQuery   : '');
-  const { results: deliveryResults, loading: deliveryLoading } = usePhoton(focused === 'delivery' ? deliveryQuery : '');
+  const { results: pickupResults,   loading: pickupLoading,   searchFailed: pickupFailed   } = usePhoton(focused === 'pickup'   ? pickupQuery   : '');
+  const { results: deliveryResults, loading: deliveryLoading, searchFailed: deliveryFailed } = usePhoton(focused === 'delivery' ? deliveryQuery : '');
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -190,11 +196,12 @@ function AddressStep() {
   const dotColors = { pickup: 'var(--primary)', delivery: 'var(--red)' };
 
   const renderField = ({ field, label, placeholder, value, containerRef }) => {
-    const results  = field === 'pickup' ? pickupResults   : deliveryResults;
-    const loading  = field === 'pickup' ? pickupLoading   : deliveryLoading;
+    const results     = field === 'pickup' ? pickupResults   : deliveryResults;
+    const loading     = field === 'pickup' ? pickupLoading   : deliveryLoading;
+    const searchFailed = field === 'pickup' ? pickupFailed   : deliveryFailed;
     const dotColor = dotColors[field];
     const isFocused = focused === field;
-    const showDropdown = isFocused && (loading || results.length > 0 || (value.length >= 3));
+    const showDropdown = isFocused && (loading || results.length > 0 || searchFailed || (value.length >= 3));
 
     return (
       <div className="form-group" style={{ position: 'relative', marginBottom: 0 }} ref={containerRef}>
@@ -280,7 +287,12 @@ function AddressStep() {
             </div>
 
             {/* Results */}
-            {!loading && results.length === 0 && value.length >= 3 && (
+            {!loading && searchFailed && (
+              <div style={{ padding: '16px 14px', fontSize: '13px', color: 'var(--red)', textAlign: 'center' }}>
+                Search temporarily unavailable. Please try again.
+              </div>
+            )}
+            {!loading && !searchFailed && results.length === 0 && value.length >= 3 && (
               <div style={{ padding: '16px 14px', fontSize: '13px', color: 'var(--text-3)', textAlign: 'center' }}>
                 No locations found. Try a different search.
               </div>

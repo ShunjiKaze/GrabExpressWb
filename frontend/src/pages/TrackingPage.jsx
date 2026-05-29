@@ -113,12 +113,16 @@ function TrackingPage({ dbUser }) {
     } catch { setCancelling(false); }
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const text = `Track my GrabExpress delivery (Order #${id.slice(-8).toUpperCase()}) in real-time on GrabExpress.`;
-    navigator.clipboard.writeText(text).then(() => {
+    try {
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    });
+    } catch {
+      // Clipboard API unavailable — show the text for manual copy
+      window.prompt('Copy this tracking message:', text);
+    }
   };
 
   if (loading) return (
@@ -363,19 +367,23 @@ function TrackingPage({ dbUser }) {
           {isComplete && (
             <div style={{ marginTop: '24px', padding: '16px', background: 'var(--primary-light)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(0,177,79,0.2)', textAlign: 'center' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-                {booking.driverRating
+                {(dbUser?.role === 'driver' ? booking.customerRating : booking.driverRating)
                   ? <StarIcon size={28} color="#F59E0B" filled />
                   : <SparklesIcon size={28} color="var(--primary)" />
                 }
               </div>
               <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--navy)', marginBottom: '6px' }}>Delivery Complete!</div>
-              {booking.driverRating ? (
-                <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '12px' }}>You rated your driver {booking.driverRating} star{booking.driverRating !== 1 ? 's' : ''}. Thanks for your feedback!</p>
+              {(dbUser?.role === 'driver' ? booking.customerRating : booking.driverRating) ? (
+                <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '12px' }}>
+                  {dbUser?.role === 'driver'
+                    ? `You rated this customer ${booking.customerRating} star${booking.customerRating !== 1 ? 's' : ''}.`
+                    : `You rated your driver ${booking.driverRating} star${booking.driverRating !== 1 ? 's' : ''}.`} Thanks for your feedback!
+                </p>
               ) : (
                 <>
                   <p style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '14px' }}>How was your delivery experience?</p>
                   <button onClick={() => navigate(`/rate/${id}`)} className="btn btn-primary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <StarIcon size={16} color="white" /> Rate Your Driver
+                    <StarIcon size={16} color="white" /> {dbUser?.role === 'driver' ? 'Rate Customer' : 'Rate Your Driver'}
                   </button>
                 </>
               )}

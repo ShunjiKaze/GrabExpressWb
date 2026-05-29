@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { StarIcon, SparklesIcon, CheckIcon, FileTextIcon } from '../components/Icons';
 
@@ -39,8 +39,19 @@ function RatingPage({ dbUser }) {
   const [rating, setRating]   = useState(0);
   const [tags, setTags]       = useState([]);
   const [review, setReview]   = useState('');
-  const [loading, setLoading] = useState(false);
-  const [done, setDone]       = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [done, setDone]           = useState(false);
+  const [alreadyRated, setAlreadyRated] = useState(false);
+
+  useEffect(() => {
+    getDoc(doc(db, 'bookings', id)).then(snap => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      const isDriver = dbUser?.role === 'driver';
+      const field = isDriver ? 'driverRatingForCustomer' : 'customerRating';
+      if (data[field]) setAlreadyRated(true);
+    }).catch(console.error);
+  }, [id, dbUser]);
 
   const toggleTag = (tag) => setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
 
@@ -49,8 +60,8 @@ function RatingPage({ dbUser }) {
     setLoading(true);
     try {
       const isDriver = dbUser?.role === 'driver';
-      const field = isDriver ? 'customerRating' : 'driverRating';
-      const reviewField = isDriver ? 'customerReview' : 'driverReview';
+      const field = isDriver ? 'driverRatingForCustomer' : 'customerRating';
+      const reviewField = isDriver ? 'driverReviewForCustomer' : 'customerReview';
       await updateDoc(doc(db, 'bookings', id), {
         [field]: rating,
         [reviewField]: review,
@@ -62,6 +73,26 @@ function RatingPage({ dbUser }) {
     } catch (err) { console.error(err); }
     setLoading(false);
   };
+
+  if (alreadyRated) {
+    return (
+      <div className="dashboard-container" style={{ maxWidth: '480px', paddingTop: '60px', textAlign: 'center' }}>
+        <div className="card" style={{ padding: '48px 32px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <CheckIcon size={72} color="var(--primary)" />
+          </div>
+          <h2 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--navy)', marginBottom: '12px' }}>Already Rated</h2>
+          <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: '1.6', marginBottom: '32px' }}>
+            You've already submitted a rating for this delivery. Ratings can't be changed after submission.
+          </p>
+          <button onClick={() => navigate(dbUser?.role === 'driver' ? '/driver/deliveries' : '/book')} className="btn btn-primary btn-full btn-lg" style={{ marginBottom: '10px' }}>Back to Dashboard</button>
+          <button onClick={() => navigate(`/receipt/${id}`)} className="btn btn-secondary btn-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <FileTextIcon size={16} /> View Receipt
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (done) {
     return (

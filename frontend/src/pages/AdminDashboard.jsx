@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit, doc, updateDoc, arrayUnion, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { UsersIcon, MotorcycleIcon, PackageIcon, ActivityIcon, XCircleIcon,
          SearchIcon, ZapIcon, CheckCircleIcon, BanknoteIcon, LogOutIcon, FileTextIcon } from '../components/Icons';
+import { useToast } from '../components/Toast';
 
 const STATUS_CONFIG = {
   searching:  { label: 'Searching',  badge: 'badge-amber',  Icon: SearchIcon },
@@ -16,6 +17,7 @@ const STATUS_CONFIG = {
 };
 
 function AdminDashboard() {
+  const showToast = useToast();
   const [bookings, setBookings] = useState([]);
   const [users, setUsers]       = useState([]);
   const [payments, setPayments] = useState([]);
@@ -32,6 +34,35 @@ function AdminDashboard() {
   const [filterDriverStatus, setFilterDriverStatus] = useState('all');
   const [filterRequestType, setFilterRequestType] = useState('all');
 
+  // Pagination
+  const PAGE_SIZE = 20;
+  const [pageBookings,   setPageBookings]   = useState(0);
+  const [pageCustomers,  setPageCustomers]  = useState(0);
+  const [pageDrivers,    setPageDrivers]    = useState(0);
+  const [pageRequests,   setPageRequests]   = useState(0);
+
+  const Pagination = ({ page, setPage, total }) => {
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    if (totalPages <= 1) return null;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--border)' }}>
+        <span style={{ fontSize: '13px', color: 'var(--text-3)' }}>
+          Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
+        </span>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => setPage(p => p - 1)} disabled={page === 0}
+            style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: page === 0 ? 'var(--surface-2)' : 'var(--surface)', color: page === 0 ? 'var(--text-3)' : 'var(--text)', fontWeight: 600, fontSize: '13px', cursor: page === 0 ? 'not-allowed' : 'pointer' }}
+          >← Prev</button>
+          <button
+            onClick={() => setPage(p => p + 1)} disabled={page >= totalPages - 1}
+            style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: page >= totalPages - 1 ? 'var(--surface-2)' : 'var(--surface)', color: page >= totalPages - 1 ? 'var(--text-3)' : 'var(--text)', fontWeight: 600, fontSize: '13px', cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer' }}
+          >Next →</button>
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     const bUnsub = onSnapshot(
       query(collection(db, 'bookings'), orderBy('createdAt', 'desc'), limit(100)),
@@ -47,7 +78,10 @@ function AdminDashboard() {
     );
     const vUnsub = onSnapshot(
       collection(db, 'vehicles'),
-      snap => setVehicles(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      snap => setVehicles(snap.docs.map(d => {
+        const data = d.data();
+        return { id: d.id, ...data, plateNo: data.plateNo || data.plate || '' };
+      }))
     );
     return () => { bUnsub(); uUnsub(); pUnsub(); vUnsub(); };
   }, []);
@@ -90,8 +124,10 @@ function AdminDashboard() {
         };
         await updateDoc(doc(db, 'users', driverUser.id), { notifications: arrayUnion(notif) });
       }
+      showToast(action === 'approve' ? 'Vehicle request approved.' : 'Vehicle request rejected.', 'success');
     } catch (err) {
       console.error(err);
+      showToast('Action failed. Please try again.', 'error');
     }
   };
 
@@ -111,11 +147,25 @@ function AdminDashboard() {
           const randLng = 123.8200 + Math.random() * (124.0200 - 123.8200); // ~123.82 to 124.02 lng
           updates.role = 'driver';
           updates.driverApplicationStatus = 'approved';
-          updates.vehicle_type = details.vehicleType;
+          updates.vehicle_type  = details.vehicleType;
           updates.vehicle_plate = details.plateNo;
+          updates.vehicleType   = details.vehicleType;  // Android compatibility
+          updates.vehiclePlate  = details.plateNo;       // Android compatibility
           updates.accountStatus = 'active';
           updates.assignedLat = parseFloat(randLat.toFixed(6));
           updates.assignedLng = parseFloat(randLng.toFixed(6));
+          // Create the vehicle document so it appears on the driver's Vehicles page
+          await addDoc(collection(db, 'vehicles'), {
+            driverId:        userId,
+            type:            details.vehicleType,
+            plateNo:         details.plateNo,
+            year:            details.year || null,
+            insuranceExpiry: details.insuranceExpiry || null,
+            status:          'inactive',
+            adminStatus:     'approved',
+            adminProcessedAt: new Date().toISOString(),
+            createdAt:       serverTimestamp(),
+          });
           newNotification.title = 'Application Approved';
           newNotification.message = 'Congratulations! Your driver application has been approved. You can now accept deliveries.';
         } else {
@@ -141,8 +191,10 @@ function AdminDashboard() {
 
       updates.notifications = arrayUnion(newNotification);
       await updateDoc(doc(db, 'users', userId), updates);
+      showToast(action === 'approve' ? 'Request approved.' : 'Request rejected.', 'success');
     } catch (err) {
       console.error(err);
+      showToast('Action failed. Please try again.', 'error');
     }
   };
 
@@ -191,13 +243,15 @@ function AdminDashboard() {
           <div><strong style={{ color: 'var(--text-2)' }}>Email:</strong> <span style={{ fontWeight: 600 }}>{u.email}</span></div>
           <div><strong style={{ color: 'var(--text-2)' }}>Vehicle Type:</strong> <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{u.driverApplicationDetails?.vehicleType}</span></div>
           <div><strong style={{ color: 'var(--text-2)' }}>Plate Number:</strong> <span style={{ fontWeight: 600 }}>{u.driverApplicationDetails?.plateNo}</span></div>
+          {u.driverApplicationDetails?.year && <div><strong style={{ color: 'var(--text-2)' }}>Vehicle Year:</strong> <span style={{ fontWeight: 600 }}>{u.driverApplicationDetails.year}</span></div>}
+          {u.driverApplicationDetails?.insuranceExpiry && <div><strong style={{ color: 'var(--text-2)' }}>Insurance Expiry:</strong> <span style={{ fontWeight: 600 }}>{u.driverApplicationDetails.insuranceExpiry}</span></div>}
           <div><strong style={{ color: 'var(--text-2)' }}>License Number:</strong> <span style={{ fontWeight: 600 }}>{u.driverApplicationDetails?.licenseNo}</span></div>
           
-          <div style={{ marginTop: '8px', color: 'var(--text-2)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase' }}>Documents Provided</div>
+          <div style={{ marginTop: '8px', color: 'var(--text-2)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase' }}>Documents Submitted</div>
           <div style={{ padding: '16px', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '13px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircleIcon size={18} color="var(--primary)" /> Driver's License Photo (Verified)</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}><CheckCircleIcon size={18} color="var(--primary)" /> Selfie with ID (Verified)</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}><CheckCircleIcon size={18} color="var(--primary)" /> Vehicle OR/CR (Verified)</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><FileTextIcon size={18} color="var(--text-3)" /> Driver's License Photo</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}><FileTextIcon size={18} color="var(--text-3)" /> Selfie with ID</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}><FileTextIcon size={18} color="var(--text-3)" /> Vehicle OR/CR</div>
           </div>
         </div>
       );
@@ -372,7 +426,7 @@ function AdminDashboard() {
         <div className="grid grid-2 gap-20">
           {/* Recent Bookings */}
           <div className="card" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '20px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '20px 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '15px', fontWeight: 700 }}>Recent Bookings</h3>
               <button onClick={() => setTab('bookings')} style={{ fontSize: '12px', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>View all →</button>
             </div>
@@ -397,7 +451,7 @@ function AdminDashboard() {
 
           {/* Users breakdown */}
           <div className="card" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '20px 20px 0' }}>
+            <div style={{ padding: '20px 20px 16px' }}>
               <h3 style={{ fontSize: '15px', fontWeight: 700 }}>User Breakdown</h3>
             </div>
             {['customer','driver','admin'].map(role => {
@@ -420,16 +474,32 @@ function AdminDashboard() {
             {/* Status breakdown */}
             <div style={{ padding: '20px', borderTop: '1px solid var(--border)' }}>
               <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '12px' }}>Order Status Split</div>
-              {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
-                const count = bookings.filter(b => b.status === status).length;
-                if (!count) return null;
-                return (
-                  <div key={status} className="flex justify-between mb-6">
-                    <span className={`badge ${cfg.badge}`}>{cfg.label}</span>
-                    <span style={{ fontSize: '14px', fontWeight: 700 }}>{count}</span>
-                  </div>
-                );
-              })}
+              {(() => {
+                const total = bookings.length || 1;
+                const barColors = {
+                  completed: 'var(--primary)', delivered: 'var(--primary)',
+                  cancelled: 'var(--red)',
+                  searching: '#F59E0B',
+                  accepted: 'var(--blue)', in_transit: 'var(--blue)', picked_up: 'var(--blue)',
+                };
+                return Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
+                  const count = bookings.filter(b => b.status === status).length;
+                  if (!count) return null;
+                  const pct = Math.round((count / total) * 100);
+                  const barColor = barColors[status] || 'var(--text-3)';
+                  return (
+                    <div key={status} style={{ marginBottom: '10px' }}>
+                      <div className="flex justify-between" style={{ marginBottom: '4px' }}>
+                        <span className={`badge ${cfg.badge}`}>{cfg.label}</span>
+                        <span style={{ fontSize: '14px', fontWeight: 700 }}>{count}</span>
+                      </div>
+                      <div style={{ height: '4px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: '3px', transition: 'width 0.5s ease' }} />
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
@@ -446,11 +516,12 @@ function AdminDashboard() {
           if (filterBookings === 'cancelled') return b.status === 'cancelled';
           return true;
         });
+        const pagedBookings = filteredBookings.slice(pageBookings * PAGE_SIZE, (pageBookings + 1) * PAGE_SIZE);
         return (
           <div className="card" style={{ overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' }}>Filter:</span>
-              <select value={filterBookings} onChange={e => setFilterBookings(e.target.value)} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', fontWeight: 600, color: 'var(--text)', outline: 'none' }}>
+              <select value={filterBookings} onChange={e => { setFilterBookings(e.target.value); setPageBookings(0); }} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', fontWeight: 600, color: 'var(--text)', outline: 'none' }}>
                 <option value="all">All Bookings</option>
                 <option value="searching">Searching</option>
                 <option value="accepted">Accepted</option>
@@ -474,7 +545,7 @@ function AdminDashboard() {
               <tbody>
                 {loading ? (
                   <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-3)', padding: '32px' }}>Loading…</td></tr>
-                ) : filteredBookings.map(b => {
+                ) : pagedBookings.map(b => {
                 const cfg = STATUS_CONFIG[b.status] || { badge: 'badge-gray', label: b.status };
                 return (
                   <tr key={b.id}>
@@ -490,6 +561,7 @@ function AdminDashboard() {
               })}
             </tbody>
           </table>
+          <Pagination page={pageBookings} setPage={setPageBookings} total={filteredBookings.length} />
         </div>
         );
       })()}
@@ -497,15 +569,16 @@ function AdminDashboard() {
       {/* Tab: Customers */}
       {tab === 'customers' && (() => {
         const customers = users.filter(u => u.role === 'customer');
-        const filteredCustomers = customers.filter(c => 
-          (c.full_name || '').toLowerCase().includes(filterCustomerSearch.toLowerCase()) || 
+        const filteredCustomers = customers.filter(c =>
+          (c.full_name || '').toLowerCase().includes(filterCustomerSearch.toLowerCase()) ||
           (c.email || '').toLowerCase().includes(filterCustomerSearch.toLowerCase())
         );
+        const pagedCustomers = filteredCustomers.slice(pageCustomers * PAGE_SIZE, (pageCustomers + 1) * PAGE_SIZE);
         return (
           <div className="card" style={{ overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' }}>Search:</span>
-              <input type="text" placeholder="Search by name or email..." value={filterCustomerSearch} onChange={e => setFilterCustomerSearch(e.target.value)} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', color: 'var(--text)', outline: 'none', width: '250px' }} />
+              <input type="text" placeholder="Search by name or email..." value={filterCustomerSearch} onChange={e => { setFilterCustomerSearch(e.target.value); setPageCustomers(0); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', color: 'var(--text)', outline: 'none', width: '250px' }} />
             </div>
             <table className="data-table">
               <thead>
@@ -516,9 +589,9 @@ function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredCustomers.length === 0 ? (
+                {pagedCustomers.length === 0 ? (
                   <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-3)', padding: '32px' }}>No customers found</td></tr>
-                ) : filteredCustomers.map(u => (
+                ) : pagedCustomers.map(u => (
                   <tr key={u.id}>
                     <td style={{ fontWeight: 700 }}>{u.full_name || '—'}</td>
                     <td style={{ color: 'var(--text-2)', fontSize: '13px' }}>{u.email}</td>
@@ -527,6 +600,7 @@ function AdminDashboard() {
                 ))}
               </tbody>
             </table>
+            <Pagination page={pageCustomers} setPage={setPageCustomers} total={filteredCustomers.length} />
           </div>
         );
       })()}
@@ -536,14 +610,15 @@ function AdminDashboard() {
         const drivers = users.filter(u => u.role === 'driver');
         const filteredDrivers = drivers.filter(d => {
           if (filterDriverStatus === 'all') return true;
-          const status = d.accountStatus || 'active'; // Default active if not set
+          const status = d.accountStatus || 'active';
           return status === filterDriverStatus;
         });
+        const pagedDrivers = filteredDrivers.slice(pageDrivers * PAGE_SIZE, (pageDrivers + 1) * PAGE_SIZE);
         return (
           <div className="card" style={{ overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', alignItems: 'center' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' }}>Filter:</span>
-              <select value={filterDriverStatus} onChange={e => setFilterDriverStatus(e.target.value)} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', fontWeight: 600, color: 'var(--text)', outline: 'none' }}>
+              <select value={filterDriverStatus} onChange={e => { setFilterDriverStatus(e.target.value); setPageDrivers(0); }} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '13px', fontWeight: 600, color: 'var(--text)', outline: 'none' }}>
                 <option value="all">All Drivers</option>
                 <option value="active">Active</option>
                 <option value="deactivated">Deactivated</option>
@@ -560,9 +635,9 @@ function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredDrivers.length === 0 ? (
+                {pagedDrivers.length === 0 ? (
                   <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-3)', padding: '32px' }}>No drivers found</td></tr>
-                ) : filteredDrivers.map(u => {
+                ) : pagedDrivers.map(u => {
                   const status = u.accountStatus || 'active';
                   const badgeCls = status === 'deactivated' ? 'badge-red' : status.startsWith('pending') ? 'badge-amber' : 'badge-blue';
                   const displayStatus = status === 'deactivated' ? 'Deactivated' : status.startsWith('pending') ? 'Pending' : 'Active';
@@ -576,6 +651,7 @@ function AdminDashboard() {
                 })}
               </tbody>
             </table>
+            <Pagination page={pageDrivers} setPage={setPageDrivers} total={filteredDrivers.length} />
           </div>
         );
       })()}
@@ -590,6 +666,7 @@ function AdminDashboard() {
           else type = r._typeKey || '';
           return type === filterRequestType;
         });
+        const pagedReqs = filteredReqs.slice(pageRequests * PAGE_SIZE, (pageRequests + 1) * PAGE_SIZE);
 
         return (
         <div className="card" style={{ overflow: 'hidden' }}>
@@ -598,7 +675,7 @@ function AdminDashboard() {
               {['pending', 'approved', 'rejected'].map(status => (
                 <button
                   key={status}
-                  onClick={() => setActiveRequestTab(status)}
+                  onClick={() => { setActiveRequestTab(status); setPageRequests(0); }}
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase',
                     color: activeRequestTab === status ? 'var(--primary)' : 'var(--text-3)',
@@ -631,9 +708,9 @@ function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {filteredReqs.length === 0 ? (
+              {pagedReqs.length === 0 ? (
                 <tr><td colSpan={4} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-3)' }}>No {activeRequestTab} requests for selected type</td></tr>
-              ) : filteredReqs.map(item => {
+              ) : pagedReqs.map(item => {
                 let reqType = '';
                 let details = '';
                 let typeKey = '';
@@ -646,20 +723,22 @@ function AdminDashboard() {
                   displaySub = driver?.email || item.driverId;
                   typeKey = item._typeKey || (item.status === 'pending_add' ? 'vehicle_add' : 'vehicle_delete');
                   reqType = typeKey === 'vehicle_add' ? 'Vehicle Registration' : 'Vehicle Removal';
-                  details = `${item.plateNo} — ${item.type} (${item.year})`;
+                  details = `${item.plateNo} — ${item.type}${item.year ? ` (${item.year})` : ''}`;
                 } else {
                   displayName = item.full_name || '—';
                   displaySub = item.email;
                   typeKey = item._typeKey || '';
                   if (typeKey === 'driver_application') {
                     reqType = 'Driver Application';
-                    details = `${item.driverApplicationDetails?.vehicleType?.toUpperCase()} - ${item.driverApplicationDetails?.plateNo}`;
+                    const vType = item.driverApplicationDetails?.vehicleType;
+                    const plate = item.driverApplicationDetails?.plateNo;
+                    details = [vType && vType.charAt(0).toUpperCase() + vType.slice(1), plate].filter(Boolean).join(' · ');
                   } else if (typeKey === 'deactivation') {
                     reqType = 'Account Deactivation';
-                    details = 'Requested to deactivate account.';
+                    details = 'Account deactivation request';
                   } else if (typeKey === 'reactivation') {
                     reqType = 'Account Reactivation';
-                    details = 'Requested to reactivate account.';
+                    details = 'Account reactivation request';
                   }
                 }
 
@@ -689,6 +768,7 @@ function AdminDashboard() {
               })}
             </tbody>
           </table>
+          <Pagination page={pageRequests} setPage={setPageRequests} total={filteredReqs.length} />
         </div>
         );
       })()}

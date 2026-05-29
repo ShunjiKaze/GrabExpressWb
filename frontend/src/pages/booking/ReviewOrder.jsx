@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -45,18 +45,27 @@ function ReviewOrder({ dbUser }) {
   const { bookingData, updateBooking, resetBooking, total } = useBooking();
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+  const submittingRef         = useRef(false);
 
   const base        = VEHICLE_BASE[bookingData.vehicleType] ?? 60;
   const sizeAdd     = SIZE_ADD[bookingData.itemSize] ?? 0;
   const tierAdd     = TIER_ADD[bookingData.guaranteeTier] ?? 0;
   const deliveryAdd = DELIVERY_ADD[bookingData.deliveryType] ?? 0;
 
+  const generateDisplayId = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  };
+
   const handleBook = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     setError('');
     try {
       const docRef = await addDoc(collection(db, 'bookings'), {
         customerId:     dbUser.user_id,
+        displayId:      generateDisplayId(),
         driverId:       null,
         status:         'searching',
         pickupAddress:  bookingData.pickupAddress,
@@ -115,6 +124,7 @@ function ReviewOrder({ dbUser }) {
     } catch (err) {
       console.error(err);
       setError('Failed to create booking. Please try again.');
+      submittingRef.current = false;
     }
     setLoading(false);
   };

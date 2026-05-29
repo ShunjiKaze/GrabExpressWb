@@ -36,9 +36,9 @@ function RegisterPage() {
 
   const validate = () => {
     const e = {};
-    if (!isValidName(first)) e.first = 'First name must be at least 2 letters. No numbers or special characters.';
-    if (!isValidName(last))  e.last  = 'Last name must be at least 2 letters. No numbers or special characters.';
-    if (!/^[^\s@]+@[^\s@]+\.com$/.test(email)) e.email = 'Enter a valid email address.';
+    if (!isValidName(first)) e.first = 'First name must be at least 2 characters. No special characters.';
+    if (!isValidName(last))  e.last  = 'Last name must be at least 2 characters. No special characters.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Enter a valid email address.';
     if (!/^09\d{9}$/.test(phone)) e.phone = 'Phone must be in format 09XXXXXXXXX (11 digits).';
     if (pw.length < 8) e.pw  = 'Password must be at least 8 characters.';
     if (pw !== cpw)    e.cpw = 'Passwords do not match.';

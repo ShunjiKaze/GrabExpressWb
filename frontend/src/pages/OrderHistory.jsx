@@ -30,6 +30,7 @@ function OrderHistory({ dbUser }) {
   const [filter, setFilter]     = useState('all');
   const [search, setSearch]     = useState('');
   const [expanded, setExpanded] = useState(null);
+  const [sortBy, setSortBy]     = useState('date-desc');
 
   useEffect(() => {
     const field = dbUser.role === 'driver' ? 'driverId' : 'customerId';
@@ -43,9 +44,8 @@ function OrderHistory({ dbUser }) {
         const docs = snap.docs
           .map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => {
-            const ta = a.createdAt?.toMillis?.() ?? 0;
-            const tb = b.createdAt?.toMillis?.() ?? 0;
-            return tb - ta;
+            const getMs = ts => ts ? (ts.toMillis ? ts.toMillis() : new Date(ts.toDate ? ts.toDate() : ts).getTime() || 0) : 0;
+            return getMs(b.createdAt) - getMs(a.createdAt);
           });
         setOrders(docs);
         setError(null);
@@ -67,6 +67,20 @@ function OrderHistory({ dbUser }) {
        o.status === filter);
     const matchSearch = !search || [o.pickupAddress, o.deliveryAddress, o.id].some(v => v?.toLowerCase().includes(search.toLowerCase()));
     return matchStatus && matchSearch;
+  }).sort((a, b) => {
+    const getMs = ts => ts ? (ts.toMillis ? ts.toMillis() : new Date(ts.toDate ? ts.toDate() : ts).getTime() || 0) : 0;
+    
+    if (sortBy === 'date-desc') {
+      return getMs(b.createdAt) - getMs(a.createdAt);
+    }
+    if (sortBy === 'date-asc') {
+      return getMs(a.createdAt) - getMs(b.createdAt);
+    }
+    if (sortBy === 'address-asc') return (a.pickupAddress || '').localeCompare(b.pickupAddress || '');
+    if (sortBy === 'address-desc') return (b.pickupAddress || '').localeCompare(a.pickupAddress || '');
+    if (sortBy === 'id-asc') return a.id.localeCompare(b.id);
+    if (sortBy === 'id-desc') return b.id.localeCompare(a.id);
+    return 0;
   });
 
   const formatDate = (ts) => {
@@ -81,7 +95,7 @@ function OrderHistory({ dbUser }) {
     <div className="dashboard-container" style={{ maxWidth: '1000px' }}>
       {/* Header */}
       <div className="page-header">
-        <h1 className="page-title">Order History</h1>
+        <h1 className="page-title">{dbUser.role === 'driver' ? 'Delivery History' : 'Order History'}</h1>
         <p className="page-subtitle">{dbUser.role === 'driver' ? 'All deliveries you have completed' : 'All your past and active deliveries'}</p>
       </div>
 
@@ -118,6 +132,23 @@ function OrderHistory({ dbUser }) {
             style={{ paddingLeft: '36px' }}
           />
         </div>
+        {dbUser.role === 'driver' && (
+          <div style={{ flex: '0 0 auto' }}>
+            <select
+              className="form-input"
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              style={{ padding: '8px 12px', cursor: 'pointer', maxWidth: '160px' }}
+            >
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="address-asc">Address (A-Z)</option>
+              <option value="address-desc">Address (Z-A)</option>
+              <option value="id-asc">Order ID (A-Z)</option>
+              <option value="id-desc">Order ID (Z-A)</option>
+            </select>
+          </div>
+        )}
         <div className="flex gap-8" style={{ flexWrap: 'wrap' }}>
           {(dbUser.role === 'driver'
             ? [['all','All'],['active','Active'],['delivered','Completed'],['cancelled','Cancelled']]
@@ -162,8 +193,8 @@ function OrderHistory({ dbUser }) {
       ) : filtered.length === 0 ? (
         <div className="card">
           <div className="empty-state">
-            <div className="empty-state-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ClipboardIcon size={48} color="var(--text-3)" />
+            <div className="empty-state-icon" style={{ background: 'var(--primary-light)', border: '1px solid rgba(0,177,79,0.2)' }}>
+              <ClipboardIcon size={36} color="var(--primary)" />
             </div>
             <div className="empty-state-title">{search || filter !== 'all' ? 'No matching orders found' : 'No deliveries on record'}</div>
             <div className="empty-state-desc">
@@ -251,16 +282,29 @@ function OrderHistory({ dbUser }) {
                         Track this Order →
                       </button>
                     )}
-                    {['delivered', 'completed'].includes(o.status) && !o.driverRating && dbUser.role === 'customer' && (
+                    {['delivered', 'completed'].includes(o.status) && !o.customerRating && dbUser.role === 'customer' && (
                       <button onClick={() => navigate(`/rate/${o.id}`)} className="btn btn-secondary btn-sm mt-16" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <StarIcon size={14} color="var(--amber)" /> Rate Driver
                       </button>
                     )}
-                    {o.driverRating && (
+                    {['delivered', 'completed'].includes(o.status) && !o.driverRatingForCustomer && dbUser.role === 'driver' && (
+                      <button onClick={() => navigate(`/rate/${o.id}`)} className="btn btn-secondary btn-sm mt-16" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <StarIcon size={14} color="var(--amber)" /> Rate Customer
+                      </button>
+                    )}
+                    {(dbUser.role === 'driver' ? o.driverRatingForCustomer : o.customerRating) && (
                       <div style={{ marginTop: '14px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span style={{ fontSize: '13px', color: 'var(--text-3)' }}>Your rating:</span>
                         <span style={{ display: 'flex', gap: '2px' }}>
-                          {Array.from({ length: o.driverRating }, (_, i) => <StarIcon key={i} size={14} color="#F59E0B" filled />)}
+                          {Array.from({ length: dbUser.role === 'driver' ? o.driverRatingForCustomer : o.customerRating }, (_, i) => <StarIcon key={i} size={14} color="#F59E0B" filled />)}
+                        </span>
+                      </div>
+                    )}
+                    {(dbUser.role === 'driver' ? o.customerRating : o.driverRatingForCustomer) && (
+                      <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', color: 'var(--text-3)' }}>{dbUser.role === 'driver' ? "Customer's rating on you:" : "Driver's rating on you:"}</span>
+                        <span style={{ display: 'flex', gap: '2px' }}>
+                          {Array.from({ length: dbUser.role === 'driver' ? o.customerRating : o.driverRatingForCustomer }, (_, i) => <StarIcon key={i} size={14} color="#F59E0B" filled />)}
                         </span>
                       </div>
                     )}
